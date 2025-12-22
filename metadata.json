@@ -1,0 +1,8 @@
+{
+  "name": "Zysculpt - AI Resume Architect",
+  "description": "A high-end AI-powered resume builder designed to craft ATS-optimized resumes from job descriptions and your work history.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
