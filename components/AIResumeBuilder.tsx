@@ -8,10 +8,12 @@ import {
   CheckCircle2, 
   FileDown, 
   Undo,
-  Menu
+  Menu,
+  FileText
 } from 'lucide-react';
 import { Message } from '../types';
 import { geminiService } from '../services/gemini';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 
 const MarkdownLite: React.FC<{ text: string; dark?: boolean }> = ({ text, dark = false }) => {
   const lines = text.split('\n');
@@ -71,6 +73,7 @@ const AIResumeBuilder: React.FC<{ onToggleMobile?: () => void }> = ({ onToggleMo
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [resumeText, setResumeText] = useState('');
   const [finalResume, setFinalResume] = useState<string | null>(null);
@@ -178,7 +181,96 @@ const AIResumeBuilder: React.FC<{ onToggleMobile?: () => void }> = ({ onToggleMo
   };
 
   const exportPDF = () => {
-    window.print();
+    setIsExporting(true);
+    const element = document.querySelector('.printable-area');
+    if (!element) return;
+
+    const opt = {
+      margin: 10,
+      filename: `Zysculpt_Resume_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // @ts-ignore
+    html2pdf().set(opt).from(element).save().then(() => {
+      setIsExporting(false);
+    });
+  };
+
+  const exportDOCX = async () => {
+    if (!finalResume) return;
+    setIsExporting(true);
+
+    try {
+      const children: any[] = [];
+      const lines = finalResume.split('\n');
+
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (trimmed === '') {
+          children.push(new Paragraph({ spacing: { before: 200 } }));
+          return;
+        }
+
+        // Mapping Markdown to docx Paragraphs
+        if (trimmed.startsWith('# ')) {
+          children.push(new Paragraph({
+            text: trimmed.slice(2),
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 },
+          }));
+        } else if (trimmed.startsWith('## ')) {
+          children.push(new Paragraph({
+            text: trimmed.slice(3),
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 300, after: 150 },
+          }));
+        } else if (trimmed.startsWith('### ')) {
+          children.push(new Paragraph({
+            text: trimmed.slice(4),
+            heading: HeadingLevel.HEADING_3,
+            spacing: { before: 200, after: 100 },
+          }));
+        } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          children.push(new Paragraph({
+            text: trimmed.slice(2),
+            bullet: { level: 0 },
+            spacing: { before: 50, after: 50 },
+          }));
+        } else {
+          // Handle bold parts in regular text
+          const parts = trimmed.split(/(\*\*.*?\*\*)/g);
+          const runs = parts.map(part => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return new TextRun({ text: part.slice(2, -2), bold: true });
+            }
+            return new TextRun(part);
+          });
+          children.push(new Paragraph({ children: runs, spacing: { after: 100 } }));
+        }
+      });
+
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: children,
+        }],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Zysculpt_Resume_${new Date().toISOString().split('T')[0]}.docx`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Docx Export Failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (showPreview && finalResume) {
@@ -200,15 +292,26 @@ const AIResumeBuilder: React.FC<{ onToggleMobile?: () => void }> = ({ onToggleMo
               className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-[#2a2a2a] text-white hover:bg-[#333] transition-colors text-sm"
             >
               <Undo size={16} />
-              <span className="hidden sm:inline">Back to Chat</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
-            <button 
-              onClick={exportPDF}
-              className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-white text-black font-semibold hover:bg-[#e0e0e0] transition-colors text-sm"
-            >
-              <FileDown size={16} />
-              <span>Export PDF</span>
-            </button>
+            <div className="flex gap-1 md:gap-2">
+              <button 
+                onClick={exportDOCX}
+                disabled={isExporting}
+                className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-[#2a2a2a] text-[#a0a0a0] border border-[#333] hover:text-white hover:border-white transition-colors text-sm disabled:opacity-50"
+              >
+                {isExporting ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                <span className="hidden sm:inline">.docx</span>
+              </button>
+              <button 
+                onClick={exportPDF}
+                disabled={isExporting}
+                className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-white text-black font-semibold hover:bg-[#e0e0e0] transition-colors text-sm disabled:opacity-50"
+              >
+                {isExporting ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                <span>PDF</span>
+              </button>
+            </div>
           </div>
         </header>
 
@@ -309,14 +412,14 @@ const AIResumeBuilder: React.FC<{ onToggleMobile?: () => void }> = ({ onToggleMo
               className="p-2 text-[#a0a0a0] hover:text-white transition-colors"
               title="Upload existing resume"
             >
-              <Paperclip size={18} md:size={20} />
+              <Paperclip size={18} />
             </button>
             <button 
               onClick={handleSend}
               disabled={!inputValue.trim() || isTyping}
               className="p-2 bg-white text-black rounded-xl hover:bg-[#e0e0e0] transition-colors disabled:opacity-50"
             >
-              <Send size={18} md:size={20} />
+              <Send size={18} />
             </button>
           </div>
         </div>
