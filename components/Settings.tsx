@@ -1,80 +1,132 @@
 
 import React from 'react';
-import { User, Bell, Shield, CreditCard, ExternalLink, Menu } from 'lucide-react';
+import { User, Bell, Shield, CreditCard, ExternalLink, Menu, LogOut, ChevronRight, CheckCircle } from 'lucide-react';
+import { Theme } from '../types';
 
 interface SettingsProps {
   onToggleMobile?: () => void;
+  theme: Theme;
 }
 
-const Settings: React.FC<SettingsProps> = ({ onToggleMobile }) => {
+const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme }) => {
+  const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
+  const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
+  const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-slate-200 shadow-sm';
+  const sectionTitle = `text-[10px] md:text-xs font-bold uppercase tracking-widest mb-4 ${theme === 'dark' ? 'text-[#555]' : 'text-slate-400'}`;
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Responsive Header */}
-      <header className="p-4 md:p-6 border-b border-[#2a2a2a] flex items-center justify-between bg-[#191919] sticky top-0 z-10">
+    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#191919]' : 'bg-[#F8FAFC]'}`}>
+      <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden text-[#a0a0a0]">
-            <Menu size={24} />
+          <button onClick={onToggleMobile} className="md:hidden">
+            <Menu size={24} className={textPrimary} />
           </button>
-          <div>
-            <h2 className="text-lg md:text-xl font-bold text-white">Settings</h2>
-            <p className="text-[10px] md:text-xs text-[#a0a0a0]">Manage your account preferences</p>
-          </div>
+          <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Account & Settings</h2>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-4xl mx-auto w-full">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-10 hidden md:block">Account Settings</h1>
-
-        <div className="space-y-8">
+        <div className="space-y-10 pb-12">
+          {/* User Profile Section */}
           <section>
-            <h2 className="text-[10px] md:text-xs font-bold text-[#555] uppercase tracking-widest mb-4">Profile</h2>
-            <div className="p-4 md:p-6 bg-[#121212] border border-[#2a2a2a] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
-                  <User size={24} md:size={32} />
+            <h2 className={sectionTitle}>Profile Intelligence</h2>
+            <div className={`p-6 md:p-8 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 ${cardBg}`}>
+              <div className="flex items-center gap-6">
+                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl flex items-center justify-center border-2 transition-all ${
+                  theme === 'dark' ? 'bg-indigo-500/10 border-indigo-500/20 text-white' : 'bg-indigo-50 border-indigo-100 text-indigo-600'
+                }`}>
+                  <User size={40} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-base md:text-lg font-bold">John Doe</h3>
-                  <p className="text-[#a0a0a0] text-sm">john.doe@example.com</p>
+                  <h3 className={`text-xl md:text-2xl font-bold ${textPrimary}`}>Professional User</h3>
+                  <p className={`${textSecondary} mb-2`}>Senior Product Designer</p>
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    theme === 'dark' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'
+                  }`}>
+                    <CheckCircle size={12} /> Verified Profile
+                  </div>
                 </div>
               </div>
-              <button className="w-full sm:w-auto px-4 py-2 border border-[#2a2a2a] rounded-lg hover:bg-[#1f1f1f] transition-colors text-sm">Edit Profile</button>
+              <button className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm ${
+                theme === 'dark' ? 'bg-white text-black hover:bg-slate-200' : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`}>
+                Edit Public Profile
+              </button>
             </div>
           </section>
 
+          {/* Subscription Section */}
           <section>
-            <h2 className="text-[10px] md:text-xs font-bold text-[#555] uppercase tracking-widest mb-4">Preferences</h2>
-            <div className="bg-[#121212] border border-[#2a2a2a] rounded-2xl overflow-hidden">
-              <button className="w-full p-4 flex items-center justify-between hover:bg-[#1f1f1f] transition-colors">
-                <div className="flex items-center gap-3">
-                  <Bell size={20} className="text-[#a0a0a0]" />
-                  <span className="font-medium text-sm md:text-base">Notifications</span>
+            <h2 className={sectionTitle}>Plan & Billing</h2>
+            <div className={`p-8 rounded-3xl border-2 border-dashed relative overflow-hidden transition-all ${
+              theme === 'dark' ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-white border-indigo-100'
+            }`}>
+              <div className="absolute top-0 right-0 p-4">
+                 <div className="px-3 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-lg rotate-12">BEST VALUE</div>
+              </div>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+                <div>
+                  <h3 className={`text-xl font-bold mb-2 ${textPrimary}`}>Zysculpt Architect Pro</h3>
+                  <p className={`text-sm max-w-md ${textSecondary}`}>You have full access to unlimited ATS-optimized resume generations, cover letter sculpting, and AI interview prep.</p>
                 </div>
-                <div className="w-10 h-5 bg-white rounded-full relative">
-                  <div className="absolute right-1 top-1 w-3 h-3 bg-black rounded-full"></div>
+                <div className="flex flex-col items-center gap-3">
+                  <span className={`text-3xl font-extrabold ${textPrimary}`}>$19<span className="text-sm font-normal opacity-50">/mo</span></span>
+                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20">
+                    Manage Billing
+                  </button>
                 </div>
-              </button>
-              <button className="w-full p-4 border-t border-[#2a2a2a] flex items-center justify-between hover:bg-[#1f1f1f] transition-colors">
-                <div className="flex items-center gap-3">
-                  <Shield size={20} className="text-[#a0a0a0]" />
-                  <span className="font-medium text-sm md:text-base">Privacy & Security</span>
-                </div>
-                <ExternalLink size={16} className="text-[#555]" />
-              </button>
-              <button className="w-full p-4 border-t border-[#2a2a2a] flex items-center justify-between hover:bg-[#1f1f1f] transition-colors">
-                <div className="flex items-center gap-3">
-                  <CreditCard size={20} className="text-[#a0a0a0]" />
-                  <span className="font-medium text-sm md:text-base">Billing & Subscription</span>
-                </div>
-                <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-[#a0a0a0]">Pro Plan</span>
-              </button>
+              </div>
             </div>
           </section>
 
-          <div className="p-6 md:p-8 border border-white/10 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-dashed">
-            <h3 className="text-base md:text-lg font-bold mb-2">Need help?</h3>
-            <p className="text-[#a0a0a0] text-xs md:text-sm mb-6">Our support team is available 24/7 to help you with your resume building journey.</p>
-            <button className="w-full sm:w-auto px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-[#e0e0e0] transition-colors text-sm">Contact Support</button>
+          {/* Account Preferences */}
+          <section>
+            <h2 className={sectionTitle}>System Preferences</h2>
+            <div className={`rounded-3xl overflow-hidden ${cardBg}`}>
+              {[
+                { icon: <Bell size={20} />, label: 'Smart Notifications', desc: 'Alerts for job matches and sculpt updates', toggle: true },
+                { icon: <Shield size={20} />, label: 'Privacy & Security', desc: 'Control your profile visibility and data', link: true },
+                { icon: <CreditCard size={20} />, label: 'Payment Methods', desc: 'Securely manage your connected cards', link: true },
+                { icon: <ExternalLink size={20} />, label: 'API Access', desc: 'Connect Zysculpt to your ATS tools', link: true }
+              ].map((item, i) => (
+                <button 
+                  key={i} 
+                  className={`w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-all text-left group ${
+                    i !== 0 ? 'border-t' : ''
+                  } ${theme === 'dark' ? 'hover:bg-white/5 border-white/5' : 'border-slate-100 hover:bg-slate-50'}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`p-2.5 rounded-xl ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <div className={`font-bold text-sm md:text-base ${textPrimary}`}>{item.label}</div>
+                      <div className={`text-xs ${textSecondary}`}>{item.desc}</div>
+                    </div>
+                  </div>
+                  {item.toggle ? (
+                    <div className={`w-12 h-6 rounded-full p-1 transition-all ${theme === 'dark' ? 'bg-indigo-600' : 'bg-indigo-500'}`}>
+                      <div className="w-4 h-4 bg-white rounded-full ml-auto shadow-sm"></div>
+                    </div>
+                  ) : (
+                    <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-500 transition-all group-hover:translate-x-1" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <div className={`p-8 rounded-3xl text-center border transition-all ${
+            theme === 'dark' ? 'bg-red-500/5 border-red-500/10' : 'bg-red-50 border-red-100'
+          }`}>
+            <h3 className={`font-bold mb-2 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Danger Zone</h3>
+            <p className="text-xs text-slate-500 mb-6 max-w-xs mx-auto">Once deleted, your resume sculpts and profile data cannot be recovered.</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+               <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-500/10">
+                 <LogOut size={18} /> Logout Session
+               </button>
+               <button className="text-xs font-bold text-slate-400 hover:text-red-600 transition-colors">Deactivate Account</button>
+            </div>
           </div>
         </div>
       </div>
