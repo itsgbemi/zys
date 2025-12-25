@@ -1,8 +1,10 @@
 
 export enum AppView {
+  OVERVIEW = 'OVERVIEW',
   RESUME_BUILDER = 'RESUME_BUILDER',
   COVER_LETTER = 'COVER_LETTER',
   RESIGNATION_LETTER = 'RESIGNATION_LETTER',
+  CAREER_COPILOT = 'CAREER_COPILOT',
   DOCUMENTS = 'DOCUMENTS',
   FIND_JOB = 'FIND_JOB',
   SETTINGS = 'SETTINGS',
@@ -17,6 +19,19 @@ export interface Message {
   timestamp: number;
 }
 
+export interface DailyLog {
+  date: string; // YYYY-MM-DD
+  win: string;
+  completed: boolean;
+}
+
+export interface CareerGoal {
+  mainGoal: string;
+  dailyTasks: string[];
+  logs: DailyLog[];
+  startDate: number;
+}
+
 export interface ChatSession {
   id: string;
   title: string;
@@ -25,29 +40,6 @@ export interface ChatSession {
   jobDescription?: string;
   resumeText?: string;
   finalResume?: string | null;
-  type: 'resume' | 'cover-letter' | 'resignation-letter';
-}
-
-export interface ResumeData {
-  contact: {
-    name: string;
-    email: string;
-    phone: string;
-    location: string;
-    linkedin?: string;
-    website?: string;
-  };
-  summary: string;
-  experience: {
-    company: string;
-    role: string;
-    duration: string;
-    description: string[];
-  }[];
-  education: {
-    institution: string;
-    degree: string;
-    year: string;
-  }[];
-  skills: string[];
+  type: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot';
+  careerGoalData?: CareerGoal;
 }

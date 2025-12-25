@@ -8,19 +8,23 @@ export class GeminiService {
   private ai: GoogleGenAI;
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    // Initializing Gemini client with API key from environment variables as per guidelines
+    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   }
 
   async generateChatResponse(
     history: Message[], 
     currentMessage: string, 
-    context?: { jobDescription?: string, resumeText?: string, type?: 'resume' | 'cover-letter' | 'resignation-letter' }
+    context?: { jobDescription?: string, resumeText?: string, type?: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot' }
   ) {
     const type = context?.type || 'resume';
     let roleDescription = 'professional career assistant';
+    
+    // Fix: Defined roles for all supported document and task types
     if (type === 'resume') roleDescription = 'ATS resume architect';
     if (type === 'cover-letter') roleDescription = 'persuasive cover letter writer';
     if (type === 'resignation-letter') roleDescription = 'professional resignation consultant';
+    if (type === 'career-copilot') roleDescription = 'strategic career coach and growth mentor';
     
     const systemInstruction = `You are Zysculpt AI, a world-class ${roleDescription}.
     Your goal is to help the user build a high-impact, professional ${type.replace('-', ' ')}.
@@ -32,8 +36,10 @@ export class GeminiService {
     4. Maintain a professional, expert, and encouraging tone.
     5. When ready, offer to "generate" the final document.
     ${type === 'resignation-letter' ? 'Focus on professionalism, gratitude (if applicable), and clear exit details like notice period.' : ''}
+    ${type === 'career-copilot' ? 'Focus on career progression, skill mapping, and breaking down yearly goals into actionable daily targets.' : ''}
     `;
 
+    // Initialize chat session. We map the history to conform to Gemini API expectations if needed.
     const chat = this.ai.chats.create({
       model: MODEL_NAME,
       config: {
@@ -67,11 +73,13 @@ export class GeminiService {
       - Output ONLY the resume in Markdown.
     `;
 
+    // Use ai.models.generateContent with model and content in one call
     const response = await this.ai.models.generateContent({
       model: MODEL_NAME,
       contents: prompt,
     });
 
+    // Access .text property directly as it is not a method
     return response.text || "Failed to generate resume.";
   }
 

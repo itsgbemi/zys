@@ -15,7 +15,9 @@ import {
   Sun,
   Moon,
   Mail,
-  DoorOpen
+  DoorOpen,
+  LayoutDashboard,
+  Compass
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
@@ -31,7 +33,7 @@ interface SidebarProps {
   sessions: ChatSession[];
   activeSessionId: string;
   setActiveSessionId: (id: string) => void;
-  onNewSession: (type?: 'resume' | 'cover-letter' | 'resignation-letter') => void;
+  onNewSession: (type?: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot') => void;
 }
 
 const LogoIcon = ({ theme }: { theme: Theme }) => (
@@ -53,15 +55,89 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentView, setView, isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen, 
   theme, toggleTheme, sessions, activeSessionId, setActiveSessionId, onNewSession 
 }) => {
-  const [isResumeSubmenuOpen, setIsResumeSubmenuOpen] = useState(true);
-  const [isLetterSubmenuOpen, setIsLetterSubmenuOpen] = useState(false);
-  const [isResignSubmenuOpen, setIsResignSubmenuOpen] = useState(false);
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
+    resume: true,
+    letter: false,
+    resignation: false,
+    copilot: true
+  });
 
-  const mainMenuItems = [
-    { id: AppView.DOCUMENTS, label: 'Documents', icon: <FolderOpen size={20} /> },
-    { id: AppView.FIND_JOB, label: 'Job Search', icon: <Search size={20} /> },
-    { id: AppView.SETTINGS, label: 'Account', icon: <Settings size={20} /> },
-  ];
+  const toggleSubmenu = (key: string) => {
+    setOpenSubmenus(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const renderNavButton = (id: AppView, label: string, icon: React.ReactNode, typeKey?: string, onPlusClick?: () => void) => {
+    const isActive = currentView === id;
+    const hasSubmenu = typeKey !== undefined;
+    const isOpen = openSubmenus[typeKey || ''];
+    
+    return (
+      <div className="space-y-1">
+        <div 
+          className={`flex items-center group rounded-xl transition-all ${
+            isActive && !hasSubmenu
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
+              : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
+          } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
+        >
+          <button
+            onClick={() => {
+              if (hasSubmenu) {
+                if (isCollapsed && !isMobileOpen) setIsCollapsed(false);
+                toggleSubmenu(typeKey!);
+              }
+              setView(id);
+              if (isMobileOpen && !hasSubmenu) setIsMobileOpen(false);
+            }}
+            className="flex-1 flex items-center gap-4 p-3 overflow-hidden"
+          >
+            <span className="flex-shrink-0">{icon}</span>
+            {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm truncate">{label}</span>}
+            {hasSubmenu && (!isCollapsed || isMobileOpen) && (
+              <ChevronDown size={14} className={`ml-auto transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+            )}
+          </button>
+          
+          {hasSubmenu && onPlusClick && (!isCollapsed || isMobileOpen) && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onPlusClick(); }}
+              className="p-3 hover:text-indigo-500 transition-colors"
+              title={`New ${label}`}
+            >
+              <Plus size={16} />
+            </button>
+          )}
+        </div>
+
+        {hasSubmenu && isOpen && (!isCollapsed || isMobileOpen) && (
+          <div className="ml-9 mt-1 space-y-1 border-l border-slate-200 dark:border-white/10 pl-3">
+            {sessions
+              .filter(s => {
+                if (typeKey === 'resume') return s.type === 'resume';
+                if (typeKey === 'letter') return s.type === 'cover-letter';
+                if (typeKey === 'resignation') return s.type === 'resignation-letter';
+                if (typeKey === 'copilot') return s.type === 'career-copilot';
+                return false;
+              })
+              .slice(0, 3)
+              .map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
+                  className={`w-full text-left p-2 rounded-md text-[11px] truncate transition-all ${
+                    activeSessionId === s.id && currentView === id
+                      ? theme === 'dark' ? 'text-white bg-white/5' : 'text-[#0F172A] bg-slate-100 font-semibold'
+                      : theme === 'dark' ? 'text-[#555] hover:text-[#aaa]' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  {s.title || 'Untitled Session'}
+                </button>
+              ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const sidebarClasses = `
     fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print
@@ -78,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <aside className={sidebarClasses}>
         <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView(AppView.RESUME_BUILDER)}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
             <LogoIcon theme={theme} />
             {(!isCollapsed || isMobileOpen) && (
               <span className={`text-2xl font-extrabold tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`} style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -91,141 +167,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2">
-          {/* Resume Builder Section */}
-          <div className="space-y-1">
-            <button
-              onClick={() => {
-                if (isCollapsed && !isMobileOpen) setIsCollapsed(false);
-                else { setView(AppView.RESUME_BUILDER); setIsResumeSubmenuOpen(!isResumeSubmenuOpen); }
-              }}
-              className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
-                currentView === AppView.RESUME_BUILDER 
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                  : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
-              } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
-            >
-              <FileText size={20} />
-              {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm">Resume Builder</span>}
-              {(!isCollapsed || isMobileOpen) && (
-                <ChevronDown size={14} className={`ml-auto transition-transform ${isResumeSubmenuOpen ? 'rotate-180' : ''}`} />
-              )}
-            </button>
-
-            {isResumeSubmenuOpen && (!isCollapsed || isMobileOpen) && (
-              <div className="ml-9 mt-1 space-y-1">
-                <button 
-                  onClick={() => onNewSession('resume')}
-                  className={`w-full flex items-center gap-3 p-2 text-xs font-medium rounded-md transition-all ${
-                    theme === 'dark' ? 'text-indigo-400 hover:bg-white/5' : 'text-indigo-600 hover:bg-indigo-50'
-                  }`}
-                >
-                  <Plus size={14} /> New Resume
-                </button>
-                {sessions.filter(s => s.type === 'resume').slice(0, 2).map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => { setActiveSessionId(s.id); setView(AppView.RESUME_BUILDER); if(isMobileOpen) setIsMobileOpen(false); }}
-                    className={`w-full text-left p-2 rounded-md text-[11px] truncate transition-all ${
-                      activeSessionId === s.id && currentView === AppView.RESUME_BUILDER
-                        ? theme === 'dark' ? 'text-white bg-white/5' : 'text-[#0F172A] bg-slate-100 font-semibold'
-                        : theme === 'dark' ? 'text-[#555] hover:text-[#aaa]' : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                  >
-                    {s.title || 'Untitled Resume'}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Cover Letter Section */}
-          <div className="space-y-1">
-            <button
-              onClick={() => {
-                if (isCollapsed && !isMobileOpen) setIsCollapsed(false);
-                else { setView(AppView.COVER_LETTER); setIsLetterSubmenuOpen(!isLetterSubmenuOpen); }
-              }}
-              className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
-                currentView === AppView.COVER_LETTER 
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                  : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
-              } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
-            >
-              <Mail size={20} />
-              {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm">Cover Letter</span>}
-              {(!isCollapsed || isMobileOpen) && (
-                <ChevronDown size={14} className={`ml-auto transition-transform ${isLetterSubmenuOpen ? 'rotate-180' : ''}`} />
-              )}
-            </button>
-
-            {isLetterSubmenuOpen && (!isCollapsed || isMobileOpen) && (
-              <div className="ml-9 mt-1 space-y-1">
-                <button 
-                  onClick={() => onNewSession('cover-letter')}
-                  className={`w-full flex items-center gap-3 p-2 text-xs font-medium rounded-md transition-all ${
-                    theme === 'dark' ? 'text-indigo-400 hover:bg-white/5' : 'text-indigo-600 hover:bg-indigo-50'
-                  }`}
-                >
-                  <Plus size={14} /> New Letter
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Resignation Section */}
-          <div className="space-y-1">
-            <button
-              onClick={() => {
-                if (isCollapsed && !isMobileOpen) setIsCollapsed(false);
-                else { setView(AppView.RESIGNATION_LETTER); setIsResignSubmenuOpen(!isResignSubmenuOpen); }
-              }}
-              className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
-                currentView === AppView.RESIGNATION_LETTER 
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                  : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
-              } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
-            >
-              <DoorOpen size={20} />
-              {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm">Resignation Letter</span>}
-              {(!isCollapsed || isMobileOpen) && (
-                <ChevronDown size={14} className={`ml-auto transition-transform ${isResignSubmenuOpen ? 'rotate-180' : ''}`} />
-              )}
-            </button>
-
-            {isResignSubmenuOpen && (!isCollapsed || isMobileOpen) && (
-              <div className="ml-9 mt-1 space-y-1">
-                <button 
-                  onClick={() => onNewSession('resignation-letter')}
-                  className={`w-full flex items-center gap-3 p-2 text-xs font-medium rounded-md transition-all ${
-                    theme === 'dark' ? 'text-indigo-400 hover:bg-white/5' : 'text-indigo-600 hover:bg-indigo-50'
-                  }`}
-                >
-                  <Plus size={14} /> New Resignation
-                </button>
-              </div>
-            )}
-          </div>
-
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2 custom-scrollbar">
+          {renderNavButton(AppView.OVERVIEW, 'Overview', <LayoutDashboard size={20} />)}
+          {renderNavButton(AppView.CAREER_COPILOT, 'Career Copilot', <Compass size={20} />, 'copilot', () => onNewSession('career-copilot'))}
+          {renderNavButton(AppView.RESUME_BUILDER, 'Resume Builder', <FileText size={20} />, 'resume', () => onNewSession('resume'))}
+          {renderNavButton(AppView.COVER_LETTER, 'Cover Letter', <Mail size={20} />, 'letter', () => onNewSession('cover-letter'))}
+          {renderNavButton(AppView.RESIGNATION_LETTER, 'Resignation Letter', <DoorOpen size={20} />, 'resignation', () => onNewSession('resignation-letter'))}
+          
           <div className={`h-px my-3 mx-2 ${theme === 'dark' ? 'bg-[#2a2a2a]' : 'bg-slate-100'}`} />
 
-          {mainMenuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { setView(item.id); if (isMobileOpen) setIsMobileOpen(false); }}
-              className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
-                currentView === item.id 
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                  : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
-              } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
-            >
-              <span className="flex-shrink-0">{item.icon}</span>
-              {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm">{item.label}</span>}
-            </button>
-          ))}
+          {renderNavButton(AppView.DOCUMENTS, 'Documents', <FolderOpen size={20} />)}
+          {renderNavButton(AppView.FIND_JOB, 'Job Search', <Search size={20} />)}
+          {renderNavButton(AppView.SETTINGS, 'Account', <Settings size={20} />)}
         </nav>
 
-        <div className="p-4 space-y-2">
+        <div className="p-4 space-y-2 border-t border-slate-200 dark:border-white/5">
           <button
             onClick={toggleTheme}
             className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${

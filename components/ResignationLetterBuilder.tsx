@@ -26,12 +26,13 @@ interface ResignationLetterBuilderProps {
 
 const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme }> = ({ text, dark = false, theme = 'dark' }) => {
   const lines = text.split('\n');
+  
   const formatText = (content: string) => {
-    const parts = content.split(/(\*\*.*?\*\*|\*.*?\*|\[.*?\]\(.*?\))/g);
+    const parts = content.split(/(\*\*.*?\*\*)/g);
     return parts.map((part, i) => {
-      if (!part) return null;
-      if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
-      if (part.startsWith('*') && part.endsWith('*')) return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+      }
       return part;
     });
   };
@@ -41,7 +42,19 @@ const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme }> = 
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (trimmed === '') return <div key={i} className="h-2" />;
-        return <p key={i} className="leading-relaxed">{formatText(line)}</p>;
+        
+        if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-bold mt-4 mb-2 text-indigo-500">{formatText(trimmed.slice(4))}</h3>;
+        if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-6 mb-3 border-b border-indigo-500/20 pb-1">{formatText(trimmed.slice(3))}</h2>;
+        if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-8 mb-4 border-b-2 border-indigo-500 pb-2 uppercase tracking-tight">{formatText(trimmed.slice(2))}</h1>;
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          return (
+            <div key={i} className="flex gap-2 ml-4">
+              <span className="opacity-50">•</span>
+              <span className="flex-1">{formatText(trimmed.slice(2))}</span>
+            </div>
+          );
+        }
+        return <p key={i} className="leading-relaxed mb-2">{formatText(line)}</p>;
       })}
     </div>
   );
@@ -200,11 +213,11 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm border ${
               m.role === 'user' 
-                ? theme === 'dark' ? 'bg-[#121212] text-white border-[#333]' : 'bg-indigo-600 text-white border-indigo-500 shadow-indigo-500/20' 
+                ? `bg-indigo-600 text-white border-indigo-500 shadow-indigo-500/20` 
                 : theme === 'dark' ? 'bg-[#2a2a2a] text-white border-[#444]' : 'bg-white text-[#0F172A] border-[#e2e8f0]'
             }`}>
               <div className="text-sm leading-relaxed"><MarkdownLite text={m.content} theme={theme} /></div>
-              <div className={`text-[9px] mt-2 opacity-30 text-right ${m.role === 'user' && theme === 'light' ? 'text-white' : ''}`}>
+              <div className={`text-[9px] mt-2 opacity-30 text-right ${m.role === 'user' ? 'text-white' : ''}`}>
                 {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
