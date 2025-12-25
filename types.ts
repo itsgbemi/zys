@@ -32,6 +32,12 @@ export interface CareerGoal {
   startDate: number;
 }
 
+export interface StylePrefs {
+  font: string;
+  headingColor: string;
+  listStyle: 'disc' | 'circle' | 'square';
+}
+
 export interface ChatSession {
   id: string;
   title: string;
@@ -42,4 +48,5 @@ export interface ChatSession {
   finalResume?: string | null;
   type: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot';
   careerGoalData?: CareerGoal;
+  stylePrefs?: StylePrefs;
 }
