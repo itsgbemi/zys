@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileText, 
   Search, 
@@ -17,7 +17,11 @@ import {
   Mail,
   DoorOpen,
   LayoutDashboard,
-  Compass
+  Compass,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  Check
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
@@ -34,6 +38,8 @@ interface SidebarProps {
   activeSessionId: string;
   setActiveSessionId: (id: string) => void;
   onNewSession: (type?: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot') => void;
+  onDeleteSession: (id: string) => void;
+  onRenameSession: (id: string, title: string) => void;
 }
 
 const LogoIcon = ({ theme }: { theme: Theme }) => (
@@ -53,7 +59,7 @@ const LogoIcon = ({ theme }: { theme: Theme }) => (
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   currentView, setView, isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen, 
-  theme, toggleTheme, sessions, activeSessionId, setActiveSessionId, onNewSession 
+  theme, toggleTheme, sessions, activeSessionId, setActiveSessionId, onNewSession, onDeleteSession, onRenameSession
 }) => {
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
     resume: true,
@@ -62,8 +68,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     copilot: true
   });
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleStartRename = (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    setEditingId(id);
+    setEditValue(title);
+  };
+
+  const handleFinishRename = (id: string) => {
+    if (editValue.trim()) {
+      onRenameSession(id, editValue.trim());
+    }
+    setEditingId(null);
   };
 
   const renderNavButton = (id: AppView, label: string, icon: React.ReactNode, typeKey?: string, onPlusClick?: () => void) => {
@@ -119,19 +141,50 @@ const Sidebar: React.FC<SidebarProps> = ({
                 if (typeKey === 'copilot') return s.type === 'career-copilot';
                 return false;
               })
-              .slice(0, 3)
+              .slice(0, 10) // Show more sessions
               .map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
-                  className={`w-full text-left p-2 rounded-md text-[11px] truncate transition-all ${
-                    activeSessionId === s.id && currentView === id
-                      ? theme === 'dark' ? 'text-white bg-white/5' : 'text-[#0F172A] bg-slate-100 font-semibold'
-                      : theme === 'dark' ? 'text-[#555] hover:text-[#aaa]' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  {s.title || 'Untitled Session'}
-                </button>
+                <div key={s.id} className="relative group/item flex items-center">
+                  {editingId === s.id ? (
+                    <div className="flex-1 flex items-center gap-1 p-1">
+                      <input 
+                        autoFocus
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={() => handleFinishRename(s.id)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleFinishRename(s.id)}
+                        className={`w-full text-[11px] p-1 rounded border outline-none ${theme === 'dark' ? 'bg-[#191919] border-white/10 text-white' : 'bg-white border-slate-200 text-[#0F172A]'}`}
+                      />
+                      <button onClick={() => handleFinishRename(s.id)} className="text-emerald-500 hover:text-emerald-400 p-1"><Check size={14}/></button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
+                        className={`flex-1 text-left p-2 pr-10 rounded-md text-[11px] truncate transition-all ${
+                          activeSessionId === s.id && currentView === id
+                            ? theme === 'dark' ? 'text-white bg-white/5' : 'text-[#0F172A] bg-slate-100 font-semibold'
+                            : theme === 'dark' ? 'text-[#555] hover:text-[#aaa]' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        {s.title}
+                      </button>
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden group-item:flex items-center gap-0.5 px-1 bg-inherit">
+                        <button 
+                          onClick={(e) => handleStartRename(e, s.id, s.title)}
+                          className="p-1 text-slate-400 hover:text-indigo-500 transition-colors"
+                        >
+                          <Edit2 size={12}/>
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onDeleteSession(s.id); }}
+                          className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={12}/>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               ))}
           </div>
         )}

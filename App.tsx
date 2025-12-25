@@ -23,7 +23,7 @@ const App: React.FC = () => {
     return [
       {
         id: 'default-copilot',
-        title: 'Career Copilot',
+        title: 'Career Growth Strategy',
         lastUpdated: Date.now(),
         type: 'career-copilot',
         messages: [{
@@ -55,28 +55,47 @@ const App: React.FC = () => {
     setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, ...updates, lastUpdated: Date.now() } : s));
   };
 
+  const deleteSession = (sessionId: string) => {
+    const filtered = sessions.filter(s => s.id !== sessionId);
+    setSessions(filtered);
+    if (activeSessionId === sessionId && filtered.length > 0) {
+      setActiveSessionId(filtered[0].id);
+    } else if (filtered.length === 0) {
+      createNewSession('career-copilot');
+    }
+  };
+
+  const renameSession = (sessionId: string, newTitle: string) => {
+    updateSession(sessionId, { title: newTitle });
+  };
+
   const createNewSession = (type: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot' = 'resume') => {
     const newId = Date.now().toString();
     let welcomeMsg = '';
     let targetView = AppView.RESUME_BUILDER;
+    let defaultTitle = '';
 
     if (type === 'resume') {
       welcomeMsg = "I'm ready to build your next resume. Paste a job description or upload your current CV to begin.";
       targetView = AppView.RESUME_BUILDER;
+      defaultTitle = 'New Resume Build';
     } else if (type === 'cover-letter') {
       welcomeMsg = "Let's write a compelling cover letter. Tell me about the role you're applying for.";
       targetView = AppView.COVER_LETTER;
+      defaultTitle = 'New Cover Letter';
     } else if (type === 'resignation-letter') {
       welcomeMsg = "I'll help you write a professional resignation letter. Tell me about your current role and notice period.";
       targetView = AppView.RESIGNATION_LETTER;
+      defaultTitle = 'New Resignation Letter';
     } else if (type === 'career-copilot') {
       welcomeMsg = "Ready for the next 365 days? What's the main goal we're crushing this year?";
       targetView = AppView.CAREER_COPILOT;
+      defaultTitle = 'Career Growth Strategy';
     }
 
     const newSession: ChatSession = {
       id: newId,
-      title: type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      title: defaultTitle,
       lastUpdated: Date.now(),
       type: type,
       messages: [{ id: '1', role: 'assistant', content: welcomeMsg, timestamp: Date.now() }],
@@ -87,15 +106,15 @@ const App: React.FC = () => {
     setCurrentView(targetView);
   };
 
-  const handleSculptFromJob = (jd: string, type: 'resume' | 'cover-letter') => {
+  const handleSculptFromJob = (job: { title: string, company: string, description: string }, type: 'resume' | 'cover-letter') => {
     const newId = Date.now().toString();
     const newSession: ChatSession = {
       id: newId,
-      title: 'Targeted Document',
+      title: `${type === 'resume' ? 'Resume' : 'Letter'}: ${job.title} @ ${job.company}`,
       lastUpdated: Date.now(),
       type: type,
-      jobDescription: jd,
-      messages: [{ id: '1', role: 'assistant', content: `Job details imported. ${type === 'resume' ? "Let's align your resume." : "Let's draft a cover letter."}`, timestamp: Date.now() }],
+      jobDescription: job.description,
+      messages: [{ id: '1', role: 'assistant', content: `Job details imported for **${job.title}** at **${job.company}**. ${type === 'resume' ? "Let's align your resume." : "Let's draft a cover letter."}`, timestamp: Date.now() }],
       finalResume: null
     };
     setSessions([newSession, ...sessions]);
@@ -141,7 +160,7 @@ const App: React.FC = () => {
           />
         );
       case AppView.FIND_JOB:
-        return <JobSearch onToggleMobile={toggleMobileSidebar} theme={theme} onSculptResume={(jd) => handleSculptFromJob(jd, 'resume')} onSculptLetter={(jd) => handleSculptFromJob(jd, 'cover-letter')} />;
+        return <JobSearch onToggleMobile={toggleMobileSidebar} theme={theme} onSculptResume={(job) => handleSculptFromJob(job, 'resume')} onSculptLetter={(job) => handleSculptFromJob(job, 'cover-letter')} />;
       case AppView.SETTINGS:
         return <Settings onToggleMobile={toggleMobileSidebar} theme={theme} />;
       default:
@@ -164,6 +183,8 @@ const App: React.FC = () => {
         activeSessionId={activeSessionId}
         setActiveSessionId={setActiveSessionId}
         onNewSession={createNewSession}
+        onDeleteSession={deleteSession}
+        onRenameSession={renameSession}
       />
       <main className="flex-1 overflow-hidden relative w-full">
         {renderView()}

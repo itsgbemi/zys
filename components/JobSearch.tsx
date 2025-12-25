@@ -6,8 +6,8 @@ import { Theme } from '../types';
 interface JobSearchProps {
   onToggleMobile?: () => void;
   theme: Theme;
-  onSculptResume: (jd: string) => void;
-  onSculptLetter: (jd: string) => void;
+  onSculptResume: (job: { title: string, company: string, description: string }) => void;
+  onSculptLetter: (job: { title: string, company: string, description: string }) => void;
 }
 
 interface Job {
@@ -25,8 +25,9 @@ interface Job {
 
 const CustomMenuIcon = ({ className }: { className?: string }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M4 8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M4 16H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
 
@@ -101,13 +102,13 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
           </div>
           <div className="flex gap-2">
             <button 
-              onClick={() => onSculptLetter(selectedJob.description)}
+              onClick={() => onSculptLetter({ title: selectedJob.title, company: selectedJob.company, description: selectedJob.description })}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-slate-100 text-slate-800'}`}
             >
               <Mail size={16} /> Cover Letter
             </button>
             <button 
-              onClick={() => onSculptResume(selectedJob.description)}
+              onClick={() => onSculptResume({ title: selectedJob.title, company: selectedJob.company, description: selectedJob.description })}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20"
             >
               <Sparkles size={16} /> Build Resume
