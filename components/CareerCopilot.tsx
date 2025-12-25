@@ -133,8 +133,8 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
             </svg>
           </button>
           <div className="flex flex-col">
-            <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Growth Mentor</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Mapping your 365-day trajectory...</p>
+            <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Career Copilot</h2>
+            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Strategic 365-day trajectory and accountability.</p>
           </div>
         </div>
         <button onClick={handleSyncToCalendar} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 text-xs md:text-sm">

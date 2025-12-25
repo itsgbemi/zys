@@ -245,8 +245,8 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             </svg>
           </button>
           <div className="flex flex-col">
-            <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resume Architect</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>AI is tailoring your professional identity...</p>
+            <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resume Builder</h2>
+            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Sculpting a high-impact, ATS-optimized resume.</p>
           </div>
         </div>
         {activeSession.jobDescription && (

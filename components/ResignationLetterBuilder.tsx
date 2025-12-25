@@ -131,15 +131,45 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
   };
 
   const exportPDF = () => {
+    setIsExporting(true);
     const element = document.querySelector('.printable-area');
     const opt = { 
       margin: 20, 
-      filename: `Resignation_${activeSession.title}.pdf`, 
+      filename: `ResignationLetter_${activeSession.title}.pdf`, 
       html2canvas: { scale: 2 }, 
       jsPDF: { unit: 'mm', format: 'a4' } 
     };
     // @ts-ignore
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(element).save().then(() => setIsExporting(false));
+  };
+
+  const exportDOCX = async () => {
+    if (!activeSession.finalResume) return;
+    setIsExporting(true);
+    try {
+      const paragraphs = activeSession.finalResume.split('\n').map(line => {
+        return new Paragraph({
+          children: [new TextRun(line)],
+          spacing: { after: 120 }
+        });
+      });
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: paragraphs,
+        }],
+      });
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ResignationLetter_${activeSession.title}.docx`;
+      link.click();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (showPreview && activeSession.finalResume) {
@@ -156,7 +186,8 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowPreview(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Undo size={14} /> Back</button>
-            <button onClick={exportPDF} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
+            <button onClick={exportDOCX} disabled={isExporting} className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><WordIcon size={14} /> Word</button>
+            <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
           </div>
         </header>
         <div className={`flex-1 overflow-y-auto p-4 md:p-8 pb-32 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
@@ -208,8 +239,8 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
             </svg>
           </button>
           <div className="flex flex-col">
-            <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Exit Consultant</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>AI is planning your professional departure...</p>
+            <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resignation Letter</h2>
+            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Ensuring a professional and graceful career transition.</p>
           </div>
         </div>
         {activeSession.messages.length > 1 && (
