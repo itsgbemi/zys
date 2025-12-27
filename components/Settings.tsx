@@ -1,140 +1,168 @@
 
-import React from 'react';
-import { User, Bell, Shield, CreditCard, ExternalLink, Menu, LogOut, ChevronRight, CheckCircle } from 'lucide-react';
-import { Theme } from '../types';
+import React, { useRef } from 'react';
+import { User, Bell, Shield, CreditCard, ExternalLink, Menu, LogOut, ChevronRight, CheckCircle, Save, FileText, Mail, Phone, MapPin, Linkedin } from 'lucide-react';
+import { Theme, UserProfile } from '../types';
 
 interface SettingsProps {
   onToggleMobile?: () => void;
   theme: Theme;
+  userProfile: UserProfile;
+  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
 }
 
-const CustomMenuIcon = ({ className }: { className?: string }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-
-const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme }) => {
+const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile, setUserProfile }) => {
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
   const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
   const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-slate-200 shadow-sm';
-  const sectionTitle = `text-[10px] md:text-xs font-bold uppercase tracking-widest mb-4 ${theme === 'dark' ? 'text-[#555]' : 'text-slate-400'}`;
+  const sectionTitle = `text-[10px] md:text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 ${theme === 'dark' ? 'text-[#555]' : 'text-slate-400'}`;
+  const inputBg = theme === 'dark' ? 'bg-[#191919] border-white/5' : 'bg-slate-50 border-slate-200';
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpdate = (field: keyof UserProfile, value: string) => {
+    setUserProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        handleUpdate('baseResumeText', ev.target?.result as string);
+      };
+      reader.readAsText(file);
+    }
+  };
 
   return (
     <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#191919]' : 'bg-[#F8FAFC]'}`}>
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
           <button onClick={onToggleMobile} className="md:hidden">
-            <CustomMenuIcon className={textPrimary} />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={textPrimary}>
+              <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
           </button>
           <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Settings</h2>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-4xl mx-auto w-full">
-        <div className="space-y-10 pb-12">
-          {/* User Profile Section */}
+        <div className="space-y-12 pb-24">
+          {/* Profile Section */}
           <section>
-            <h2 className={sectionTitle}>Personal Information</h2>
-            <div className={`p-6 md:p-8 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 ${cardBg}`}>
-              <div className="flex items-center gap-6">
-                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl flex items-center justify-center border-2 transition-all ${
-                  theme === 'dark' ? 'bg-indigo-500/10 border-indigo-500/20 text-white' : 'bg-indigo-50 border-indigo-100 text-indigo-600'
-                }`}>
-                  <User size={40} strokeWidth={1.5} />
+            <h2 className={sectionTitle}><User size={14} /> Professional Identity</h2>
+            <div className={`p-8 rounded-[32px] border ${cardBg}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold opacity-50 ml-1">Full Name</label>
+                  <div className="relative">
+                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+                    <input 
+                      value={userProfile.fullName}
+                      onChange={(e) => handleUpdate('fullName', e.target.value)}
+                      className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none transition-all focus:border-indigo-500 ${inputBg} ${textPrimary}`}
+                      placeholder="e.g. Alex Johnson"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <h3 className={`text-xl md:text-2xl font-bold ${textPrimary}`}>Demo User</h3>
-                  <p className={`${textSecondary} mb-2`}>Senior Professional</p>
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    theme === 'dark' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'
-                  }`}>
-                    <CheckCircle size={12} /> Account Active
+                <div className="space-y-2">
+                  <label className="text-xs font-bold opacity-50 ml-1">Professional Title</label>
+                  <input 
+                    value={userProfile.title}
+                    onChange={(e) => handleUpdate('title', e.target.value)}
+                    className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none transition-all focus:border-indigo-500 ${inputBg} ${textPrimary}`}
+                    placeholder="e.g. Senior Frontend Engineer"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold opacity-50 ml-1">Email Address</label>
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+                    <input 
+                      value={userProfile.email}
+                      onChange={(e) => handleUpdate('email', e.target.value)}
+                      className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none transition-all focus:border-indigo-500 ${inputBg} ${textPrimary}`}
+                      placeholder="alex@example.com"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold opacity-50 ml-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+                    <input 
+                      value={userProfile.phone}
+                      onChange={(e) => handleUpdate('phone', e.target.value)}
+                      className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none transition-all focus:border-indigo-500 ${inputBg} ${textPrimary}`}
+                      placeholder="+1 (555) 000-0000"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold opacity-50 ml-1">Location</label>
+                  <div className="relative">
+                    <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+                    <input 
+                      value={userProfile.location}
+                      onChange={(e) => handleUpdate('location', e.target.value)}
+                      className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none transition-all focus:border-indigo-500 ${inputBg} ${textPrimary}`}
+                      placeholder="City, Country"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold opacity-50 ml-1">LinkedIn URL</label>
+                  <div className="relative">
+                    <Linkedin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+                    <input 
+                      value={userProfile.linkedIn}
+                      onChange={(e) => handleUpdate('linkedIn', e.target.value)}
+                      className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none transition-all focus:border-indigo-500 ${inputBg} ${textPrimary}`}
+                      placeholder="linkedin.com/in/alexj"
+                    />
                   </div>
                 </div>
               </div>
-              <button className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm ${
-                theme === 'dark' ? 'bg-white text-black hover:bg-slate-200' : 'bg-indigo-600 text-white hover:bg-indigo-700'
-              }`}>
-                Edit Profile
-              </button>
             </div>
           </section>
 
-          {/* Subscription Section */}
+          {/* Base Resume Section */}
           <section>
-            <h2 className={sectionTitle}>Billing & Plan</h2>
-            <div className={`p-8 rounded-3xl border-2 border-dashed relative overflow-hidden transition-all ${
-              theme === 'dark' ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-white border-indigo-100'
-            }`}>
-              <div className="absolute top-0 right-0 p-4">
-                 <div className="px-3 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-lg rotate-12">PRO PLAN</div>
-              </div>
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-                <div>
-                  <h3 className={`text-xl font-bold mb-2 ${textPrimary}`}>Zysculpt Pro</h3>
-                  <p className={`text-sm max-w-md ${textSecondary}`}>Unlimited access to resume generation, cover letters, and job matching tools.</p>
-                </div>
-                <div className="flex flex-col items-center gap-3">
-                  <span className={`text-3xl font-extrabold ${textPrimary}`}>$19<span className="text-sm font-normal opacity-50">/mo</span></span>
-                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20">
-                    Manage Billing
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Account Preferences */}
-          <section>
-            <h2 className={sectionTitle}>Account Preferences</h2>
-            <div className={`rounded-3xl overflow-hidden ${cardBg}`}>
-              {[
-                { icon: <Bell size={20} />, label: 'Email Notifications', desc: 'Alerts for job matches and resume updates', toggle: true },
-                { icon: <Shield size={20} />, label: 'Privacy Settings', desc: 'Control your profile visibility and data sharing', link: true },
-                { icon: <CreditCard size={20} />, label: 'Payment Methods', desc: 'Manage your saved credit cards', link: true },
-                { icon: <ExternalLink size={20} />, label: 'Connected Apps', desc: 'Sync Zysculpt with LinkedIn or your ATS', link: true }
-              ].map((item, i) => (
+            <h2 className={sectionTitle}><FileText size={14} /> Career DNA (Base Resume)</h2>
+            <div className={`p-8 rounded-[32px] border ${cardBg}`}>
+              <p className={`text-sm mb-6 ${textSecondary}`}>
+                Your base resume acts as the primary knowledge base for the AI. Uploading it here ensures Zysculpt knows your full history without you having to explain it in every chat.
+              </p>
+              
+              <div className="flex flex-col gap-4">
+                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} accept=".txt,.pdf,.docx" />
                 <button 
-                  key={i} 
-                  className={`w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-all text-left group ${
-                    i !== 0 ? 'border-t' : ''
-                  } ${theme === 'dark' ? 'hover:bg-white/5 border-white/5' : 'border-slate-100 hover:bg-slate-50'}`}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex items-center justify-center gap-3 p-8 border-2 border-dashed rounded-3xl transition-all ${
+                    userProfile.baseResumeText ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-indigo-500/20 hover:border-indigo-500 bg-indigo-500/5'
+                  }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2.5 rounded-xl ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-                      {item.icon}
-                    </div>
-                    <div>
-                      <div className={`font-bold text-sm md:text-base ${textPrimary}`}>{item.label}</div>
-                      <div className={`text-xs ${textSecondary}`}>{item.desc}</div>
-                    </div>
-                  </div>
-                  {item.toggle ? (
-                    <div className={`w-12 h-6 rounded-full p-1 transition-all ${theme === 'dark' ? 'bg-indigo-600' : 'bg-indigo-500'}`}>
-                      <div className="w-4 h-4 bg-white rounded-full ml-auto shadow-sm"></div>
-                    </div>
-                  ) : (
-                    <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-500 transition-all group-hover:translate-x-1" />
-                  )}
+                  {userProfile.baseResumeText ? <CheckCircle className="text-emerald-500" /> : <FileText size={32} className="text-indigo-500" />}
+                  <span className={`font-bold ${textPrimary}`}>
+                    {userProfile.baseResumeText ? 'Base Resume Loaded' : 'Click to upload your Master CV'}
+                  </span>
                 </button>
-              ))}
+                
+                {userProfile.baseResumeText && (
+                  <div className={`p-4 rounded-2xl text-[10px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto border ${inputBg} opacity-50`}>
+                    {userProfile.baseResumeText}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
 
-          <div className={`p-8 rounded-3xl text-center border transition-all ${
-            theme === 'dark' ? 'bg-red-500/5 border-red-500/10' : 'bg-red-50 border-red-100'
-          }`}>
-            <h3 className={`font-bold mb-2 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Danger Zone</h3>
-            <p className="text-xs text-slate-500 mb-6 max-w-xs mx-auto">Once deleted, your documents and profile data cannot be recovered.</p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-               <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-500/10">
-                 <LogOut size={18} /> Logout
-               </button>
-               <button className="text-xs font-bold text-slate-400 hover:text-red-600 transition-colors">Delete Account</button>
-            </div>
+          <div className="flex items-center justify-center pt-8 border-t border-white/5">
+             <div className="text-center">
+                <p className={`text-xs font-bold opacity-30 mb-2`}>All changes saved locally</p>
+                <div className="flex items-center gap-2 text-indigo-500 font-bold"><CheckCircle size={16} /> Identity Fully Sculpted</div>
+             </div>
           </div>
         </div>
       </div>

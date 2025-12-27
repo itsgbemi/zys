@@ -12,6 +12,16 @@ export enum AppView {
 
 export type Theme = 'light' | 'dark';
 
+export interface UserProfile {
+  fullName: string;
+  title: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedIn: string;
+  baseResumeText: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';

@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { Message } from "../types";
+import { Message, UserProfile } from "../types";
 
 const MODEL_NAME = 'gemini-3-flash-preview';
 
@@ -8,30 +8,38 @@ export class GeminiService {
   private ai: GoogleGenAI;
 
   constructor() {
-    // Initializing Gemini client with API key from environment variables as per guidelines
     this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   }
 
   async generateChatResponse(
     history: Message[], 
     currentMessage: string, 
-    context?: { jobDescription?: string, resumeText?: string, type?: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot' }
+    context?: { 
+      jobDescription?: string, 
+      resumeText?: string, 
+      type?: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot',
+      userProfile?: UserProfile 
+    }
   ) {
     const type = context?.type || 'resume';
     let roleDescription = 'professional career assistant';
     
-    // Fix: Defined roles for all supported document and task types
     if (type === 'resume') roleDescription = 'ATS resume architect';
     if (type === 'cover-letter') roleDescription = 'persuasive cover letter writer';
     if (type === 'resignation-letter') roleDescription = 'professional resignation consultant';
     if (type === 'career-copilot') roleDescription = 'strategic career coach and growth mentor';
     
+    const profile = context?.userProfile;
+    const profileContext = profile ? `User Profile: ${profile.fullName}, ${profile.title}. Contact: ${profile.email}, ${profile.phone}. LinkedIn: ${profile.linkedIn}.` : '';
+
     const systemInstruction = `You are Zysculpt AI, a world-class ${roleDescription}.
     Your goal is to help the user build a high-impact, professional ${type.replace('-', ' ')}.
     
+    ${profileContext}
+
     CRITICAL INSTRUCTIONS:
     1. Context - Target Info: ${context?.jobDescription || 'Not yet provided.'}
-    2. Context - User Background: ${context?.resumeText || 'Not yet provided.'}
+    2. Context - User Background: ${context?.resumeText || profile?.baseResumeText || 'Not yet provided.'}
     3. Ask clear, focused questions one or two at a time.
     4. Maintain a professional, expert, and encouraging tone.
     5. When ready, offer to "generate" the final document.
@@ -39,7 +47,6 @@ export class GeminiService {
     ${type === 'career-copilot' ? 'Focus on career progression, skill mapping, and breaking down yearly goals into actionable daily targets.' : ''}
     `;
 
-    // Initialize chat session. We map the history to conform to Gemini API expectations if needed.
     const chat = this.ai.chats.create({
       model: MODEL_NAME,
       config: {
@@ -73,13 +80,11 @@ export class GeminiService {
       - Output ONLY the resume in Markdown.
     `;
 
-    // Use ai.models.generateContent with model and content in one call
     const response = await this.ai.models.generateContent({
       model: MODEL_NAME,
       contents: prompt,
     });
 
-    // Access .text property directly as it is not a method
     return response.text || "Failed to generate resume.";
   }
 
@@ -112,7 +117,7 @@ export class GeminiService {
     const prompt = `
       As a professional consultant, write a polite and firm resignation letter based on the provided details.
       
-      EXIT DETAILS (Notice period, reason, etc):
+      EXIT DETAILS:
       ${exitDetails}
       
       USER BACKGROUND:
@@ -120,8 +125,8 @@ export class GeminiService {
       
       INSTRUCTIONS:
       - Use professional business letter format.
-      - Ensure a positive tone to maintain bridges.
-      - Include current date placeholder, manager name placeholder, and signature placeholder.
+      - Ensure a positive tone.
+      - Include placeholders for manager name and signature.
       - Output ONLY the letter in Markdown.
     `;
 

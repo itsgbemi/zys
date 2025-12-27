@@ -12,7 +12,7 @@ import {
   Type as TypeIcon,
   Plus
 } from 'lucide-react';
-import { Message, ChatSession, Theme, StylePrefs } from '../types';
+import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { geminiService } from '../services/gemini';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 
@@ -23,6 +23,7 @@ interface AIResumeBuilderProps {
   activeSessionId: string;
   updateSession: (id: string, updates: Partial<ChatSession>) => void;
   setSessions: React.Dispatch<React.SetStateAction<ChatSession[]>>;
+  userProfile?: UserProfile;
 }
 
 const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; prefs?: StylePrefs }> = ({ text, dark = false, theme = 'dark', prefs }) => {
@@ -51,11 +52,9 @@ const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; pref
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (trimmed === '') return <div key={i} className="h-2" />;
-        
         if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-bold mt-4 mb-2">{formatText(trimmed.slice(4))}</h3>;
         if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
         if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-8 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80">{formatText(trimmed.slice(2))}</h1>;
-        
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 ml-4">
@@ -71,7 +70,7 @@ const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; pref
 };
 
 const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({ 
-  onToggleMobile, theme, sessions, activeSessionId, updateSession, setSessions 
+  onToggleMobile, theme, sessions, activeSessionId, updateSession, setSessions, userProfile 
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -110,7 +109,12 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       const responseStream = await geminiService.generateChatResponse(
         newMessages, 
         inputValue, 
-        { jobDescription: activeSession.jobDescription, resumeText: activeSession.resumeText, type: 'resume' }
+        { 
+          jobDescription: activeSession.jobDescription, 
+          resumeText: activeSession.resumeText || userProfile?.baseResumeText, 
+          type: 'resume',
+          userProfile
+        }
       );
       
       let assistantResponse = '';
@@ -249,11 +253,11 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Sculpting a high-impact, ATS-optimized resume.</p>
           </div>
         </div>
-        {activeSession.jobDescription && (
+        {(activeSession.jobDescription || userProfile?.baseResumeText) && (
           <button onClick={async () => {
             setIsTyping(true);
             try {
-              const combinedData = `Background: ${activeSession.resumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
+              const combinedData = `Background: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
               const result = await geminiService.sculptResume(activeSession.jobDescription || 'Professional Resume', combinedData);
               updateSession(activeSessionId, { finalResume: result });
               setShowPreview(true);
@@ -312,7 +316,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
                   const text = ev.target?.result as string;
                   updateSession(activeSessionId, { 
                     resumeText: text.slice(0, 2000),
-                    messages: [...activeSession.messages, { id: Date.now().toString(), role: 'user', content: `Uploaded resume: ${file.name}`, timestamp: Date.now() }, 
+                    messages: [...activeSession.messages, { id: Date.now().toString(), role: 'user', content: `Uploaded document: ${file.name}`, timestamp: Date.now() }, 
                     { id: (Date.now() + 1).toString(), role: 'assistant', content: `Received "${file.name}". What job are we tailoring this for?`, timestamp: Date.now() }]
                   });
                 };

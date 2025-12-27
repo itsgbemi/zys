@@ -9,13 +9,26 @@ import CareerCopilot from './components/CareerCopilot';
 import JobSearch from './components/JobSearch';
 import Settings from './components/Settings';
 import Documents from './components/Documents';
-import { AppView, ChatSession, Theme } from './types';
+import { AppView, ChatSession, Theme, UserProfile } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.OVERVIEW);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('zysculpt-theme') as Theme) || 'dark');
+
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('zysculpt-profile');
+    return saved ? JSON.parse(saved) : {
+      fullName: '',
+      title: '',
+      email: '',
+      phone: '',
+      location: '',
+      linkedIn: '',
+      baseResumeText: ''
+    };
+  });
 
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
     const saved = localStorage.getItem('zysculpt-sessions');
@@ -47,6 +60,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('zysculpt-sessions', JSON.stringify(sessions));
   }, [sessions]);
+
+  useEffect(() => {
+    localStorage.setItem('zysculpt-profile', JSON.stringify(userProfile));
+  }, [userProfile]);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
@@ -99,7 +116,8 @@ const App: React.FC = () => {
       lastUpdated: Date.now(),
       type: type,
       messages: [{ id: '1', role: 'assistant', content: welcomeMsg, timestamp: Date.now() }],
-      finalResume: null
+      finalResume: null,
+      resumeText: userProfile.baseResumeText || undefined // Auto-populate from profile
     };
     setSessions([newSession, ...sessions]);
     setActiveSessionId(newId);
@@ -115,7 +133,8 @@ const App: React.FC = () => {
       type: type,
       jobDescription: job.description,
       messages: [{ id: '1', role: 'assistant', content: `Job details imported for **${job.title}** at **${job.company}**. ${type === 'resume' ? "Let's align your resume." : "Let's draft a cover letter."}`, timestamp: Date.now() }],
-      finalResume: null
+      finalResume: null,
+      resumeText: userProfile.baseResumeText || undefined
     };
     setSessions([newSession, ...sessions]);
     setActiveSessionId(newId);
@@ -129,12 +148,13 @@ const App: React.FC = () => {
       sessions,
       activeSessionId,
       updateSession,
-      setSessions
+      setSessions,
+      userProfile
     };
     
     switch (currentView) {
       case AppView.OVERVIEW:
-        return <Overview onToggleMobile={toggleMobileSidebar} theme={theme} sessions={sessions} setView={setCurrentView} />;
+        return <Overview {...commonProps} setView={setCurrentView} />;
       case AppView.RESUME_BUILDER:
         return <AIResumeBuilder {...commonProps} />;
       case AppView.COVER_LETTER:
@@ -162,9 +182,9 @@ const App: React.FC = () => {
       case AppView.FIND_JOB:
         return <JobSearch onToggleMobile={toggleMobileSidebar} theme={theme} onSculptResume={(job) => handleSculptFromJob(job, 'resume')} onSculptLetter={(job) => handleSculptFromJob(job, 'cover-letter')} />;
       case AppView.SETTINGS:
-        return <Settings onToggleMobile={toggleMobileSidebar} theme={theme} />;
+        return <Settings onToggleMobile={toggleMobileSidebar} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} />;
       default:
-        return <Overview onToggleMobile={toggleMobileSidebar} theme={theme} sessions={sessions} setView={setCurrentView} />;
+        return <Overview {...commonProps} setView={setCurrentView} />;
     }
   };
 
