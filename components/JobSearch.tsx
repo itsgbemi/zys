@@ -103,7 +103,7 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
           <div className="flex gap-2">
             <button 
               onClick={() => onSculptLetter({ title: selectedJob.title, company: selectedJob.company, description: selectedJob.description })}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-slate-100 text-slate-800'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
             >
               <Mail size={16} /> Cover Letter
             </button>
@@ -111,7 +111,7 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
               onClick={() => onSculptResume({ title: selectedJob.title, company: selectedJob.company, description: selectedJob.description })}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20"
             >
-              <Sparkles size={16} /> Build Resume
+              <Sparkles size={16} /> Sculpt Resume
             </button>
           </div>
         </header>

@@ -9,6 +9,7 @@ import CareerCopilot from './components/CareerCopilot';
 import JobSearch from './components/JobSearch';
 import Settings from './components/Settings';
 import Documents from './components/Documents';
+import KnowledgeHub from './components/KnowledgeHub';
 import { AppView, ChatSession, Theme, UserProfile } from './types';
 
 const App: React.FC = () => {
@@ -26,7 +27,8 @@ const App: React.FC = () => {
       phone: '',
       location: '',
       linkedIn: '',
-      baseResumeText: ''
+      baseResumeText: '',
+      dailyAvailability: 2
     };
   });
 
@@ -36,13 +38,13 @@ const App: React.FC = () => {
     return [
       {
         id: 'default-copilot',
-        title: 'Career Growth Strategy',
+        title: 'Career Progression Plan',
         lastUpdated: Date.now(),
         type: 'career-copilot',
         messages: [{
           id: '1',
           role: 'assistant',
-          content: "Hello! I'm your Career Copilot. What are your big career goals for the next 365 days? Let's break them down into daily wins.",
+          content: "Welcome to your **Career Roadmap**. Let's design your professional future. What is your primary career objective for the next 3 to 12 months?",
           timestamp: Date.now(),
         }],
         finalResume: null
@@ -75,140 +77,77 @@ const App: React.FC = () => {
   const deleteSession = (sessionId: string) => {
     const filtered = sessions.filter(s => s.id !== sessionId);
     setSessions(filtered);
-    if (activeSessionId === sessionId && filtered.length > 0) {
-      setActiveSessionId(filtered[0].id);
-    } else if (filtered.length === 0) {
-      createNewSession('career-copilot');
-    }
+    if (activeSessionId === sessionId && filtered.length > 0) setActiveSessionId(filtered[0].id);
+    else if (filtered.length === 0) createNewSession('career-copilot');
   };
 
-  const renameSession = (sessionId: string, newTitle: string) => {
-    updateSession(sessionId, { title: newTitle });
-  };
-
-  const createNewSession = (type: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot' = 'resume') => {
+  const createNewSession = (type: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot' = 'resume', title?: string, jobDesc?: string, jobContext?: string) => {
     const newId = Date.now().toString();
-    let welcomeMsg = '';
-    let targetView = AppView.RESUME_BUILDER;
-    let defaultTitle = '';
-
-    if (type === 'resume') {
-      welcomeMsg = "I'm ready to build your next resume. Paste a job description or upload your current CV to begin.";
-      targetView = AppView.RESUME_BUILDER;
-      defaultTitle = 'New Resume Build';
-    } else if (type === 'cover-letter') {
-      welcomeMsg = "Let's write a compelling cover letter. Tell me about the role you're applying for.";
-      targetView = AppView.COVER_LETTER;
-      defaultTitle = 'New Cover Letter';
-    } else if (type === 'resignation-letter') {
-      welcomeMsg = "I'll help you write a professional resignation letter. Tell me about your current role and notice period.";
-      targetView = AppView.RESIGNATION_LETTER;
-      defaultTitle = 'New Resignation Letter';
-    } else if (type === 'career-copilot') {
-      welcomeMsg = "Ready for the next 365 days? What's the main goal we're crushing this year?";
-      targetView = AppView.CAREER_COPILOT;
-      defaultTitle = 'Career Growth Strategy';
+    
+    let welcomeMessage = "How can I help you today?";
+    
+    if (jobContext) {
+      welcomeMessage = `I've imported the details for **${jobContext}**. I'm ready to help you tailor a high-impact ${type === 'resume' ? 'resume' : 'cover letter'} for this specific role. Shall we start by reviewing how your current experience aligns with their requirements?`;
+    } else {
+      if (type === 'resume') welcomeMessage = "Welcome to the **Resume Architect**. I'm ready to build a professional, ATS-optimized resume. To start, you can paste a job description or share a few recent career highlights.";
+      if (type === 'cover-letter') welcomeMessage = "Let's draft a persuasive **Cover Letter**. Tell me about the role you're targeting and what makes you a great fit, and I'll help you strike the perfect tone.";
+      if (type === 'resignation-letter') welcomeMessage = "I'll help you draft a professional and graceful **Resignation Letter**. Please share your current role and your planned notice period.";
+      if (type === 'career-copilot') welcomeMessage = "I'm your **Career Strategist**. What major professional milestone are we working toward? I'll help you break it down into a clear, daily action plan.";
     }
 
     const newSession: ChatSession = {
       id: newId,
-      title: defaultTitle,
+      title: title || (type === 'resume' ? 'New Resume' : type === 'cover-letter' ? 'New Letter' : type === 'resignation-letter' ? 'Resignation' : 'New Roadmap'),
       lastUpdated: Date.now(),
       type: type,
-      messages: [{ id: '1', role: 'assistant', content: welcomeMsg, timestamp: Date.now() }],
-      finalResume: null,
-      resumeText: userProfile.baseResumeText || undefined // Auto-populate from profile
-    };
-    setSessions([newSession, ...sessions]);
-    setActiveSessionId(newId);
-    setCurrentView(targetView);
-  };
-
-  const handleSculptFromJob = (job: { title: string, company: string, description: string }, type: 'resume' | 'cover-letter') => {
-    const newId = Date.now().toString();
-    const newSession: ChatSession = {
-      id: newId,
-      title: `${type === 'resume' ? 'Resume' : 'Letter'}: ${job.title} @ ${job.company}`,
-      lastUpdated: Date.now(),
-      type: type,
-      jobDescription: job.description,
-      messages: [{ id: '1', role: 'assistant', content: `Job details imported for **${job.title}** at **${job.company}**. ${type === 'resume' ? "Let's align your resume." : "Let's draft a cover letter."}`, timestamp: Date.now() }],
+      jobDescription: jobDesc,
+      messages: [{ id: '1', role: 'assistant', content: welcomeMessage, timestamp: Date.now() }],
       finalResume: null,
       resumeText: userProfile.baseResumeText || undefined
     };
+
     setSessions([newSession, ...sessions]);
     setActiveSessionId(newId);
-    setCurrentView(type === 'resume' ? AppView.RESUME_BUILDER : AppView.COVER_LETTER);
+    
+    if (type === 'resume') setCurrentView(AppView.RESUME_BUILDER);
+    else if (type === 'cover-letter') setCurrentView(AppView.COVER_LETTER);
+    else if (type === 'resignation-letter') setCurrentView(AppView.RESIGNATION_LETTER);
+    else setCurrentView(AppView.CAREER_COPILOT);
+  };
+
+  const handleSculptFromJob = (job: { title: string, company: string, description: string }, type: 'resume' | 'cover-letter') => {
+    const contextStr = `${job.title} at ${job.company}`;
+    createNewSession(type, `${type === 'resume' ? 'Resume' : 'Letter'}: ${contextStr}`, job.description, contextStr);
   };
 
   const renderView = () => {
-    const commonProps = { 
-      onToggleMobile: toggleMobileSidebar, 
-      theme,
-      sessions,
-      activeSessionId,
-      updateSession,
-      setSessions,
-      userProfile
-    };
-    
+    const commonProps = { onToggleMobile: toggleMobileSidebar, theme, sessions, activeSessionId, updateSession, setSessions, userProfile };
     switch (currentView) {
-      case AppView.OVERVIEW:
-        return <Overview {...commonProps} setView={setCurrentView} />;
-      case AppView.RESUME_BUILDER:
-        return <AIResumeBuilder {...commonProps} />;
-      case AppView.COVER_LETTER:
-        return <CoverLetterBuilder {...commonProps} />;
-      case AppView.RESIGNATION_LETTER:
-        return <ResignationLetterBuilder {...commonProps} />;
-      case AppView.CAREER_COPILOT:
-        return <CareerCopilot {...commonProps} />;
-      case AppView.DOCUMENTS:
-        return (
-          <Documents 
-            onToggleMobile={toggleMobileSidebar}
-            theme={theme}
-            sessions={sessions}
-            onSelectSession={(id) => {
-              const session = sessions.find(s => s.id === id);
-              setActiveSessionId(id);
-              if (session?.type === 'cover-letter') setCurrentView(AppView.COVER_LETTER);
-              else if (session?.type === 'resignation-letter') setCurrentView(AppView.RESIGNATION_LETTER);
-              else if (session?.type === 'career-copilot') setCurrentView(AppView.CAREER_COPILOT);
-              else setCurrentView(AppView.RESUME_BUILDER);
-            }}
-          />
-        );
-      case AppView.FIND_JOB:
-        return <JobSearch onToggleMobile={toggleMobileSidebar} theme={theme} onSculptResume={(job) => handleSculptFromJob(job, 'resume')} onSculptLetter={(job) => handleSculptFromJob(job, 'cover-letter')} />;
-      case AppView.SETTINGS:
-        return <Settings onToggleMobile={toggleMobileSidebar} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} />;
-      default:
-        return <Overview {...commonProps} setView={setCurrentView} />;
+      case AppView.OVERVIEW: return <Overview {...commonProps} setView={setCurrentView} />;
+      case AppView.RESUME_BUILDER: return <AIResumeBuilder {...commonProps} />;
+      case AppView.COVER_LETTER: return <CoverLetterBuilder {...commonProps} />;
+      case AppView.RESIGNATION_LETTER: return <ResignationLetterBuilder {...commonProps} />;
+      case AppView.CAREER_COPILOT: return <CareerCopilot {...commonProps} />;
+      case AppView.KNOWLEDGE_HUB: return <KnowledgeHub onToggleMobile={toggleMobileSidebar} theme={theme} />;
+      case AppView.DOCUMENTS: return <Documents onToggleMobile={toggleMobileSidebar} theme={theme} sessions={sessions} onSelectSession={(id) => { setActiveSessionId(id); setCurrentView(AppView.DOCUMENTS); }} />;
+      case AppView.FIND_JOB: return <JobSearch onToggleMobile={toggleMobileSidebar} theme={theme} onSculptResume={(job) => handleSculptFromJob(job, 'resume')} onSculptLetter={(job) => handleSculptFromJob(job, 'cover-letter')} />;
+      case AppView.SETTINGS: return <Settings onToggleMobile={toggleMobileSidebar} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} />;
+      default: return <Overview {...commonProps} setView={setCurrentView} />;
     }
   };
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar 
-        currentView={currentView} 
-        setView={setCurrentView} 
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-        isMobileOpen={isMobileOpen}
-        setIsMobileOpen={setIsMobileOpen}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        setActiveSessionId={setActiveSessionId}
-        onNewSession={createNewSession}
-        onDeleteSession={deleteSession}
-        onRenameSession={renameSession}
+        currentView={currentView} setView={setCurrentView} 
+        isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed}
+        isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}
+        theme={theme} toggleTheme={toggleTheme}
+        sessions={sessions} activeSessionId={activeSessionId} setActiveSessionId={setActiveSessionId}
+        onNewSession={createNewSession} onDeleteSession={deleteSession}
+        onRenameSession={(id, title) => updateSession(id, { title })}
       />
-      <main className="flex-1 overflow-hidden relative w-full">
-        {renderView()}
-      </main>
+      <main className="flex-1 overflow-hidden relative w-full">{renderView()}</main>
     </div>
   );
 };

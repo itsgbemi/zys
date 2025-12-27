@@ -16,6 +16,7 @@ import { Message, ChatSession, Theme, StylePrefs } from '../types';
 import { geminiService } from '../services/gemini';
 import { Document, Packer } from 'docx';
 import { parseMarkdownToDocx } from '../utils/docx-export';
+import { MarkdownLite } from './AIResumeBuilder';
 
 interface CoverLetterBuilderProps {
   onToggleMobile?: () => void;
@@ -25,39 +26,6 @@ interface CoverLetterBuilderProps {
   updateSession: (id: string, updates: Partial<ChatSession>) => void;
   setSessions: React.Dispatch<React.SetStateAction<ChatSession[]>>;
 }
-
-const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; prefs?: StylePrefs }> = ({ text, dark = false, theme = 'dark', prefs }) => {
-  const lines = text.split('\n');
-  const fontClass = prefs?.font || 'font-sans';
-  const listStyle = prefs?.listStyle || 'disc';
-  
-  const formatText = (content: string) => {
-    const parts = content.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
-      }
-      const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
-      if (linkMatch) {
-        return <a key={i} href={linkMatch[2]} className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">{linkMatch[1]}</a>;
-      }
-      return part;
-    });
-  };
-
-  return (
-    <div className={`space-y-1 ${fontClass} ${dark ? 'text-black' : theme === 'dark' ? 'text-slate-200' : 'text-slate-900'}`}>
-      {lines.map((line, i) => {
-        const trimmed = line.trim();
-        if (trimmed === '') return <div key={i} className="h-2" />;
-        if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-bold mt-4 mb-2">{formatText(trimmed.slice(4))}</h3>;
-        if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
-        if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-8 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center">{formatText(trimmed.slice(2))}</h1>;
-        return <p key={i} className="leading-relaxed mb-2">{formatText(line)}</p>;
-      })}
-    </div>
-  );
-};
 
 const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({ 
   onToggleMobile, theme, sessions, activeSessionId, updateSession, setSessions 
@@ -156,7 +124,7 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowPreview(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Undo size={14} /> Back</button>
-            <button onClick={exportDOCX} disabled={isExporting} className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><WordIcon size={14} /> Word</button>
+            <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><WordIcon size={14} /> Word</button>
             <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
           </div>
         </header>
@@ -193,7 +161,7 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
               setShowPreview(true);
             } catch (err) { console.error(err); } finally { setIsTyping(false); }
           }} disabled={isTyping} className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 text-xs md:text-sm">
-            {isTyping ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />} Generate Letter
+            {isTyping ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />} Generate Cover Letter
           </button>
         )}
       </header>

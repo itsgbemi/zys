@@ -64,6 +64,43 @@ export class GeminiService {
     }
   }
 
+  async generateCareerPlan(goal: string, availability: number): Promise<any[]> {
+    const prompt = `Create a 30-day career plan for the following goal: "${goal}". 
+    The user has ${availability} hours per day available.
+    Return the plan as a JSON array of objects with keys: "day" (1-30) and "task" (string).
+    Keep tasks specific and achievable within the time frame.`;
+
+    const response = await this.ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
+
+    try {
+      return JSON.parse(response.text);
+    } catch (e) {
+      console.error("Failed to parse AI plan", e);
+      return [];
+    }
+  }
+
+  async generateQuiz(topic: string): Promise<any[]> {
+    const prompt = `Generate 5 challenging quiz questions about "${topic}". 
+    Return as a JSON array of objects with: "question", "options" (array of 4 strings), and "correctIndex" (0-3).`;
+
+    const response = await this.ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
+
+    try {
+      return JSON.parse(response.text);
+    } catch (e) {
+      return [];
+    }
+  }
+
   async sculptResume(jobDescription: string, userData: string): Promise<string> {
     const prompt = `
       As an ATS expert, take the following Job Description and User Experience data and generate a perfect resume in Markdown format.
@@ -78,6 +115,7 @@ export class GeminiService {
       - Use clear headings: Professional Summary, Work Experience, Skills, Education.
       - Optimize for specific keywords from the Job Description.
       - Output ONLY the resume in Markdown.
+      - IMPORTANT: Format links as [actual-url](actual-url) so they are clickable and readable.
     `;
 
     const response = await this.ai.models.generateContent({

@@ -27,13 +27,12 @@ interface AIResumeBuilderProps {
   userProfile?: UserProfile;
 }
 
-const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; prefs?: StylePrefs }> = ({ text, dark = false, theme = 'dark', prefs }) => {
+export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; prefs?: StylePrefs }> = ({ text, dark = false, theme = 'dark', prefs }) => {
   const lines = text.split('\n');
   const fontClass = prefs?.font || 'font-sans';
   const listStyle = prefs?.listStyle || 'disc';
   
   const formatText = (content: string) => {
-    // Improved formatter to handle links, bold, and italics in one pass
     const parts = content.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
@@ -64,7 +63,6 @@ const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; pref
         if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
         if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center">{formatText(trimmed.slice(2))}</h1>;
         
-        // Custom formatting for Job Title | Company *Dates* lines
         if (trimmed.startsWith('#### ')) {
            return <h4 key={i} className="text-sm font-bold mt-3 mb-1">{formatText(trimmed.slice(5))}</h4>;
         }
@@ -144,7 +142,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       }
     } catch (e) {
       updateSession(activeSessionId, { 
-        messages: [...newMessages, { id: 'error', role: 'assistant', content: "An error occurred. Please try again.", timestamp: Date.now() }] 
+        messages: [...newMessages, { id: 'error', role: 'assistant', content: "Something went wrong. Please check your connection.", timestamp: Date.now() }] 
       });
     } finally { setIsTyping(false); }
   };
@@ -158,7 +156,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     const element = document.querySelector('.printable-area');
     const opt = { 
       margin: 10, 
-      filename: `Resume_${activeSession.title.replace(/\s+/g, '_')}.pdf`, 
+      filename: `${activeSession.title.replace(/\s+/g, '_')}.pdf`, 
       html2canvas: { scale: 2 }, 
       jsPDF: { unit: 'mm', format: 'a4' } 
     };
@@ -181,7 +179,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Resume_${activeSession.title.replace(/\s+/g, '_')}.docx`;
+      link.download = `${activeSession.title.replace(/\s+/g, '_')}.docx`;
       link.click();
     } catch (e) {
       console.error(e);
@@ -204,7 +202,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowPreview(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Undo size={14} /> Back</button>
-            <button onClick={exportDOCX} disabled={isExporting} className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><WordIcon size={14} /> Word</button>
+            <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><WordIcon size={14} /> Word</button>
             <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
           </div>
         </header>
@@ -258,8 +256,8 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             </svg>
           </button>
           <div className="flex flex-col">
-            <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resume Builder</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Creating a high-impact, professional resume.</p>
+            <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resume Architect</h2>
+            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Tailoring your profile for specific career opportunities.</p>
           </div>
         </div>
         {(activeSession.jobDescription || userProfile?.baseResumeText) && (
@@ -310,7 +308,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder="Paste job description or share your background..."
+            placeholder="Share context or a job description to refine your resume..."
             className={`w-full border rounded-2xl p-4 pr-32 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
               theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-indigo-400'
             }`}
@@ -326,13 +324,13 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
                   updateSession(activeSessionId, { 
                     resumeText: text.slice(0, 2000),
                     messages: [...activeSession.messages, { id: Date.now().toString(), role: 'user', content: `Uploaded document: ${file.name}`, timestamp: Date.now() }, 
-                    { id: (Date.now() + 1).toString(), role: 'assistant', content: `Received "${file.name}". What job are we tailoring this for?`, timestamp: Date.now() }]
+                    { id: (Date.now() + 1).toString(), role: 'assistant', content: `Great, I've processed "${file.name}". What specific role are we targeting with this experience?`, timestamp: Date.now() }]
                   });
                 };
                 reader.readAsText(file);
               }
             }} className="hidden" accept=".pdf,.doc,.docx,.txt" />
-            <button onClick={() => fileInputRef.current?.click()} className={`p-2 transition-colors ${theme === 'dark' ? 'text-[#555] hover:text-white' : 'text-slate-400 hover:text-slate-600'}`} title="Upload"><Paperclip size={18} /></button>
+            <button onClick={() => fileInputRef.current?.click()} className={`p-2 transition-colors ${theme === 'dark' ? 'text-[#555] hover:text-white' : 'text-slate-400 hover:text-slate-600'}`} title="Upload Context"><Paperclip size={18} /></button>
             <button onClick={handleSend} disabled={!inputValue.trim() || isTyping} className="p-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors shadow-md disabled:opacity-30"><Send size={18} /></button>
           </div>
         </div>

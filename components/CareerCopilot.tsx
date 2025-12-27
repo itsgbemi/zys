@@ -8,14 +8,16 @@ import {
   Plus, 
   Calendar as CalendarIcon, 
   Target, 
-  BarChart3,
+  Clock,
   ChevronRight,
   TrendingUp,
   Award,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react';
-import { Message, ChatSession, Theme, CareerGoal, DailyLog } from '../types';
+import { Message, ChatSession, Theme, ScheduledTask, UserProfile } from '../types';
 import { geminiService } from '../services/gemini';
+import { MarkdownLite } from './AIResumeBuilder';
 
 interface CareerCopilotProps {
   onToggleMobile?: () => void;
@@ -24,44 +26,15 @@ interface CareerCopilotProps {
   activeSessionId: string;
   updateSession: (id: string, updates: Partial<ChatSession>) => void;
   setSessions: React.Dispatch<React.SetStateAction<ChatSession[]>>;
+  userProfile: UserProfile;
 }
 
-const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme }> = ({ text, dark = false, theme = 'dark' }) => {
-  const lines = text.split('\n');
-  const formatText = (content: string) => {
-    const parts = content.split(/(\*\*.*?\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
-      }
-      return part;
-    });
-  };
-  return (
-    <div className={`space-y-1 ${theme === 'dark' ? 'text-slate-200' : 'text-slate-900'}`}>
-      {lines.map((line, i) => {
-        const trimmed = line.trim();
-        if (trimmed === '') return <div key={i} className="h-2" />;
-        if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-bold mt-4 mb-1">{formatText(trimmed.slice(4))}</h3>;
-        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-          return (
-            <div key={i} className="flex gap-2 ml-4">
-              <span className="opacity-50">•</span>
-              <span className="flex-1">{formatText(trimmed.slice(2))}</span>
-            </div>
-          );
-        }
-        return <p key={i} className="leading-relaxed mb-1">{formatText(line)}</p>;
-      })}
-    </div>
-  );
-};
-
 const CareerCopilot: React.FC<CareerCopilotProps> = ({ 
-  onToggleMobile, theme, sessions, activeSessionId, updateSession, setSessions 
+  onToggleMobile, theme, sessions, activeSessionId, updateSession, setSessions, userProfile 
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -78,7 +51,7 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
     setIsTyping(true);
 
     try {
-      const responseStream = await geminiService.generateChatResponse(newMessages, inputValue, { type: 'career-copilot' });
+      const responseStream = await geminiService.generateChatResponse(newMessages, inputValue, { type: 'career-copilot', userProfile });
       let assistantResponse = '';
       const assistantId = (Date.now() + 1).toString();
       updateSession(activeSessionId, { messages: [...newMessages, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }] });
@@ -95,29 +68,37 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
     } finally { setIsTyping(false); }
   };
 
-  const handleSyncToCalendar = () => {
-    const confirmMsg: Message = { 
-      id: Date.now().toString(), 
-      role: 'assistant', 
-      content: "Great! I've synced your daily progression targets to the Overview Calendar. You can now log your 'Daily Wins' by clicking on the current date in the dashboard. Let's start crushing those milestones!", 
-      timestamp: Date.now() 
-    };
-    
-    // Initialize goal start date if not present
-    if (!activeSession.careerGoalData) {
+  const handleGeneratePlan = async () => {
+    setIsGeneratingPlan(true);
+    try {
+      const plan = await geminiService.generateCareerPlan(activeSession.title, userProfile.dailyAvailability || 2);
+      const scheduledTasks: ScheduledTask[] = plan.map((p, i) => ({
+        id: `task-${i}`,
+        dayNumber: p.day,
+        task: p.task,
+        completed: false
+      }));
+
       updateSession(activeSessionId, {
         careerGoalData: {
           mainGoal: activeSession.title,
-          dailyTasks: ["Complete career audit", "Update portfolio", "Network with 2 leads"],
+          scheduledTasks,
           logs: [],
           startDate: Date.now()
-        },
-        messages: [...activeSession.messages, confirmMsg]
+        }
       });
-    } else {
-       updateSession(activeSessionId, {
-        messages: [...activeSession.messages, confirmMsg]
-      });
+      
+      const confirmMsg: Message = { 
+        id: Date.now().toString(), 
+        role: 'assistant', 
+        content: `I've architected a 30-day plan based on your **${userProfile.dailyAvailability}h/day** availability. Check your Home dashboard to track your progress!`, 
+        timestamp: Date.now() 
+      };
+      updateSession(activeSessionId, { messages: [...activeSession.messages, confirmMsg] });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGeneratingPlan(false);
     }
   };
 
@@ -134,11 +115,16 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
           </button>
           <div className="flex flex-col">
             <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Career Copilot</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Strategic 365-day trajectory and accountability.</p>
+            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Defining your trajectory and daily actions.</p>
           </div>
         </div>
-        <button onClick={handleSyncToCalendar} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 text-xs md:text-sm">
-          <Calendar size={16} /> Sync to Calendar
+        <button 
+          onClick={handleGeneratePlan} 
+          disabled={isGeneratingPlan}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 text-xs md:text-sm disabled:opacity-50"
+        >
+          {isGeneratingPlan ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
+          {activeSession.careerGoalData ? 'Re-generate Plan' : 'Generate 30-Day Plan'}
         </button>
       </header>
 
@@ -173,7 +159,7 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder="Discuss your goals..."
+            placeholder="Tell the Copilot about your career goal..."
             className={`w-full border rounded-2xl p-4 pr-16 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
               theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-indigo-400'
             }`}
