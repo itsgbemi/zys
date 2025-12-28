@@ -10,7 +10,8 @@ import {
   FileText as WordIcon,
   List as ListIcon,
   ChevronUp,
-  Type as TypeIcon
+  Type as TypeIcon,
+  Palette
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs } from '../types';
 import { geminiService } from '../services/gemini';
@@ -34,9 +35,16 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showStyleMenu, setShowStyleMenu] = useState(false);
 
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const stylePrefs: StylePrefs = activeSession.stylePrefs || {
+    font: 'font-sans',
+    headingColor: 'text-black',
+    listStyle: 'disc'
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -76,6 +84,10 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
     } catch (e) {
       updateSession(activeSessionId, { messages: [...newMessages, { id: 'error', role: 'assistant', content: "An error occurred.", timestamp: Date.now() }] });
     } finally { setIsTyping(false); }
+  };
+
+  const updatePrefs = (newPrefs: Partial<StylePrefs>) => {
+    updateSession(activeSessionId, { stylePrefs: { ...stylePrefs, ...newPrefs } as any });
   };
 
   const exportPDF = () => {
@@ -124,13 +136,35 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowPreview(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Undo size={14} /> Back</button>
+            <div className="relative">
+              <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Palette size={14} /> Style</button>
+              {showStyleMenu && (
+                <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+                   {[
+                    { id: 'font-sans', label: 'Inter (Modern)' },
+                    { id: 'font-serif', label: 'Garamond (Serif)' },
+                    { id: 'font-mono', label: 'Roboto (Clean)' },
+                    { id: 'font-arial', label: 'Arial (Standard)' },
+                    { id: 'font-times', label: 'Times (Academic)' }
+                  ].map(font => (
+                    <button 
+                      key={font.id}
+                      onClick={() => { updatePrefs({ font: font.id as any }); setShowStyleMenu(false); }}
+                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-indigo-500 text-white' : 'hover:bg-slate-500/10'}`}
+                    >
+                      {font.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><WordIcon size={14} /> Word</button>
             <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
           </div>
         </header>
         <div className={`flex-1 overflow-y-auto p-4 md:p-8 pb-32 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
           <div className="printable-area max-w-4xl mx-auto bg-white text-black p-12 md:p-16 shadow-2xl rounded-sm min-h-[1050px] border border-slate-200">
-            <MarkdownLite text={activeSession.finalResume} dark={true} />
+            <MarkdownLite text={activeSession.finalResume} dark={true} prefs={stylePrefs} />
           </div>
         </div>
       </div>
@@ -141,11 +175,6 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
     <div className="flex flex-col h-full relative">
       <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-2">
-          <button onClick={onToggleMobile} className="md:hidden">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}>
-              <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
           <div className="flex flex-col">
             <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Cover Letter</h2>
             <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Creating a persuasive pitch for your application.</p>

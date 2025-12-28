@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, MapPin, Briefcase, Filter, ArrowUpRight, Menu, TrendingUp, ChevronLeft, Building2, Calendar, DollarSign, Sparkles, Mail } from 'lucide-react';
+import { Search, MapPin, Briefcase, Filter, ArrowUpRight, Menu, TrendingUp, ChevronLeft, Building2, Calendar, DollarSign, Sparkles, Mail, Layout } from 'lucide-react';
 import { Theme } from '../types';
 
 interface JobSearchProps {
@@ -23,65 +23,69 @@ interface Job {
   type: string;
 }
 
-const CustomMenuIcon = ({ className }: { className?: string }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-
 const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptResume, onSculptLetter }) => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   const jobs: Job[] = [
     { 
       id: 1, 
+      title: 'Digital Marketing Manager', 
+      company: 'VibeMedia', 
+      location: 'London / Remote', 
+      salary: '£65k - £85k', 
+      match: '96%', 
+      tags: ['Growth', 'SEO', 'Paid Social'],
+      type: 'Full-time',
+      posted: '4 hours ago',
+      description: `VibeMedia is looking for a data-driven Digital Marketing Manager to lead our growth efforts. You will be responsible for scaling user acquisition across multiple paid and organic channels.\n\nKey Responsibilities:\n- Manage annual performance marketing budget\n- Lead SEO and content strategy\n- Analyze campaign metrics to optimize CAC and LTV.`
+    },
+    { 
+      id: 2, 
+      title: 'Creative Director', 
+      company: 'Loom Studio', 
+      location: 'New York, NY', 
+      salary: '$150k - $200k', 
+      match: '91%', 
+      tags: ['Branding', 'Leadership', 'Concept'],
+      type: 'Full-time',
+      posted: '1 day ago',
+      description: `Loom Studio is a premium branding agency. We need a visionary Creative Director to lead our design team and oversee high-impact campaigns for global fashion brands.\n\nQualifications:\n- 10+ years in agency environments\n- Strong portfolio in identity and spatial design\n- Proven leadership of multi-disciplinary teams.`
+    },
+    { 
+      id: 3, 
+      title: 'Head of Sales', 
+      company: 'SaaSFlow', 
+      location: 'Chicago, IL', 
+      salary: '$140k + OTE', 
+      match: '88%', 
+      tags: ['Salesforce', 'Negotiation', 'B2B'],
+      type: 'Full-time',
+      posted: '2 days ago',
+      description: `SaaSFlow provides workflow automation for HR teams. We are seeking an aggressive Head of Sales to build our enterprise sales motion from the ground up.\n\nFocus:\n- Hiring and mentoring a team of 5 AEs\n- Managing high-value pipeline in Salesforce\n- Closing deals with Fortune 500 stakeholders.`
+    },
+    { 
+      id: 4, 
+      title: 'HR Specialist', 
+      company: 'EcoGreen Global', 
+      location: 'Remote', 
+      salary: '$80k - $100k', 
+      match: '94%', 
+      tags: ['Compliance', 'Culture', 'Remote'],
+      type: 'Full-time',
+      posted: 'Just now',
+      description: `EcoGreen is a sustainable energy startup. We need an HR Specialist to manage our global remote culture, ensure compliance across 10+ countries, and lead employee engagement initiatives.`
+    },
+    { 
+      id: 5, 
       title: 'Senior Frontend Engineer', 
       company: 'TechFlow', 
       location: 'Remote', 
       salary: '$140k - $180k', 
-      match: '98%', 
+      match: '82%', 
       tags: ['React', 'Next.js', 'Typescript'],
       type: 'Full-time',
       posted: '2 days ago',
-      description: `As a Senior Frontend Engineer at TechFlow, you'll be responsible for building high-performance web applications using React and Next.js. We are looking for someone with at least 5 years of experience in modern JavaScript frameworks.\n\nKey Responsibilities:\n- Architect scalable frontend systems\n- Mentor junior developers\n- Collaborate with product and design teams to deliver exceptional UX.`
-    },
-    { 
-      id: 2, 
-      title: 'Product Designer', 
-      company: 'Nexus AI', 
-      location: 'San Francisco, CA', 
-      salary: '$120k - $160k', 
-      match: '92%', 
-      tags: ['Figma', 'UI/UX', 'Mobile'],
-      type: 'Full-time',
-      posted: '1 week ago',
-      description: `Nexus AI is seeking a Product Designer to join our core product team. You will lead design efforts for our mobile and web platforms, ensuring a seamless AI-driven user experience.\n\nQualifications:\n- 3+ years in Product Design\n- Strong portfolio demonstrating complex problem solving\n- Proficiency in Figma and prototyping tools.`
-    },
-    { 
-      id: 3, 
-      title: 'Full Stack Developer', 
-      company: 'CloudScale', 
-      location: 'New York, NY', 
-      salary: '$130k - $170k', 
-      match: '85%', 
-      tags: ['Node.js', 'PostgreSQL', 'AWS'],
-      type: 'Contract',
-      posted: '3 days ago',
-      description: `Join CloudScale to help us build the next generation of cloud infrastructure management. We need a versatile developer comfortable across the entire stack.\n\nRequirements:\n- Strong Node.js and TypeScript skills\n- Experience with AWS (Lambda, RDS, S3)\n- Solid understanding of SQL and database optimization.`
-    },
-    { 
-      id: 4, 
-      title: 'Engineering Manager', 
-      company: 'Horizon Web', 
-      location: 'Austin, TX', 
-      salary: '$190k - $240k', 
-      match: '78%', 
-      tags: ['Leadership', 'Strategy', 'Scale'],
-      type: 'Full-time',
-      posted: 'Just now',
-      description: `Horizon Web is scaling fast and we need an experienced Engineering Manager to lead our Core Infrastructure tribe. You'll manage three squads of engineers and report directly to the VP of Engineering.\n\nFocus:\n- Team growth and career development\n- Technical roadmap execution\n- Cross-functional collaboration.`
+      description: `Build high-performance web applications using React and Next.js. We are looking for someone with at least 5 years of experience in modern JavaScript frameworks.`
     },
   ];
 
@@ -174,7 +178,7 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${headerBg}`}>
         <div className="flex items-center gap-3">
           <button onClick={onToggleMobile} className="md:hidden">
-            <CustomMenuIcon className={textPrimary} />
+            <Layout className={textPrimary} />
           </button>
           <div>
             <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Job Marketplace</h2>

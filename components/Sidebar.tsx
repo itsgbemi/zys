@@ -15,7 +15,12 @@ import {
   MoreHorizontal,
   FolderOpen,
   Zap,
-  LogOut
+  LogOut,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
@@ -26,7 +31,7 @@ export const ZysculptLogo = ({ theme, size = 24 }: { theme: Theme, size?: number
     width={size} 
     height={size}
     style={{ transform: 'rotate(90deg)' }}
-    className="transition-transform duration-500 hover:scale-110"
+    className="transition-transform duration-500 hover:scale-110 flex-shrink-0"
   >
     <path 
       fill={theme === 'dark' ? '#ffffff' : '#0F172A'} 
@@ -54,15 +59,37 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   currentView, setView, isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen, 
-  theme, toggleTheme, sessions, activeSessionId, setActiveSessionId, onNewSession
+  theme, toggleTheme, sessions, activeSessionId, setActiveSessionId, onNewSession, onDeleteSession, onRenameSession
 }) => {
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
     resume: true,
-    copilot: true
+    letter: true,
+    resignation: false,
+    copilot: false
   });
+  
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const toggleSubmenu = (key: string) => {
-    setOpenSubmenus(prev => ({ ...prev, [key]: !prev[key] }));
+    if (isCollapsed && !isMobileOpen) {
+      setIsCollapsed(false);
+      setOpenSubmenus(prev => ({ ...prev, [key]: true }));
+    } else {
+      setOpenSubmenus(prev => ({ ...prev, [key]: !prev[key] }));
+    }
+  };
+
+  const handleRename = (id: string, currentTitle: string) => {
+    const newTitle = prompt('Enter new title:', currentTitle);
+    if (newTitle) onRenameSession(id, newTitle);
+    setActiveMenuId(null);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Delete this chat permanently? This action cannot be undone.')) {
+      onDeleteSession(id);
+    }
+    setActiveMenuId(null);
   };
 
   const renderNavButton = (id: AppView, label: string, icon: React.ReactNode, typeKey?: string, onPlusClick?: () => void) => {
@@ -90,13 +117,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={() => {
               if (hasSubmenu) {
-                if (isCollapsed && !isMobileOpen) setIsCollapsed(false);
                 toggleSubmenu(typeKey!);
               }
               setView(id);
               if (isMobileOpen && !hasSubmenu) setIsMobileOpen(false);
             }}
             className="flex-1 flex items-center gap-4 p-3 overflow-hidden"
+            title={isCollapsed ? label : ""}
           >
             <span className="flex-shrink-0">{icon}</span>
             {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm truncate">{label}</span>}
@@ -109,6 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button 
               onClick={(e) => { e.stopPropagation(); onPlusClick(); }}
               className="p-3 hover:text-indigo-500 transition-colors"
+              title={`New ${label}`}
             >
               <Plus size={16} />
             </button>
@@ -117,15 +145,42 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {hasSubmenu && isOpen && (!isCollapsed || isMobileOpen) && (
           <div className="ml-9 mt-1 space-y-1 border-l border-slate-200 dark:border-white/10 pl-3">
-            {filteredSessions.map(s => (
+            {filteredSessions.length > 0 ? (
+              filteredSessions.map(s => (
+                <div key={s.id} className="group/item flex items-center relative">
+                  <button 
+                    onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
+                    className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${activeSessionId === s.id && currentView === id ? (theme === 'dark' ? 'text-white bg-white/5 font-semibold' : 'text-[#0F172A] bg-slate-100 font-bold') : (theme === 'dark' ? 'text-[#a0a0a0] hover:text-white' : 'text-slate-500 hover:text-slate-900')}`}
+                  >
+                    {s.title}
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === s.id ? null : s.id); }}
+                    className="opacity-0 group-hover/item:opacity-100 p-1 text-slate-400 hover:text-indigo-500 transition-all"
+                  >
+                    <MoreHorizontal size={12} />
+                  </button>
+
+                  {activeMenuId === s.id && (
+                    <div className={`absolute left-0 mt-8 sm:left-full sm:mt-0 sm:ml-2 z-[100] w-36 border rounded-2xl shadow-2xl p-1.5 animate-in zoom-in-95 backdrop-blur-md ${theme === 'dark' ? 'bg-[#1a1a1a]/95 border-white/10' : 'bg-white/95 border-slate-200'}`}>
+                      <button onClick={() => handleRename(s.id, s.title)} className="w-full flex items-center gap-2.5 p-2 rounded-xl text-[11px] font-bold hover:bg-indigo-600 hover:text-white transition-colors">
+                        <Edit2 size={13} /> Rename
+                      </button>
+                      <button onClick={() => handleDelete(s.id)} className="w-full flex items-center gap-2.5 p-2 rounded-xl text-[11px] font-bold text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                        <Trash2 size={13} /> Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
               <button 
-                key={s.id}
-                onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
-                className={`w-full text-left p-2 rounded-md text-[11px] truncate transition-all ${activeSessionId === s.id && currentView === id ? (theme === 'dark' ? 'text-white bg-white/5 font-semibold' : 'text-[#0F172A] bg-slate-100 font-bold') : (theme === 'dark' ? 'text-[#a0a0a0] hover:text-white' : 'text-slate-500 hover:text-slate-900')}`}
+                onClick={(e) => { e.stopPropagation(); onPlusClick?.(); }}
+                className={`w-full text-left p-3 rounded-xl text-[10px] leading-relaxed transition-all ${theme === 'dark' ? 'bg-white/5 text-slate-400 hover:text-slate-200' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
               >
-                {s.title}
+                You haven’t created a {label.toLowerCase()} yet. <span className="underline font-bold">Click + icon or here to begin.</span>
               </button>
-            ))}
+            )}
           </div>
         )}
       </div>
@@ -133,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleLogout = () => {
-    if (confirm("Logout of your Zysculpt session?")) {
+    if (confirm("Sign out and refresh session?")) {
       window.location.reload();
     }
   };
@@ -148,23 +203,35 @@ const Sidebar: React.FC<SidebarProps> = ({
             {(!isCollapsed || isMobileOpen) && <span className={`text-2xl font-extrabold tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`} style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</span>}
           </div>
         </div>
+        
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2 custom-scrollbar">
-          {renderNavButton(AppView.OVERVIEW, 'Home', <LayoutDashboard size={20} />)}
-          {renderNavButton(AppView.CAREER_COPILOT, 'Career Copilot', <Compass size={20} />, 'copilot', () => onNewSession('career-copilot'))}
+          {renderNavButton(AppView.OVERVIEW, 'Overview', <LayoutDashboard size={20} />)}
+          {renderNavButton(AppView.CAREER_COPILOT, 'Roadmap', <Compass size={20} />, 'copilot', () => onNewSession('career-copilot'))}
           {renderNavButton(AppView.RESUME_BUILDER, 'Resume Builder', <FileText size={20} />, 'resume', () => onNewSession('resume'))}
           {renderNavButton(AppView.COVER_LETTER, 'Cover Letter', <Mail size={20} />, 'letter', () => onNewSession('cover-letter'))}
-          {renderNavButton(AppView.RESIGNATION_LETTER, 'Resignation Letter', <DoorOpen size={20} />, 'resignation', () => onNewSession('resignation-letter'))}
+          {renderNavButton(AppView.RESIGNATION_LETTER, 'Resignation', <DoorOpen size={20} />, 'resignation', () => onNewSession('resignation-letter'))}
           <div className={`h-px my-3 mx-2 ${theme === 'dark' ? 'bg-[#2a2a2a]' : 'bg-slate-100'}`} />
-          {renderNavButton(AppView.KNOWLEDGE_HUB, 'Knowledge Hub', <Zap size={20} />)}
-          {renderNavButton(AppView.DOCUMENTS, 'Documents', <FolderOpen size={20} />)}
+          {renderNavButton(AppView.KNOWLEDGE_HUB, 'Skill Lab', <Zap size={20} />)}
+          {renderNavButton(AppView.DOCUMENTS, 'My Documents', <FolderOpen size={20} />)}
           {renderNavButton(AppView.FIND_JOB, 'Job Search', <Search size={20} />)}
-          {renderNavButton(AppView.SETTINGS, 'Account', <SettingsIcon size={20} />)}
+          {renderNavButton(AppView.SETTINGS, 'Settings', <SettingsIcon size={20} />)}
         </nav>
+
         <div className="p-4 space-y-2 border-t border-slate-200 dark:border-white/5">
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)} 
+            className={`hidden md:flex w-full items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'} ${isCollapsed ? 'justify-center' : ''}`}
+            title={isCollapsed ? "Expand menu" : "Collapse menu"}
+          >
+            {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            {!isCollapsed && <span className="font-medium text-sm">Minimize Menu</span>}
+          </button>
+          
           <button onClick={toggleTheme} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'} ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             {(!isCollapsed || isMobileOpen) && <span className="font-medium text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
           </button>
+
           <button onClick={handleLogout} className={`w-full flex items-center gap-4 p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
             <LogOut size={20} />
             {(!isCollapsed || isMobileOpen) && <span className="font-medium text-sm">Logout</span>}

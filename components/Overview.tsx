@@ -2,18 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
-  Mail, 
-  Compass, 
   ArrowUpRight, 
   Zap, 
   CheckCircle2,
-  Trophy,
-  X,
   Target,
-  Rocket,
   Lightbulb,
-  ChevronRight,
-  UserCheck,
   Calendar as CalendarIcon,
   Circle,
   Layout,
@@ -32,13 +25,11 @@ interface OverviewProps {
 }
 
 const PRO_TIPS = [
-  "Use the 'Knowledge Hub' to refresh technical skills before an interview.",
-  "Your 'Base Resume' automatically informs all new AI document sessions.",
-  "Ask the Copilot for a salary range for any role in the Job Search section.",
-  "Consistency is key: Log at least one win daily to keep your momentum high.",
-  "You can export resumes to both PDF and editable Word formats.",
-  "Zysculpt links in resumes are formatted cleanly as actual URLs for recruiters.",
-  "Simulate a tough performance review with the Copilot to build confidence."
+  "Upload your Master Resume in Settings to let AI know your full professional history.",
+  "Ask the Career Roadmap assistant for specific skills needed for your target role.",
+  "Check the Job Search section daily for new tailored opportunities.",
+  "Use the Resume Builder to optimize for ATS compatibility automatically.",
+  "Click any date on the calendar to see or add your professional wins."
 ];
 
 const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, setView, updateSession, userProfile }) => {
@@ -56,7 +47,7 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
   }, []);
 
   const activeGoalSession = sessions.find(s => s.type === 'career-copilot' && s.careerGoalData);
-  const isOnboarded = !!userProfile.fullName && !!userProfile.baseResumeText && !!activeGoalSession;
+  const isOnboarded = !!userProfile.fullName && !!userProfile.baseResumeText;
 
   const now = new Date();
   const currentMonth = now.toLocaleString('default', { month: 'long' });
@@ -75,22 +66,18 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
   for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(null);
   for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
-  // Logic to find task for selected day
   const getTasksForSelectedDay = (): ScheduledTask[] => {
     if (!activeGoalSession?.careerGoalData || !goalStartDate || !selectedDay) return [];
     const start = new Date(goalStartDate);
     start.setHours(0, 0, 0, 0);
     const dayDate = new Date(currentYear, now.getMonth(), selectedDay);
     dayDate.setHours(0, 0, 0, 0);
-    
     const diffTime = Math.abs(dayDate.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
     return activeGoalSession.careerGoalData.scheduledTasks.filter(t => t.dayNumber === diffDays);
   };
 
   const toggleTask = (taskId: string) => {
-    // Corrected to use activeGoalSession.id instead of undefined activeSession.id
     if (!activeGoalSession?.careerGoalData || !updateSession) return;
     const newTasks = activeGoalSession.careerGoalData.scheduledTasks.map(t => 
       t.id === taskId ? { ...t, completed: !t.completed } : t
@@ -101,7 +88,6 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
   };
 
   const handleLogWin = () => {
-    // Corrected to use activeGoalSession.id instead of undefined activeSession.id
     if (!selectedDay || !activeGoalSession || !updateSession) return;
     const dateStr = `${currentYear}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${selectedDay.toString().padStart(2, '0')}`;
     const newLog: DailyLog = { date: dateStr, win: winInput, completed: true };
@@ -118,7 +104,7 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
           <button onClick={onToggleMobile} className="md:hidden text-indigo-500"><Layout size={24} /></button>
-          <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Command Center</h2>
+          <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Overview</h2>
         </div>
       </header>
 
@@ -128,13 +114,13 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
             <div className={`p-8 rounded-[40px] border-2 border-dashed ${theme === 'dark' ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50/50 border-indigo-200'}`}>
               <div className="flex flex-col md:flex-row gap-8 items-center">
                 <div className="flex-1">
-                  <h1 className={`text-2xl md:text-3xl font-extrabold mb-4 ${textPrimary}`}>Launch your career journey</h1>
-                  <p className={`text-lg mb-6 leading-relaxed ${textSecondary}`}>Complete these 3 steps to unlock your AI roadmap.</p>
+                  <h1 className={`text-2xl md:text-3xl font-extrabold mb-4 ${textPrimary}`}>Welcome to Zysculpt</h1>
+                  <p className={`text-lg mb-6 leading-relaxed ${textSecondary}`}>Complete these steps to unlock your full AI potential.</p>
                   <div className="space-y-3">
                     {[
-                      { l: 'Complete Profile', c: !!userProfile.fullName, v: AppView.SETTINGS },
-                      { l: 'Upload Base Resume', c: !!userProfile.baseResumeText, v: AppView.SETTINGS },
-                      { l: 'Set Commitment & Goal', c: !!activeGoalSession, v: AppView.CAREER_COPILOT }
+                      { l: 'Fill Personal Information', c: !!userProfile.fullName, v: AppView.SETTINGS },
+                      { l: 'Upload Master Resume', c: !!userProfile.baseResumeText, v: AppView.SETTINGS },
+                      { l: 'Start a Career Roadmap', c: !!activeGoalSession, v: AppView.CAREER_COPILOT }
                     ].map((task, idx) => (
                       <button key={idx} onClick={() => setView(task.v)} className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all ${task.c ? 'opacity-50' : 'hover:translate-x-1'} ${cardBg}`}>
                         {task.c ? <CheckCircle2 className="text-emerald-500" size={18} /> : <Circle className="text-slate-300" size={18} />}
@@ -147,28 +133,20 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
             </div>
           </div>
         ) : (
-          <div className="mb-12">
+          <div className="mb-12 animate-in fade-in duration-700">
             <div className="flex items-center gap-4 mb-2">
-               <ZysculptLogo theme={theme} size={40} />
-               <h1 className={`text-3xl md:text-4xl font-extrabold tracking-tight ${textPrimary}`}>Hello, {userProfile.fullName.split(' ')[0]}.</h1>
+               <ZysculptLogo theme={theme} size={48} />
+               <h1 className={`text-3xl md:text-4xl font-extrabold tracking-tight ${textPrimary}`}>Welcome, {userProfile.fullName.split(' ')[0]}.</h1>
             </div>
-            <div className="flex items-center gap-3">
-               <span className={`px-3 py-1 rounded-full text-[10px] font-bold bg-indigo-500 text-white`}>{userProfile.dailyAvailability}h commitment</span>
-               <p className={`${textSecondary} font-medium`}>Goal: {activeGoalSession?.careerGoalData?.mainGoal}</p>
-            </div>
+            <p className={`${textSecondary} font-medium`}>Ready to sculpt your professional future today?</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           <div className="lg:col-span-2 space-y-6">
-            {/* Calendar */}
             <div className={`p-8 rounded-[32px] border ${cardBg}`}>
               <div className="flex items-center justify-between mb-8">
                 <h3 className={`text-lg font-bold flex items-center gap-2 ${textPrimary}`}><CalendarIcon size={20} className="text-indigo-500" /> {currentMonth}</h3>
-                <div className="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
-                   <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> <span>Logs</span></div>
-                   <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> <span>Today</span></div>
-                </div>
               </div>
               <div className="grid grid-cols-7 gap-y-4 text-center">
                 {['S','M','T','W','T','F','S'].map(d => <div key={d} className="text-[10px] font-bold opacity-30">{d}</div>)}
@@ -189,15 +167,14 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
               </div>
             </div>
 
-            {/* Daily Tasks for selected date */}
             <div className={`p-8 rounded-[32px] border ${cardBg}`}>
                <div className="flex items-center justify-between mb-6">
-                 <h3 className={`text-lg font-bold ${textPrimary}`}>Tasks for Day {selectedDay}</h3>
+                 <h3 className={`text-lg font-bold ${textPrimary}`}>Plan for Day {selectedDay}</h3>
                  <Target size={20} className="text-indigo-500" />
                </div>
                <div className="space-y-4">
                  {dayTasks.length === 0 ? (
-                   <p className={`text-sm italic ${textSecondary}`}>No specific tasks generated for this date yet. Check the Career Copilot to architect your plan.</p>
+                   <p className={`text-sm italic ${textSecondary}`}>No active roadmap tasks for this date. Visit Career Roadmap to generate your 30-day plan.</p>
                  ) : (
                    dayTasks.map(task => (
                      <div key={task.id} className="flex items-start gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
@@ -209,15 +186,6 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
                    ))
                  )}
                </div>
-               {selectedDay === now.getDate() && (
-                 <div className="mt-8 pt-8 border-t border-white/5">
-                   <p className="text-xs font-bold mb-3 uppercase tracking-widest opacity-40">Add a Win for Today</p>
-                   <div className="flex gap-2">
-                     <input value={winInput} onChange={e => setWinInput(e.target.value)} placeholder="Achieved a milestone?" className={`flex-1 p-3 text-xs rounded-xl border outline-none ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5' : 'bg-slate-50 border-slate-200'}`} />
-                     <button onClick={handleLogWin} className="px-4 bg-emerald-600 text-white rounded-xl font-bold text-xs">Save</button>
-                   </div>
-                 </div>
-               )}
             </div>
           </div>
 
@@ -225,19 +193,19 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
             <div className={`p-6 rounded-3xl border min-h-[160px] flex flex-col transition-all duration-500 ${theme === 'dark' ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
               <div className="flex items-center gap-2 mb-4 text-indigo-500">
                 <Lightbulb size={18} />
-                <h4 className="text-xs font-bold uppercase tracking-widest">Zysculpt Pro Tip</h4>
+                <h4 className="text-xs font-bold uppercase tracking-widest">Growth Tip</h4>
               </div>
-              <p className={`text-sm leading-relaxed ${textPrimary} font-medium animate-in fade-in slide-in-from-right-4`}>
+              <p className={`text-sm leading-relaxed ${textPrimary} font-medium`}>
                 "{PRO_TIPS[tipIndex]}"
               </p>
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-[10px] font-bold uppercase tracking-widest opacity-40 px-2">Quick Access</h2>
+              <h2 className="text-[10px] font-bold uppercase tracking-widest opacity-40 px-2">Quick Actions</h2>
               {[
-                { label: 'Knowledge Hub', view: AppView.KNOWLEDGE_HUB, icon: <Zap />, color: 'bg-orange-500' },
-                { label: 'Tailor Resume', view: AppView.RESUME_BUILDER, icon: <FileText />, color: 'bg-emerald-500' },
-                { label: 'Find a Role', view: AppView.FIND_JOB, icon: <Search />, color: 'bg-indigo-500' },
+                { label: 'Resume Builder', view: AppView.RESUME_BUILDER, icon: <FileText />, color: 'bg-emerald-500' },
+                { label: 'Find a Job', view: AppView.FIND_JOB, icon: <Search />, color: 'bg-indigo-500' },
+                { label: 'Skill Lab', view: AppView.KNOWLEDGE_HUB, icon: <Zap />, color: 'bg-orange-500' },
               ].map((action, i) => (
                 <button key={i} onClick={() => setView(action.view)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all group ${cardBg} hover:border-indigo-500`}>
                   <div className={`p-2.5 rounded-xl text-white ${action.color}`}>{action.icon}</div>
