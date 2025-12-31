@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { Message, UserProfile } from "../types";
 import { datadogLogs } from '@datadog/browser-logs';
@@ -12,17 +11,8 @@ const FLASH_MODEL = 'gemini-3-flash-preview';
  */
 export class GeminiService {
   private getClient() {
-    // Attempt to get key from shimmed process.env OR direct Vite meta.env
-    const key = (process.env as any).API_KEY || (import.meta as any).env?.VITE_API_KEY;
-    
-    if (!key) {
-      const error = new Error("API_KEY_MISSING: Gemini API Key not found in process.env or import.meta.env");
-      datadogLogs.logger.error("Gemini Client Initialization Failed", { error: error.message });
-      throw error;
-    }
-
-    // Strictly following initialization rule: new GoogleGenAI({ apiKey: process.env.API_KEY })
-    return new GoogleGenAI({ apiKey: key });
+    // Fix: Always use named parameter for apiKey and obtain exclusively from process.env.API_KEY as per guidelines.
+    return new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   }
 
   private formatProfileHeader(profile?: UserProfile): string {
@@ -164,13 +154,28 @@ export class GeminiService {
       The user has ${availability} hours per day available.
       Return the plan as a JSON array of objects with keys: "day" (1-30) and "task" (string).`;
 
+      // Fix: Used ai.models.generateContent directly to comply with current SDK guidelines.
       const response = await ai.models.generateContent({
         model: FLASH_MODEL,
         contents: prompt,
-        config: { responseMimeType: "application/json" }
+        config: { 
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                day: { type: Type.INTEGER },
+                task: { type: Type.STRING }
+              },
+              required: ['day', 'task']
+            }
+          }
+        }
       });
       
       this.logTelemetry('Career Plan', FLASH_MODEL, startTime, response);
+      // Fix: Extraction via .text property as per guidelines (not .text()).
       return JSON.parse(response.text || '[]');
     } catch (error: any) {
       this.logTelemetry('Career Plan', FLASH_MODEL, startTime, null, error);
@@ -185,13 +190,29 @@ export class GeminiService {
       const prompt = `Generate 5 challenging quiz questions about "${topic}". 
       Return as a JSON array of objects with: "question", "options" (array of 4 strings), and "correctIndex" (0-3).`;
 
+      // Fix: Used ai.models.generateContent directly to comply with current SDK guidelines.
       const response = await ai.models.generateContent({
         model: FLASH_MODEL,
         contents: prompt,
-        config: { responseMimeType: "application/json" }
+        config: { 
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING },
+                options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                correctIndex: { type: Type.INTEGER }
+              },
+              required: ['question', 'options', 'correctIndex']
+            }
+          }
+        }
       });
 
       this.logTelemetry('Quiz', FLASH_MODEL, startTime, response);
+      // Fix: Extraction via .text property as per guidelines (not .text()).
       return JSON.parse(response.text || '[]');
     } catch (error: any) {
       this.logTelemetry('Quiz', FLASH_MODEL, startTime, null, error);
@@ -227,12 +248,14 @@ export class GeminiService {
         5.  Structure: Header -> Professional Summary -> Experience -> Skills -> Education.
       `;
 
+      // Fix: Using direct model call for text generation.
       const response = await ai.models.generateContent({
         model: PRO_MODEL,
         contents: prompt,
       });
       
       this.logTelemetry('Sculpt Resume', PRO_MODEL, startTime, response);
+      // Fix: Extraction via .text property.
       return response.text || "Failed to generate resume.";
     } catch (error: any) {
       this.logTelemetry('Sculpt Resume', PRO_MODEL, startTime, null, error);
@@ -267,12 +290,14 @@ export class GeminiService {
         4.  Make the tone professional, enthusiastic, and confident.
       `;
 
+      // Fix: Using direct model call for text generation.
       const response = await ai.models.generateContent({
         model: PRO_MODEL,
         contents: prompt,
       });
 
       this.logTelemetry('Sculpt Cover Letter', PRO_MODEL, startTime, response);
+      // Fix: Extraction via .text property.
       return response.text || "Failed to generate cover letter.";
     } catch (error: any) {
       this.logTelemetry('Sculpt Cover Letter', PRO_MODEL, startTime, null, error);
@@ -306,12 +331,14 @@ export class GeminiService {
         3.  Keep the tone polite, firm, and grateful.
       `;
 
+      // Fix: Using direct model call for text generation.
       const response = await ai.models.generateContent({
         model: PRO_MODEL,
         contents: prompt,
       });
 
       this.logTelemetry('Sculpt Resignation', PRO_MODEL, startTime, response);
+      // Fix: Extraction via .text property.
       return response.text || "Failed to generate resignation letter.";
     } catch (error: any) {
       this.logTelemetry('Sculpt Resignation', PRO_MODEL, startTime, null, error);

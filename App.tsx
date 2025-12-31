@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Overview from './components/Overview';
 import AIResumeBuilder from './components/AIResumeBuilder';
@@ -12,18 +11,23 @@ import Documents from './components/Documents';
 import KnowledgeHub from './components/KnowledgeHub';
 import { Auth } from './components/Auth';
 import { AppView, ChatSession, Theme, UserProfile } from './types';
-import { supabase } from './services/supabase';
-import { Sparkles } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from './services/supabase';
+import { Sparkles, AlertCircle, RefreshCw, LogOut } from 'lucide-react';
 import { setDatadogUser, clearDatadogUser } from './services/datadog';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [showResetOptions, setShowResetOptions] = useState(false);
   const [currentView, setCurrentView] = useState<AppView>(AppView.OVERVIEW);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('zysculpt-theme') as Theme) || 'dark');
   const [keyPickerVisible, setKeyPickerVisible] = useState(false);
+
+  // Fix: Replaced NodeJS.Timeout with ReturnType<typeof setTimeout> to fix "Cannot find namespace 'NodeJS'" error in browser/Vite environments.
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [userProfile, setUserProfile] = useState<UserProfile>({
     fullName: '',
@@ -36,13 +40,28 @@ const App: React.FC = () => {
     portfolio: '',
     baseResumeText: '',
     dailyAvailability: 2,
-    voiceId: 'IKne3meq5aSn9XLyUdCD' // Default voice ID
+    voiceId: 'IKne3meq5aSn9XLyUdCD'
   });
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState('');
 
-  // 1. Check for API Key Selection (Mandatory for Pro Models)
+  // 1. Connection Watchdog - if it takes too long, provide a reset
+  useEffect(() => {
+    if (authLoading) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        setShowResetOptions(true);
+      }, 8000); // 8 seconds before showing reset option
+    } else {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+      setShowResetOptions(false);
+    }
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, [authLoading]);
+
+  // Check for API Key Selection
   useEffect(() => {
     const checkApiKey = async () => {
       // @ts-ignore
@@ -66,7 +85,6 @@ const App: React.FC = () => {
     }
   };
 
-  // 1. Sync Profile to Supabase
   const syncProfile = useCallback(async (profile: UserProfile, userId: string) => {
     try {
       await supabase.from('profiles').upsert({
@@ -89,7 +107,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // 2. Sync Session to Supabase
   const syncSession = useCallback(async (chatSession: ChatSession, userId: string) => {
     try {
       await supabase.from('sessions').upsert({
@@ -99,10 +116,10 @@ const App: React.FC = () => {
         type: chatSession.type,
         messages: chatSession.messages,
         job_description: chatSession.jobDescription,
-        resume_text: chatSession.resumeText,
+        resume_text: chatSession.resume_text,
         final_resume: chatSession.finalResume,
-        career_goal_data: chatSession.careerGoalData,
-        style_prefs: chatSession.stylePrefs,
+        career_goal_data: chatSession.career_goal_data,
+        style_prefs: chatSession.style_prefs,
         last_updated: chatSession.lastUpdated
       });
     } catch (e) {
@@ -110,45 +127,18 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // 3. Fetch Initial Data
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        setDatadogUser({ 
-          id: session.user.id, 
-          email: session.user.email 
-        });
-        fetchData(session.user.id);
-      } else {
-        clearDatadogUser();
-        setAuthLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        setDatadogUser({ 
-          id: session.user.id, 
-          email: session.user.email 
-        });
-        fetchData(session.user.id);
-      } else {
-        clearDatadogUser();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   const fetchData = async (userId: string) => {
     setAuthLoading(true);
+    setLoadingError(null);
     try {
-      const [profileRes, sessionsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', userId).single(),
-        supabase.from('sessions').select('*').eq('user_id', userId).order('last_updated', { ascending: false })
-      ]);
+      const profilePromise = supabase.from('profiles').select('*').eq('id', userId).single();
+      const sessionsPromise = supabase.from('sessions').select('*').eq('user_id', userId).order('last_updated', { ascending: false });
+
+      const [profileRes, sessionsRes] = await Promise.all([profilePromise, sessionsPromise]);
+
+      if (profileRes.error && profileRes.error.code !== 'PGRST116') {
+        throw profileRes.error;
+      }
 
       if (profileRes.data) {
         const profile = {
@@ -165,12 +155,7 @@ const App: React.FC = () => {
           voiceId: profileRes.data.voice_id || 'IKne3meq5aSn9XLyUdCD'
         };
         setUserProfile(profile);
-        // Update Datadog with richer profile info
-        setDatadogUser({ 
-          id: userId, 
-          email: profile.email,
-          name: profile.fullName
-        });
+        setDatadogUser({ id: userId, email: profile.email, name: profile.fullName });
       }
 
       if (sessionsRes.data && sessionsRes.data.length > 0) {
@@ -191,12 +176,53 @@ const App: React.FC = () => {
       } else {
         createNewSession('career-copilot', 'Career Roadmap');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Data fetch error:", e);
+      setLoadingError(e.message || "Network Error: Data could not be retrieved.");
     } finally {
       setAuthLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setAuthLoading(false);
+      setLoadingError("Supabase is not configured. Check environment variables.");
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error("Auth error:", error);
+        setAuthLoading(false);
+        setLoadingError("Authentication failed. Please refresh or clear cache.");
+        return;
+      }
+      setSession(session);
+      if (session) {
+        setDatadogUser({ id: session.user.id, email: session.user.email });
+        fetchData(session.user.id);
+      } else {
+        clearDatadogUser();
+        setAuthLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        setDatadogUser({ id: session.user.id, email: session.user.email });
+        // Only fetch if sessions are empty, preventing loops
+        if (sessions.length === 0) fetchData(session.user.id);
+      } else {
+        clearDatadogUser();
+        setSessions([]);
+        setActiveSessionId('');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     document.body.className = `theme-${theme}`;
@@ -273,17 +299,60 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('supabase.auth.token'); // Hard clear
     setSessions([]);
     setActiveSessionId('');
     clearDatadogUser();
+    setSession(null);
+    setAuthLoading(false);
+  };
+
+  const handleManualReset = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
   };
 
   if (authLoading) {
     return (
-      <div className="h-screen w-full bg-[#121212] flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-white font-bold text-xs tracking-widest uppercase opacity-40">Synchronizing Flight Data</p>
+      <div className="h-screen w-full bg-[#121212] flex items-center justify-center p-6">
+        <div className="flex flex-col items-center max-w-md w-full text-center">
+          <div className="relative mb-8">
+            <div className="w-16 h-16 border-4 border-indigo-500/20 rounded-full"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          
+          <h2 className="text-white font-bold text-lg mb-2">Synchronizing Flight Data</h2>
+          <p className="text-slate-500 text-sm mb-8">We're retrieving your professional profile from orbit.</p>
+          
+          {loadingError && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-xs mb-6 w-full text-left">
+              <AlertCircle size={18} className="flex-shrink-0" />
+              <p>{loadingError}</p>
+            </div>
+          )}
+
+          {showResetOptions && (
+            <div className="space-y-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl text-[11px] text-indigo-400 text-left mb-2">
+                <strong>Taking too long?</strong> This usually happens if an ad-blocker or strict browser protection is blocking our data connection.
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="flex-1 py-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all"
+                >
+                  <RefreshCw size={14} /> Refresh
+                </button>
+                <button 
+                  onClick={handleManualReset}
+                  className="flex-1 py-3 bg-red-600/10 border border-red-600/20 text-red-500 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-red-600/20 transition-all"
+                >
+                  <LogOut size={14} /> Reset Session
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
