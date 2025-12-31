@@ -2,14 +2,15 @@
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { Message, UserProfile } from "../types";
 
-const MODEL_NAME = 'gemini-3-flash-preview';
+// Using Gemini 3 Pro for complex reasoning/sculpting tasks as per guidelines
+const PRO_MODEL = 'gemini-3-pro-preview';
+const FLASH_MODEL = 'gemini-3-flash-preview';
 
 export class GeminiService {
-  private ai: GoogleGenAI;
-
-  constructor() {
+  private getClient() {
+    // Exclusively use process.env.API_KEY as per instructions
     const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
-    this.ai = new GoogleGenAI({ apiKey: apiKey as string });
+    return new GoogleGenAI({ apiKey: apiKey as string });
   }
 
   async generateChatResponse(
@@ -23,6 +24,7 @@ export class GeminiService {
       audioPart?: { inlineData: { data: string, mimeType: string } }
     }
   ) {
+    const ai = this.getClient();
     const type = context?.type || 'resume';
     let roleDescription = 'professional career assistant';
     
@@ -51,18 +53,15 @@ export class GeminiService {
     If the user provides audio, it is a voice message. Acknowledge what they said.
     `;
 
-    // Convert history to Gemini format (model instead of assistant)
     const contents = history.map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }]
     }));
 
-    // Add current turn
     const currentParts: any[] = [];
     if (context?.audioPart) {
       currentParts.push(context.audioPart);
     }
-    // Only add text part if there's message content or if there's no audio
     if (currentMessage.trim() || !context?.audioPart) {
       currentParts.push({ text: currentMessage || "I've sent a voice message." });
     }
@@ -70,15 +69,14 @@ export class GeminiService {
     contents.push({ role: 'user', parts: currentParts });
 
     try {
-      const response = await this.ai.models.generateContentStream({
-        model: MODEL_NAME,
+      return await ai.models.generateContentStream({
+        model: FLASH_MODEL,
         contents: contents as any,
         config: {
           systemInstruction,
           temperature: 0.7,
         },
       });
-      return response;
     } catch (error) {
       console.error("Gemini API Error:", error);
       throw error;
@@ -86,43 +84,45 @@ export class GeminiService {
   }
 
   async generateCareerPlan(goal: string, availability: number): Promise<any[]> {
+    const ai = this.getClient();
     const prompt = `Create a 30-day career plan for the following goal: "${goal}". 
     The user has ${availability} hours per day available.
     Return the plan as a JSON array of objects with keys: "day" (1-30) and "task" (string).
     Keep tasks specific and achievable within the time frame.`;
 
-    const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
-
     try {
-      return JSON.parse(response.text);
+      const response = await ai.models.generateContent({
+        model: FLASH_MODEL,
+        contents: prompt,
+        config: { responseMimeType: "application/json" }
+      });
+      return JSON.parse(response.text || '[]');
     } catch (e) {
-      console.error("Failed to parse AI plan", e);
-      return [];
+      console.error("Failed to generate career plan", e);
+      throw e;
     }
   }
 
   async generateQuiz(topic: string): Promise<any[]> {
+    const ai = this.getClient();
     const prompt = `Generate 5 challenging quiz questions about "${topic}". 
     Return as a JSON array of objects with: "question", "options" (array of 4 strings), and "correctIndex" (0-3).`;
 
-    const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
-
     try {
-      return JSON.parse(response.text);
+      const response = await ai.models.generateContent({
+        model: FLASH_MODEL,
+        contents: prompt,
+        config: { responseMimeType: "application/json" }
+      });
+      return JSON.parse(response.text || '[]');
     } catch (e) {
+      console.error("Failed to generate quiz", e);
       return [];
     }
   }
 
   async sculptResume(jobDescription: string, userData: string): Promise<string> {
+    const ai = this.getClient();
     const prompt = `
       As an ATS expert, take the following Job Description and User Experience data and generate a perfect resume in Markdown format.
       
@@ -139,15 +139,20 @@ export class GeminiService {
       - IMPORTANT: Format links as [actual-url](actual-url) so they are clickable and readable.
     `;
 
-    const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-    });
-
-    return response.text || "Failed to generate resume.";
+    try {
+      const response = await ai.models.generateContent({
+        model: PRO_MODEL,
+        contents: prompt,
+      });
+      return response.text || "Failed to generate resume.";
+    } catch (e) {
+      console.error("Failed to sculpt resume", e);
+      throw e;
+    }
   }
 
   async sculptCoverLetter(jobDescription: string, userData: string): Promise<string> {
+    const ai = this.getClient();
     const prompt = `
       As a professional recruiter, write a compelling, tailored cover letter based on the Job Description and User Background.
       
@@ -164,15 +169,20 @@ export class GeminiService {
       - Output ONLY the cover letter in Markdown.
     `;
 
-    const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-    });
-
-    return response.text || "Failed to generate cover letter.";
+    try {
+      const response = await ai.models.generateContent({
+        model: PRO_MODEL,
+        contents: prompt,
+      });
+      return response.text || "Failed to generate cover letter.";
+    } catch (e) {
+      console.error("Failed to sculpt cover letter", e);
+      throw e;
+    }
   }
 
   async sculptResignationLetter(exitDetails: string, userData: string): Promise<string> {
+    const ai = this.getClient();
     const prompt = `
       As a professional consultant, write a polite and firm resignation letter based on the provided details.
       
@@ -189,12 +199,16 @@ export class GeminiService {
       - Output ONLY the letter in Markdown.
     `;
 
-    const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: prompt,
-    });
-
-    return response.text || "Failed to generate resignation letter.";
+    try {
+      const response = await ai.models.generateContent({
+        model: PRO_MODEL,
+        contents: prompt,
+      });
+      return response.text || "Failed to generate resignation letter.";
+    } catch (e) {
+      console.error("Failed to sculpt resignation letter", e);
+      throw e;
+    }
   }
 }
 

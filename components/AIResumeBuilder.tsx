@@ -14,7 +14,8 @@ import {
   Palette,
   Mic,
   Square,
-  Menu
+  Menu,
+  AlertCircle
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { geminiService } from '../services/gemini';
@@ -90,11 +91,12 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isSculpting, setIsSculpting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Voice recording states
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -123,13 +125,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
-
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
-
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const reader = new FileReader();
@@ -140,11 +138,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         };
         stream.getTracks().forEach(track => track.stop());
       };
-
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      console.error("Error accessing microphone:", err);
       alert("Please allow microphone access to record voice messages.");
     }
   };
@@ -159,6 +155,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const handleSend = async (audioData?: string) => {
     if (!inputValue.trim() && !audioData && !isTyping) return;
     
+    setErrorMessage(null);
     const contentText = audioData ? (inputValue.trim() ? `${inputValue} [Voice Message]` : "[Voice Message]") : inputValue;
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: contentText, timestamp: Date.now() };
     const newMessages = [...activeSession.messages, userMessage];
@@ -173,21 +170,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         type: 'resume',
         userProfile
       };
+      if (audioData) context.audioPart = { inlineData: { data: audioData, mimeType: 'audio/webm' } };
 
-      if (audioData) {
-        context.audioPart = {
-          inlineData: {
-            data: audioData,
-            mimeType: 'audio/webm'
-          }
-        };
-      }
-
-      const responseStream = await geminiService.generateChatResponse(
-        newMessages.slice(0, -1), // Send previous history
-        inputValue, 
-        context
-      );
+      const responseStream = await geminiService.generateChatResponse(newMessages.slice(0, -1), inputValue, context);
       
       let assistantResponse = '';
       const assistantId = (Date.now() + 1).toString();
@@ -201,10 +186,25 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         } : s));
       }
     } catch (e) {
+      setErrorMessage("The AI is currently unavailable. Please check your API key and connection.");
       updateSession(activeSessionId, { 
-        messages: [...newMessages, { id: 'error', role: 'assistant', content: "Something went wrong. Please check your connection.", timestamp: Date.now() }] 
+        messages: [...newMessages, { id: 'error', role: 'assistant', content: "Something went wrong. Please check your API key in Vercel settings.", timestamp: Date.now() }] 
       });
     } finally { setIsTyping(false); }
+  };
+
+  const handleSculpt = async () => {
+    setErrorMessage(null);
+    setIsSculpting(true);
+    try {
+      const combinedData = `Background: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
+      const result = await geminiService.sculptResume(activeSession.jobDescription || 'Professional Resume', combinedData);
+      updateSession(activeSessionId, { finalResume: result });
+      setShowPreview(true);
+    } catch (err) { 
+      console.error(err);
+      setErrorMessage("Failed to sculpt resume. Ensure your API key is valid.");
+    } finally { setIsSculpting(false); }
   };
 
   const updatePrefs = (newPrefs: Partial<StylePrefs>) => {
@@ -230,10 +230,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     try {
       const children = parseMarkdownToDocx(activeSession.finalResume);
       const doc = new Document({
-        sections: [{
-          properties: {},
-          children: children,
-        }],
+        sections: [{ properties: {}, children: children }],
       });
       const blob = await Packer.toBlob(doc);
       const url = URL.createObjectURL(blob);
@@ -267,7 +264,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
                     { id: 'font-serif', label: 'Garamond (Serif)' },
                     { id: 'font-mono', label: 'Roboto (Clean)' },
                     { id: 'font-arial', label: 'Arial (Standard)' },
-                    { id: 'font-times', label: 'Times (Academic)' }
+                    { id: 'font-times', label: 'Tinos (Academic)' }
                   ].map(font => (
                     <button 
                       key={font.id}
@@ -284,7 +281,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
           </div>
         </header>
-        
         <div className={`flex-1 overflow-y-auto p-4 md:p-8 pb-32 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
           <div className="printable-area max-w-4xl mx-auto bg-white text-black p-8 md:p-12 shadow-2xl rounded-sm min-h-[1050px] border border-slate-200">
             <MarkdownLite text={activeSession.finalResume} dark={true} prefs={stylePrefs} />
@@ -296,6 +292,16 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
   return (
     <div className="flex flex-col h-full relative">
+      {isSculpting && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="p-8 rounded-[40px] bg-[#1a1a1a] border border-white/10 flex flex-col items-center shadow-2xl animate-in zoom-in-95">
+              <Loader2 size={48} className="text-indigo-500 animate-spin mb-6" />
+              <h3 className="text-xl font-bold text-white mb-2">Sculpting Resume</h3>
+              <p className="text-slate-400 text-center text-sm max-w-[240px]">Zysculpt Pro is tailoring your profile for high-impact results...</p>
+           </div>
+        </div>
+      )}
+
       <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
           <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
@@ -307,28 +313,25 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
           </div>
         </div>
         {(activeSession.jobDescription || userProfile?.baseResumeText) && (
-          <button onClick={async () => {
-            setIsTyping(true);
-            try {
-              const combinedData = `Background: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
-              const result = await geminiService.sculptResume(activeSession.jobDescription || 'Professional Resume', combinedData);
-              updateSession(activeSessionId, { finalResume: result });
-              setShowPreview(true);
-            } catch (err) { console.error(err); } finally { setIsTyping(false); }
-          }} disabled={isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-indigo-500 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 text-xs md:text-sm">
-            {isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} <span className="hidden sm:inline">Sculpt Resume</span><span className="sm:hidden">Sculpt</span>
+          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-indigo-500 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 text-xs md:text-sm disabled:opacity-50">
+            {isSculpting || isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
+            <span className="hidden sm:inline">Sculpt Resume</span><span className="sm:hidden">Sculpt</span>
           </button>
         )}
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+        {errorMessage && (
+          <div className="mx-auto max-w-lg p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-xs font-medium animate-in slide-in-from-top-4">
+             <AlertCircle size={18} />
+             <p>{errorMessage}</p>
+          </div>
+        )}
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm border relative group ${
               m.role === 'user' 
-                ? theme === 'dark' 
-                  ? 'bg-indigo-600 text-white border-indigo-500' 
-                  : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
+                ? theme === 'dark' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
                 : theme === 'dark' ? 'bg-[#2a2a2a] text-white border-[#444]' : 'bg-white text-slate-900 border-slate-200'
             }`}>
               <div className="text-sm leading-relaxed"><MarkdownLite text={m.content} theme={theme} /></div>
@@ -353,7 +356,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder={isRecording ? "Recording..." : "Tell the builder about your target role..."}
-              disabled={isRecording}
+              disabled={isRecording || isSculpting}
               className={`w-full border rounded-2xl p-4 pr-12 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
                 theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-indigo-400'
               } ${isRecording ? 'opacity-50 animate-pulse' : ''}`}
@@ -370,7 +373,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               {isRecording ? <Square size={18} /> : <Mic size={18} />}
             </button>
           </div>
-          <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording} className="p-4 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 transition-colors shadow-md disabled:opacity-30 flex-shrink-0">
+          <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording || isSculpting} className="p-4 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 transition-colors shadow-md disabled:opacity-30 flex-shrink-0">
             <Send size={18} />
           </button>
         </div>
