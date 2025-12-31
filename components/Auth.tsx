@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { ZysculptLogo } from './Sidebar';
-import { Loader2, Mail, Lock, AlertCircle, ChevronRight, User } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle, ChevronRight, User, Terminal } from 'lucide-react';
 
 export const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -11,11 +11,21 @@ export const Auth: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
+
+  // @ts-ignore - Accessing Vite's meta env for debug view
+  const env = import.meta.env || {};
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (!isSupabaseConfigured) {
+      setError("Connection Error: VITE_SUPABASE_URL is missing. Ensure you have renamed your variables in Vercel to use the VITE_ prefix.");
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isSignUp) {
@@ -38,7 +48,7 @@ export const Auth: React.FC = () => {
     } catch (err: any) {
       console.error("Auth Error:", err);
       if (err.message === 'Failed to fetch') {
-        setError("Connection failed. Please ensure your environment variables are configured correctly.");
+        setError("Network Error: The browser could not reach Supabase. Check if the project URL is correct in your Vercel Dashboard (VITE_SUPABASE_URL).");
       } else {
         setError(err.message || "An unexpected error occurred. Please check your credentials.");
       }
@@ -110,9 +120,16 @@ export const Auth: React.FC = () => {
             </div>
 
             {error && (
-              <div className={`p-4 rounded-2xl text-xs flex items-center gap-3 border ${error.includes("created") ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
-                <AlertCircle size={16} className="flex-shrink-0" />
-                <p>{error}</p>
+              <div className={`p-4 rounded-2xl text-xs flex flex-col gap-2 border ${error.includes("created") ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
+                <div className="flex items-center gap-3">
+                  <AlertCircle size={16} className="flex-shrink-0" />
+                  <p>{error}</p>
+                </div>
+                {!isSupabaseConfigured && (
+                  <p className="text-[10px] opacity-60 mt-1 italic leading-relaxed">
+                    Check your Vercel Dashboard. You likely have "SUPABASE_URL" but Vite requires "VITE_SUPABASE_URL" to let the frontend see it.
+                  </p>
+                )}
               </div>
             )}
 
@@ -132,7 +149,7 @@ export const Auth: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
+          <div className="mt-8 pt-6 border-t border-white/5 flex flex-col items-center gap-4">
             <button
               onClick={() => {
                 setIsSignUp(!isSignUp);
@@ -142,7 +159,22 @@ export const Auth: React.FC = () => {
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
+            
+            <button 
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-[9px] text-slate-700 hover:text-slate-500 uppercase tracking-widest flex items-center gap-1.5"
+            >
+              <Terminal size={10} /> Debug Dashboard Variables
+            </button>
           </div>
+
+          {showDebug && (
+            <div className="mt-4 p-4 bg-black rounded-xl border border-white/5 font-mono text-[10px] text-emerald-500 overflow-x-auto">
+              <p>VITE_SUPABASE_URL: {env.VITE_SUPABASE_URL ? 'FOUND' : 'MISSING'}</p>
+              <p>VITE_SUPABASE_ANON_KEY: {env.VITE_SUPABASE_ANON_KEY ? 'FOUND' : 'MISSING'}</p>
+              <p className="mt-2 text-slate-500 italic">If MISSING, go to Vercel Settings and prefix your keys with VITE_</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
