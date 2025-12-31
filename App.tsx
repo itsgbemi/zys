@@ -35,7 +35,8 @@ const App: React.FC = () => {
     github: '',
     portfolio: '',
     baseResumeText: '',
-    dailyAvailability: 2
+    dailyAvailability: 2,
+    voiceId: 'IKne3meq5aSn9XLyUdCD' // Default voice ID
   });
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -80,6 +81,7 @@ const App: React.FC = () => {
         portfolio: profile.portfolio,
         base_resume_text: profile.baseResumeText,
         daily_availability: profile.dailyAvailability,
+        voice_id: profile.voiceId,
         updated_at: new Date().toISOString()
       });
     } catch (e) {
@@ -159,7 +161,8 @@ const App: React.FC = () => {
           github: profileRes.data.github || '',
           portfolio: profileRes.data.portfolio || '',
           baseResumeText: profileRes.data.base_resume_text || '',
-          dailyAvailability: profileRes.data.daily_availability || 2
+          dailyAvailability: profileRes.data.daily_availability || 2,
+          voiceId: profileRes.data.voice_id || 'IKne3meq5aSn9XLyUdCD'
         };
         setUserProfile(profile);
         // Update Datadog with richer profile info

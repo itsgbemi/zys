@@ -24,6 +24,7 @@ export interface UserProfile {
   portfolio?: string;
   baseResumeText: string;
   dailyAvailability: number; // Hours per day
+  voiceId?: string; // ElevenLabs Voice ID
 }
 
 export interface Message {
