@@ -6,7 +6,18 @@ import { Message, UserProfile } from "../types";
 const PRO_MODEL = 'gemini-3-pro-preview';
 const FLASH_MODEL = 'gemini-3-flash-preview';
 
+/**
+ * Zysculpt Gemini Service
+ * 
+ * Accesses API_KEY via process.env.API_KEY (shimmed from VITE_API_KEY in index.tsx)
+ * Creates new instances per-call to ensure key updates from UI dialogs are captured.
+ */
 export class GeminiService {
+  private getClient() {
+    // Strictly following initialization rule: new GoogleGenAI({ apiKey: process.env.API_KEY })
+    return new GoogleGenAI({ apiKey: (process.env as any).API_KEY as string });
+  }
+
   async generateChatResponse(
     history: Message[], 
     currentMessage: string, 
@@ -18,8 +29,7 @@ export class GeminiService {
       audioPart?: { inlineData: { data: string, mimeType: string } }
     }
   ) {
-    // Strictly following initialization rule: new GoogleGenAI({ apiKey: process.env.API_KEY })
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const ai = this.getClient();
     
     const type = context?.type || 'resume';
     let roleDescription = 'professional career assistant';
@@ -75,7 +85,7 @@ export class GeminiService {
   }
 
   async generateCareerPlan(goal: string, availability: number): Promise<any[]> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const ai = this.getClient();
     const prompt = `Create a 30-day career plan for the following goal: "${goal}". 
     The user has ${availability} hours per day available.
     Return the plan as a JSON array of objects with keys: "day" (1-30) and "task" (string).
@@ -90,7 +100,7 @@ export class GeminiService {
   }
 
   async generateQuiz(topic: string): Promise<any[]> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const ai = this.getClient();
     const prompt = `Generate 5 challenging quiz questions about "${topic}". 
     Return as a JSON array of objects with: "question", "options" (array of 4 strings), and "correctIndex" (0-3).`;
 
@@ -103,7 +113,7 @@ export class GeminiService {
   }
 
   async sculptResume(jobDescription: string, userData: string): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const ai = this.getClient();
     const prompt = `
       As an ATS expert, take the following Job Description and User Experience data and generate a perfect resume in Markdown format.
       
@@ -128,7 +138,7 @@ export class GeminiService {
   }
 
   async sculptCoverLetter(jobDescription: string, userData: string): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const ai = this.getClient();
     const prompt = `
       As a professional recruiter, write a compelling, tailored cover letter based on the Job Description and User Background.
       
@@ -153,7 +163,7 @@ export class GeminiService {
   }
 
   async sculptResignationLetter(exitDetails: string, userData: string): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const ai = this.getClient();
     const prompt = `
       As a professional consultant, write a polite and firm resignation letter based on the provided details.
       
