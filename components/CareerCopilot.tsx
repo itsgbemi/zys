@@ -143,8 +143,7 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
       setPlayingMessageId(null);
     } else {
       setPlayingMessageId(messageId);
-      // Pass the voice preference from userProfile
-      elevenLabsService.speak(text, () => setPlayingMessageId(null), userProfile.voiceId);
+      elevenLabsService.speak(text, () => setPlayingMessageId(null));
     }
   };
 

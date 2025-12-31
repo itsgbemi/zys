@@ -2,29 +2,18 @@
 const API_KEY = (import.meta as any).env.VITE_ELEVENLABS_API_KEY;
 const BASE_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
 
-// Available Voices for Zysculpt
-export const AVAILABLE_VOICES = [
-  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', gender: 'Male', description: 'Calm, Professional (Default)' },
-  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', gender: 'Female', description: 'American, Clear, Narration' },
-  { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', gender: 'Female', description: 'Strong, Professional' },
-  { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', gender: 'Male', description: 'Well-rounded, American' }
-];
-
-// Default to Charlie
+// "Charlie" - a calm, professional voice suitable for career coaching
 const DEFAULT_VOICE_ID = 'IKne3meq5aSn9XLyUdCD'; 
 
 let currentAudio: HTMLAudioElement | null = null;
 
 export const elevenLabsService = {
-  getVoices: () => AVAILABLE_VOICES,
-
   /**
    * Streams text to speech using ElevenLabs
    * @param text The text to speak
    * @param onEnd Callback when audio finishes
-   * @param voiceId Optional specific voice ID (overrides default)
    */
-  speak: async (text: string, onEnd?: () => void, voiceId?: string) => {
+  speak: async (text: string, onEnd?: () => void) => {
     if (!API_KEY) {
       console.warn("ElevenLabs API Key missing. Set VITE_ELEVENLABS_API_KEY in .env");
       alert("Voice features require an ElevenLabs API Key in settings.");
@@ -39,12 +28,10 @@ export const elevenLabsService = {
     }
 
     try {
-      const selectedVoice = voiceId || DEFAULT_VOICE_ID;
-      
       // clean markdown asterisks for smoother reading
       const cleanText = text.replace(/\*\*/g, '').replace(/#/g, '');
 
-      const response = await fetch(`${BASE_URL}/${selectedVoice}`, {
+      const response = await fetch(`${BASE_URL}/${DEFAULT_VOICE_ID}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,8 +48,6 @@ export const elevenLabsService = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('ElevenLabs Error:', errorData);
         throw new Error('ElevenLabs API request failed');
       }
 
@@ -79,7 +64,6 @@ export const elevenLabsService = {
 
     } catch (error) {
       console.error('Error generating speech:', error);
-      alert("Failed to play audio. Check console for details (API Key or Network).");
       if (onEnd) onEnd();
     }
   },

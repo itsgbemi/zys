@@ -2,25 +2,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, 
-  Paperclip, 
   Loader2, 
   Undo,
   Sparkles,
   FileText,
-  List as ListIcon,
-  ChevronUp,
-  Type as TypeIcon,
-  Plus,
   Palette,
   Mic,
   Square,
   Menu,
   AlertCircle
 } from 'lucide-react';
-import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
-import { geminiService } from '../services/gemini';
+import { Message, ChatSession, Theme, StylePrefs, UserProfile } from './types';
+import { geminiService } from './services/gemini';
 import { Document, Packer } from 'docx';
-import { parseMarkdownToDocx } from '../utils/docx-export';
+import { parseMarkdownToDocx } from './utils/docx-export';
 
 interface AIResumeBuilderProps {
   onToggleMobile?: () => void;
@@ -112,7 +107,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeSession.messages, isTyping]);
+  }, [activeSession.messages, isTyping, isSculpting]);
 
   useEffect(() => {
     if (activeSession.finalResume) setShowPreview(true);
@@ -187,10 +182,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       }
     } catch (e: any) {
       console.error("Gemini Chat Error:", e);
-      let errorText = "The AI is currently unavailable. Check the console for more details.";
-      if (e.message?.includes('API_KEY')) {
-        errorText = "Missing or invalid Gemini API Key. Ensure VITE_API_KEY is correctly set in your Vercel/Environment settings.";
-      }
+      let errorText = "The AI is currently unavailable. Check the console.";
       setErrorMessage(errorText);
       updateSession(activeSessionId, { 
         messages: [...newMessages, { id: 'error', role: 'assistant', content: errorText, timestamp: Date.now() }] 
@@ -203,23 +195,12 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     setIsSculpting(true);
     try {
       const combinedData = `Background: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
-      const result = await geminiService.sculptResume(activeSession.jobDescription || 'Professional Resume', combinedData);
+      const result = await geminiService.sculptResume(activeSession.jobDescription || 'Professional Resume', combinedData, userProfile);
       updateSession(activeSessionId, { finalResume: result });
       setShowPreview(true);
     } catch (err: any) { 
       console.error("Gemini Sculpt Error:", err);
-      let errorText = "Failed to sculpt resume. Check your API_KEY and billing status.";
-      if (err.message?.includes('401') || err.message?.includes('API_KEY')) {
-        errorText = "API Key Error: Your API_KEY is invalid or missing in Vercel. Did you prefix it with VITE_?";
-      } else if (err.message?.includes('404')) {
-        // @ts-ignore
-        if (window.aistudio?.openSelectKey) {
-           errorText = "Project/Entity not found. Re-selecting your API key may fix this.";
-           // @ts-ignore
-           window.aistudio.openSelectKey();
-        }
-      }
-      setErrorMessage(errorText);
+      setErrorMessage("Failed to sculpt resume. Check your API key.");
     } finally { setIsSculpting(false); }
   };
 
@@ -274,7 +255,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Palette size={14} /> Style</button>
               {showStyleMenu && (
                 <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 p-2">ATS Fonts</p>
                   {[
                     { id: 'font-sans', label: 'Inter (Modern)' },
                     { id: 'font-serif', label: 'Garamond (Serif)' },
@@ -308,16 +288,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
   return (
     <div className="flex flex-col h-full relative">
-      {isSculpting && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="p-8 rounded-[40px] bg-[#1a1a1a] border border-white/10 flex flex-col items-center shadow-2xl animate-in zoom-in-95">
-              <Loader2 size={48} className="text-indigo-500 animate-spin mb-6" />
-              <h3 className="text-xl font-bold text-white mb-2">Sculpting Resume</h3>
-              <p className="text-slate-400 text-center text-sm max-w-[240px]">Zysculpt Pro is tailoring your profile for high-impact results...</p>
-           </div>
-        </div>
-      )}
-
       <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
           <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
@@ -325,7 +295,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
           </button>
           <div className="flex flex-col">
             <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resume Builder</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Sculpting a high-impact profile for target roles.</p>
+            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Sculpting a high-impact profile.</p>
           </div>
         </div>
         {(activeSession.jobDescription || userProfile?.baseResumeText) && (
@@ -354,10 +324,11 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             </div>
           </div>
         ))}
-        {isTyping && (
+        {(isTyping || isSculpting) && (
           <div className="flex justify-start">
-            <div className={`rounded-2xl p-4 border ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#333]' : 'bg-white border-[#e2e8f0]'}`}>
+            <div className={`rounded-2xl p-4 border flex items-center gap-3 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#333]' : 'bg-white border-[#e2e8f0]'}`}>
               <Loader2 className="animate-spin text-indigo-500" size={18} />
+              {isSculpting && <span className="text-xs opacity-70">Sculpting...</span>}
             </div>
           </div>
         )}
@@ -371,7 +342,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={isRecording ? "Recording..." : "Tell the builder about your target role..."}
+              placeholder={isRecording ? "Recording..." : "Tell the builder about the role..."}
               disabled={isRecording || isSculpting}
               className={`w-full border rounded-2xl p-4 pr-12 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
                 theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-indigo-400'
@@ -384,7 +355,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               onTouchStart={startRecording}
               onTouchEnd={stopRecording}
               className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-indigo-500 hover:bg-white/5'}`}
-              title="Hold to record voice message"
             >
               {isRecording ? <Square size={18} /> : <Mic size={18} />}
             </button>
@@ -393,7 +363,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             <Send size={18} />
           </button>
         </div>
-        {isRecording && <p className="text-[10px] text-center mt-2 text-red-500 font-bold uppercase tracking-widest animate-pulse">Recording voice message... release to send.</p>}
       </div>
     </div>
   );

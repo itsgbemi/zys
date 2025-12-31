@@ -156,8 +156,7 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
       setPlayingMessageId(null);
     } else {
       setPlayingMessageId(messageId);
-      // Pass user preference for voice
-      elevenLabsService.speak(text, () => setPlayingMessageId(null), userProfile.voiceId);
+      elevenLabsService.speak(text, () => setPlayingMessageId(null));
     }
   };
 

@@ -18,13 +18,10 @@ import {
   Activity,
   Menu,
   AlertTriangle,
-  BarChart3,
-  Volume2,
-  Play
+  BarChart3
 } from 'lucide-react';
 import { Theme, UserProfile } from '../types';
 import { simulateError, simulateHighLatency, simulateCostSpike } from '../services/datadog';
-import { elevenLabsService } from '../services/elevenlabs';
 
 interface SettingsProps {
   onToggleMobile?: () => void;
@@ -33,13 +30,12 @@ interface SettingsProps {
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
 }
 
-type SettingsTab = 'profile' | 'master-resume' | 'goals' | 'billing' | 'security' | 'observability' | 'voice';
+type SettingsTab = 'profile' | 'master-resume' | 'goals' | 'billing' | 'security' | 'observability';
 
 const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile, setUserProfile }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [testingVoiceId, setTestingVoiceId] = useState<string | null>(null);
 
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
   const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
@@ -50,11 +46,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
 
   const handleUpdate = (field: keyof UserProfile, value: any) => {
     setIsSaving(true);
-    // CRITICAL FIX: Create the new object explicitly based on current prop
-    // Do NOT use functional update (prev => ...) because the parent handler in App.tsx 
-    // expects a UserProfile object, not a function.
-    const updatedProfile = { ...userProfile, [field]: value };
-    setUserProfile(updatedProfile);
+    setUserProfile(prev => ({ ...prev, [field]: value }));
     setTimeout(() => setIsSaving(false), 600);
   };
 
@@ -74,34 +66,19 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
     }
   };
 
-  const testVoice = (voiceId: string) => {
-    if (testingVoiceId) {
-      elevenLabsService.stop();
-      setTestingVoiceId(null);
-      return;
-    }
-    setTestingVoiceId(voiceId);
-    elevenLabsService.speak(
-      "Hello! I am your AI career assistant. I can read your cover letters and simulate interviews.",
-      () => setTestingVoiceId(null),
-      voiceId
-    );
-  };
-
   const navItems = [
     { id: 'profile', label: 'Personal Information', icon: <User size={18} />, desc: 'Name, contact details, and social links' },
-    { id: 'voice', label: 'Voice & Audio', icon: <Volume2 size={18} />, desc: 'Customize AI voice for read-aloud features' },
     { id: 'master-resume', label: 'Master Resume', icon: <FileText size={18} />, desc: 'The source document for all tailored AI documents' },
     { id: 'goals', label: 'Daily Goals', icon: <Clock size={18} />, desc: 'Set your target availability for roadmaps' },
     { id: 'billing', label: 'Billing & Usage', icon: <CreditCard size={18} />, desc: 'Track your credits and subscription status' },
-    { id: 'observability', label: 'App Health', icon: <Activity size={18} />, desc: 'Test Datadog signals and detection rules' },
     { id: 'security', label: 'Privacy & Data', icon: <Shield size={18} />, desc: 'Manage session security and account erasure' },
+    { id: 'observability', label: 'App Health & Monitoring', icon: <Activity size={18} />, desc: 'Test Datadog signals and detection rules' },
   ];
 
   const renderBackHeader = (title: string) => (
     <div className="flex items-center gap-4 mb-8">
       <button 
-        onClick={() => { setActiveTab(null); elevenLabsService.stop(); }} 
+        onClick={() => setActiveTab(null)} 
         className={`p-2 rounded-xl transition-all ${theme === 'dark' ? 'hover:bg-white/5 text-white' : 'hover:bg-slate-100 text-slate-900'}`}
       >
         <ChevronLeft size={20} />
@@ -210,48 +187,6 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                          <input value={userProfile.portfolio || ''} onChange={e => handleUpdate('portfolio', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="www.myportfolio.com" />
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'voice' && (
-                <div className="space-y-8">
-                  {renderBackHeader('Voice & Audio')}
-                  <p className={`text-sm ${textSecondary}`}>Select the AI voice used for Mock Interviews and proofreading your documents.</p>
-                  
-                  <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-4`}>
-                    {elevenLabsService.getVoices().map(voice => (
-                      <div 
-                        key={voice.id} 
-                        onClick={() => handleUpdate('voiceId', voice.id)}
-                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between group ${
-                          userProfile.voiceId === voice.id 
-                            ? (theme === 'dark' ? 'bg-indigo-600/20 border-indigo-500' : 'bg-indigo-50 border-indigo-500')
-                            : (theme === 'dark' ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50')
-                        }`}
-                      >
-                         <div className="flex items-center gap-4">
-                           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                             userProfile.voiceId === voice.id ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-500'
-                           }`}>
-                             {voice.name[0]}
-                           </div>
-                           <div>
-                             <h4 className={`text-sm font-bold ${textPrimary}`}>{voice.name}</h4>
-                             <p className="text-xs opacity-60">{voice.gender} • {voice.description}</p>
-                           </div>
-                         </div>
-                         <div className="flex items-center gap-2">
-                           <button 
-                             onClick={(e) => { e.stopPropagation(); testVoice(voice.id); }}
-                             className={`p-2 rounded-full transition-all ${testingVoiceId === voice.id ? 'bg-indigo-500 text-white animate-pulse' : 'text-slate-400 hover:text-indigo-500 bg-white/5 hover:bg-white/10'}`}
-                           >
-                             {testingVoiceId === voice.id ? <Volume2 size={16} /> : <Play size={16} />}
-                           </button>
-                           {userProfile.voiceId === voice.id && <CheckCircle size={20} className="text-indigo-500 ml-2" />}
-                         </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}
