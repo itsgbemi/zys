@@ -72,3 +72,52 @@ export const clearDatadogUser = () => {
     datadogLogs.removeUser();
   }
 };
+
+// --- SIMULATION TOOLS FOR OBERVABILITY TESTING ---
+
+export const simulateError = () => {
+  const error = new Error("SIMULATED_ERROR: Test Alert Triggered from Settings");
+  datadogLogs.logger.error("Test Error for Monitor Verification", {
+    error: error.message,
+    stack: error.stack,
+    service: 'zysculpt-ui',
+    status: 'error',
+    alert_type: 'test_simulation'
+  });
+  alert("Simulated Error sent to Datadog Logs. Check your 'High Error Rate' monitor.");
+};
+
+export const simulateHighLatency = () => {
+  const startTime = performance.now() - 15000; // Pretend it started 15 seconds ago
+  const durationMs = 15000;
+  
+  datadogLogs.logger.info("LLM Chat Stream Success", {
+    model: 'gemini-test-simulated',
+    duration_ms: durationMs,
+    status: 'ok',
+    service: 'zysculpt-ui',
+    llm_telemetry: {
+      tokens: { prompt: 100, completion: 100, total: 200 },
+      latency: durationMs,
+      estimated_cost_usd: 0.01
+    },
+    alert_type: 'test_simulation'
+  });
+  alert("Simulated 15s Latency log sent. Check your 'High Latency' monitor.");
+};
+
+export const simulateCostSpike = () => {
+  datadogLogs.logger.info("LLM Career Plan Success", {
+    model: 'gemini-3-pro-preview',
+    duration_ms: 2000,
+    status: 'ok',
+    service: 'zysculpt-ui',
+    llm_telemetry: {
+      tokens: { prompt: 50000, completion: 5000, total: 55000 },
+      latency: 2000,
+      estimated_cost_usd: 6.00 // Intentionally high to trigger >$5 alert
+    },
+    alert_type: 'test_simulation'
+  });
+  alert("Simulated $6.00 Cost Spike sent. Check your 'High Cost' monitor.");
+};

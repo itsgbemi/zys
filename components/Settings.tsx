@@ -16,9 +16,12 @@ import {
   ChevronLeft,
   Shield,
   Activity,
-  Menu
+  Menu,
+  AlertTriangle,
+  BarChart3
 } from 'lucide-react';
 import { Theme, UserProfile } from '../types';
+import { simulateError, simulateHighLatency, simulateCostSpike } from '../services/datadog';
 
 interface SettingsProps {
   onToggleMobile?: () => void;
@@ -27,7 +30,7 @@ interface SettingsProps {
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
 }
 
-type SettingsTab = 'profile' | 'master-resume' | 'goals' | 'billing' | 'security';
+type SettingsTab = 'profile' | 'master-resume' | 'goals' | 'billing' | 'security' | 'observability';
 
 const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile, setUserProfile }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab | null>(null);
@@ -69,6 +72,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
     { id: 'goals', label: 'Daily Goals', icon: <Clock size={18} />, desc: 'Set your target availability for roadmaps' },
     { id: 'billing', label: 'Billing & Usage', icon: <CreditCard size={18} />, desc: 'Track your credits and subscription status' },
     { id: 'security', label: 'Privacy & Data', icon: <Shield size={18} />, desc: 'Manage session security and account erasure' },
+    { id: 'observability', label: 'App Health & Monitoring', icon: <Activity size={18} />, desc: 'Test Datadog signals and detection rules' },
   ];
 
   const renderBackHeader = (title: string) => (
@@ -266,6 +270,48 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                        </div>
                        <ChevronRight size={18} className="opacity-30 group-hover:translate-x-1 transition-all flex-shrink-0" />
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'observability' && (
+                <div className="space-y-8">
+                  {renderBackHeader('App Health & Monitoring')}
+                  <p className={`text-sm ${textSecondary}`}>Use these tools to verify that your Datadog Detection Rules and Monitors are working correctly.</p>
+                  
+                  <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-4`}>
+                    <div className="flex items-center gap-3 mb-4">
+                       <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500"><BarChart3 size={20} /></div>
+                       <h4 className={`font-bold ${textPrimary}`}>Signal Generation</h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <button 
+                        onClick={simulateError}
+                        className="w-full p-4 rounded-2xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 font-bold text-sm flex items-center justify-between group transition-all"
+                      >
+                        <span className="flex items-center gap-2"><AlertTriangle size={18} /> Simulate API Error</span>
+                        <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+                      </button>
+
+                      <button 
+                        onClick={simulateHighLatency}
+                        className="w-full p-4 rounded-2xl border border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 text-orange-500 font-bold text-sm flex items-center justify-between group transition-all"
+                      >
+                        <span className="flex items-center gap-2"><Clock size={18} /> Simulate High Latency (15s)</span>
+                        <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+                      </button>
+
+                      <button 
+                        onClick={simulateCostSpike}
+                        className="w-full p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 font-bold text-sm flex items-center justify-between group transition-all"
+                      >
+                        <span className="flex items-center gap-2"><CreditCard size={18} /> Simulate Cost Spike ($6.00)</span>
+                        <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+
+                    <p className="text-[10px] opacity-40 mt-4 text-center">These actions send real signals to your Datadog Monitors.</p>
                   </div>
                 </div>
               )}
