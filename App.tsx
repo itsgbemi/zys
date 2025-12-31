@@ -13,6 +13,8 @@ import KnowledgeHub from './components/KnowledgeHub';
 import { Auth } from './components/Auth';
 import { AppView, ChatSession, Theme, UserProfile } from './types';
 import { supabase } from './services/supabase';
+// Fix: Import Sparkles icon from lucide-react
+import { Sparkles } from 'lucide-react';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -21,6 +23,7 @@ const App: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('zysculpt-theme') as Theme) || 'dark');
+  const [keyPickerVisible, setKeyPickerVisible] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile>({
     fullName: '',
@@ -35,6 +38,31 @@ const App: React.FC = () => {
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState('');
+
+  // 1. Check for API Key Selection (Mandatory for Pro Models)
+  useEffect(() => {
+    const checkApiKey = async () => {
+      // @ts-ignore
+      if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
+        // @ts-ignore
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        if (!hasKey && !process.env.API_KEY) {
+          setKeyPickerVisible(true);
+        }
+      }
+    };
+    checkApiKey();
+  }, []);
+
+  const handleOpenKeyPicker = async () => {
+    // @ts-ignore
+    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
+      // @ts-ignore
+      await window.aistudio.openSelectKey();
+      // Proceed immediately as per guidelines
+      setKeyPickerVisible(false);
+    }
+  };
 
   // 1. Sync Profile to Supabase
   const syncProfile = useCallback(async (profile: UserProfile, userId: string) => {
@@ -66,6 +94,7 @@ const App: React.FC = () => {
         type: chatSession.type,
         messages: chatSession.messages,
         job_description: chatSession.jobDescription,
+        // Fix: Correct camelCase property names from ChatSession interface
         resume_text: chatSession.resumeText,
         final_resume: chatSession.finalResume,
         career_goal_data: chatSession.careerGoalData,
@@ -133,7 +162,6 @@ const App: React.FC = () => {
         setSessions(mapped);
         setActiveSessionId(mapped[0].id);
       } else {
-        // Create initial session if none exist
         createNewSession('career-copilot', 'Career Roadmap');
       }
     } catch (e) {
@@ -255,6 +283,27 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
+      {keyPickerVisible && (
+        <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-[#1a1a1a] border border-white/10 rounded-[40px] p-8 text-center animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-indigo-500/20 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Sparkles size={32} />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">Connect Gemini API</h2>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+              To use Zysculpt's Pro-tier resume sculpting features, you need to select a paid Gemini API key. 
+              <br/><br/>
+              <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Learn about Gemini Billing</a>
+            </p>
+            <button 
+              onClick={handleOpenKeyPicker}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20"
+            >
+              Select API Key
+            </button>
+          </div>
+        </div>
+      )}
       <Sidebar 
         currentView={currentView} setView={setCurrentView} 
         isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed}
