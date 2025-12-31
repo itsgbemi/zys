@@ -9,7 +9,7 @@ export const initDatadog = () => {
   const appId = env.VITE_DD_APPLICATION_ID;
   const clientToken = env.VITE_DD_CLIENT_TOKEN;
   const site = env.VITE_DD_SITE || 'datadoghq.com';
-  const service = env.VITE_DD_SERVICE || 'zysculpt-ui';
+  const service = env.VITE_DD_SERVICE || 'zysculpt';
   const environment = env.VITE_DD_ENV || 'development';
 
   if (appId && clientToken) {
@@ -80,7 +80,7 @@ export const simulateError = () => {
   datadogLogs.logger.error("Test Error for Monitor Verification", {
     error: error.message,
     stack: error.stack,
-    service: 'zysculpt-ui',
+    service: 'zysculpt',
     status: 'error',
     alert_type: 'test_simulation'
   });
@@ -95,7 +95,7 @@ export const simulateHighLatency = () => {
     model: 'gemini-test-simulated',
     duration_ms: durationMs,
     status: 'ok',
-    service: 'zysculpt-ui',
+    service: 'zysculpt',
     llm_telemetry: {
       tokens: { prompt: 100, completion: 100, total: 200 },
       latency: durationMs,
@@ -111,7 +111,7 @@ export const simulateCostSpike = () => {
     model: 'gemini-3-pro-preview',
     duration_ms: 2000,
     status: 'ok',
-    service: 'zysculpt-ui',
+    service: 'zysculpt',
     llm_telemetry: {
       tokens: { prompt: 50000, completion: 5000, total: 55000 },
       latency: 2000,

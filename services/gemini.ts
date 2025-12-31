@@ -50,7 +50,7 @@ export class GeminiService {
         duration_ms: durationMs,
         error: error.message,
         status: 'error',
-        service: 'zysculpt-ui' // Explicit service tagging
+        service: 'zysculpt' // Explicit service tagging
       });
     } else {
       // Extract usage metadata if available
@@ -63,7 +63,7 @@ export class GeminiService {
         model,
         duration_ms: durationMs,
         status: 'ok',
-        service: 'zysculpt-ui',
+        service: 'zysculpt',
         llm_telemetry: {
           tokens: {
             prompt: inputTokens,
