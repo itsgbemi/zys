@@ -14,7 +14,9 @@ import {
   EyeOff, 
   Github, 
   Chrome, 
-  ArrowLeft 
+  ArrowLeft,
+  Linkedin,
+  Disc
 } from 'lucide-react';
 
 type AuthView = 'signin' | 'signup' | 'forgot-password';
@@ -77,7 +79,7 @@ export const Auth: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'github') => {
+  const handleSocialLogin = async (provider: 'google' | 'github' | 'linkedin' | 'discord') => {
     setError(null);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -234,20 +236,34 @@ export const Auth: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => handleSocialLogin('google')}
-                  className="flex items-center justify-center gap-3 py-3 px-4 bg-[#121212] border border-white/5 rounded-2xl text-sm font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
+                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
                 >
-                  <Chrome size={18} className="text-white" />
+                  <Chrome size={16} className="text-white" />
                   Google
                 </button>
                 <button 
-                  onClick={() => handleSocialLogin('github')}
-                  className="flex items-center justify-center gap-3 py-3 px-4 bg-[#121212] border border-white/5 rounded-2xl text-sm font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
+                  onClick={() => handleSocialLogin('linkedin')}
+                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
                 >
-                  <Github size={18} className="text-white" />
+                  <Linkedin size={16} className="text-[#0077B5]" />
+                  LinkedIn
+                </button>
+                <button 
+                  onClick={() => handleSocialLogin('github')}
+                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
+                >
+                  <Github size={16} className="text-white" />
                   GitHub
+                </button>
+                <button 
+                  onClick={() => handleSocialLogin('discord')}
+                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
+                >
+                  <Disc size={16} className="text-[#5865F2]" />
+                  Discord
                 </button>
               </div>
             </>
@@ -277,7 +293,7 @@ export const Auth: React.FC = () => {
             <div className="mt-4 p-4 bg-black rounded-xl border border-white/5 font-mono text-[10px] text-emerald-500 overflow-x-auto">
               <p>VITE_SUPABASE_URL: {env.VITE_SUPABASE_URL ? 'FOUND' : 'MISSING'}</p>
               <p>VITE_SUPABASE_ANON_KEY: {env.VITE_SUPABASE_ANON_KEY ? 'FOUND' : 'MISSING'}</p>
-              <p className="mt-2 text-slate-500 italic">Ensure you enabled Google/GitHub in Supabase Auth Dashboard.</p>
+              <p className="mt-2 text-slate-500 italic">Ensure you enabled Google/GitHub/LinkedIn/Discord in Supabase Auth Dashboard.</p>
             </div>
           )}
         </div>
