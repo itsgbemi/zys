@@ -37,7 +37,7 @@ export const Auth: React.FC = () => {
     setSuccess(null);
 
     if (!isSupabaseConfigured) {
-      setError("Supabase configuration is missing.");
+      setError("Authentication is currently unavailable. (Missing Supabase URL/Key)");
       setLoading(false);
       return;
     }
@@ -56,24 +56,32 @@ export const Auth: React.FC = () => {
         });
         if (error) throw error;
         if (data?.user && data?.session === null) {
-          setSuccess("Check your email for confirmation.");
+          setSuccess("Account created! Please check your email to confirm your account.");
         }
       } else if (view === 'signin') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: window.location.origin }
-    });
+    if (!isSupabaseConfigured) return;
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { 
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message || `Failed to sign in with ${provider}`);
+    }
   };
 
   return (
@@ -148,7 +156,7 @@ export const Auth: React.FC = () => {
             </div>
 
             {error && <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2"><AlertCircle size={14}/> {error}</div>}
-            {success && <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2">Check your email for confirmation!</div>}
+            {success && <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2">{success}</div>}
 
             <button
               type="submit"
@@ -197,7 +205,11 @@ export const Auth: React.FC = () => {
 
           <div className="mt-10 pt-8 border-t border-slate-50 text-center">
             <button
-              onClick={() => setView(view === 'signin' ? 'signup' : 'signin')}
+              onClick={() => {
+                setError(null);
+                setSuccess(null);
+                setView(view === 'signin' ? 'signup' : 'signin');
+              }}
               className="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors"
             >
               {view === 'signup' ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
