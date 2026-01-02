@@ -37,7 +37,7 @@ export const Auth: React.FC = () => {
     setSuccess(null);
 
     if (!isSupabaseConfigured) {
-      setError("Authentication is currently unavailable. (Missing Supabase configuration).");
+      setError("Zysculpt configuration error: Supabase URL or Anon Key is missing from environment.");
       setLoading(false);
       return;
     }
@@ -51,33 +51,41 @@ export const Auth: React.FC = () => {
             data: { 
               full_name: fullName,
               avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=6366f1&color=fff`
-            }
+            },
+            emailRedirectTo: window.location.origin
           }
         });
         if (signupError) throw signupError;
         if (data?.user && !data?.session) {
-          setSuccess("Account created! Check your email for a confirmation link.");
+          setSuccess("Success! Please check your email inbox to confirm your account.");
         }
       } else if (view === 'signin') {
         const { error: signinError } = await supabase.auth.signInWithPassword({ email, password });
         if (signinError) throw signinError;
       }
     } catch (err: any) {
-      setError(err.message || "An authentication error occurred.");
+      setError(err.message || "An unexpected authentication error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
+    setError(null);
     if (!isSupabaseConfigured) {
-      setError("Social login is currently unavailable.");
+      setError("Social authentication is disabled (missing credentials).");
       return;
     }
     try {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: window.location.origin }
+        options: { 
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
       });
       if (oauthError) throw oauthError;
     } catch (err: any) {
