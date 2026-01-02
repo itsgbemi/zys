@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Overview from './components/Overview';
@@ -22,7 +21,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.OVERVIEW);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('zysculpt-theme') as Theme) || 'dark');
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('zysculpt-theme') as Theme) || 'light');
   const [keyPickerVisible, setKeyPickerVisible] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile>({
@@ -151,16 +150,21 @@ const App: React.FC = () => {
     setSession(null);
   };
 
-  if (authLoading) return <div className="h-screen bg-[#121212] flex items-center justify-center text-white font-bold">Zysculpt Loading...</div>;
+  if (authLoading) return <div className={`h-screen flex items-center justify-center font-bold ${theme === 'dark' ? 'bg-[#121212] text-white' : 'bg-slate-50 text-slate-900'}`}>Zysculpt Loading...</div>;
   if (!session) return <Auth />;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#121212]">
+    <div className={`flex h-screen w-full overflow-hidden transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
       <Sidebar 
         currentView={currentView} setView={setCurrentView} 
         isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed}
         isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}
-        theme={theme} toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+        theme={theme} toggleTheme={() => {
+          const newTheme = theme === 'dark' ? 'light' : 'dark';
+          setTheme(newTheme);
+          localStorage.setItem('zysculpt-theme', newTheme);
+          document.body.className = `theme-${newTheme}`;
+        }}
         sessions={sessions} activeSessionId={activeSessionId} setActiveSessionId={setActiveSessionId}
         onNewSession={() => {}} 
         onDeleteSession={() => {}}
@@ -170,7 +174,7 @@ const App: React.FC = () => {
       <main className="flex-1 overflow-hidden relative">
         {currentView === AppView.OVERVIEW && <Overview onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} setView={setCurrentView} userProfile={userProfile} />}
         {currentView === AppView.SETTINGS && <Settings onToggleMobile={() => setIsMobileOpen(true)} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} />}
-        {/* Other views omitted for brevity, logic remains identical */}
+        {/* Additional views would follow the same pattern */}
       </main>
     </div>
   );
