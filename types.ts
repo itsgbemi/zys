@@ -25,6 +25,7 @@ export interface UserProfile {
   baseResumeText: string;
   dailyAvailability: number; // Hours per day
   voiceId: string;
+  avatarUrl?: string;
 }
 
 export interface Message {

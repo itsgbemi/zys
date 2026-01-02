@@ -18,7 +18,8 @@ import {
   Activity,
   Menu,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  Camera
 } from 'lucide-react';
 import { Theme, UserProfile } from '../types';
 import { simulateError, simulateHighLatency, simulateCostSpike } from '../services/datadog';
@@ -107,14 +108,22 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
               <div className={`p-6 md:p-8 rounded-[32px] md:rounded-[40px] border shadow-2xl relative overflow-hidden ${cardBg}`}>
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl md:text-3xl shadow-xl shadow-indigo-600/30">
-                    {userProfile.fullName?.[0] || 'Z'}
+                  <div className="relative group">
+                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl md:text-4xl shadow-xl shadow-indigo-600/30 overflow-hidden">
+                      {userProfile.avatarUrl ? (
+                        <img src={userProfile.avatarUrl} alt={userProfile.fullName} className="w-full h-full object-cover" />
+                      ) : (
+                        userProfile.fullName?.[0] || 'Z'
+                      )}
+                    </div>
                   </div>
                   <div>
                     <h3 className={`text-xl md:text-2xl font-black ${textPrimary}`}>{userProfile.fullName || 'Zysculpt Pilot'}</h3>
                     <p className={`text-sm ${textSecondary}`}>{userProfile.email || 'Complete your profile info'}</p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex gap-2">
                        <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 rounded-full text-[10px] font-bold uppercase border border-indigo-500/20">Free Member</span>
+                       {userProfile.avatarUrl?.includes('github') && <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[10px] font-bold uppercase border border-white/10 flex items-center gap-1.5"><Github size={10}/> Linked</span>}
+                       {userProfile.avatarUrl?.includes('google') && <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[10px] font-bold uppercase border border-white/10 flex items-center gap-1.5"><Globe size={10}/> Linked</span>}
                     </div>
                   </div>
                 </div>
@@ -142,8 +151,25 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
           ) : (
             <div className="animate-in fade-in slide-in-from-right-4">
               {activeTab === 'profile' && (
-                <div className="space-y-8">
+                <div className="space-y-8 pb-12">
                   {renderBackHeader('Personal Information')}
+                  
+                  <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} flex flex-col items-center mb-6`}>
+                    <div className="relative mb-4">
+                      <div className="w-24 h-24 rounded-[32px] bg-indigo-600 overflow-hidden shadow-2xl border-4 border-white/5">
+                        {userProfile.avatarUrl ? (
+                          <img src={userProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white font-black text-3xl">
+                            {userProfile.fullName?.[0]}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className={`text-sm font-bold ${textPrimary}`}>{userProfile.fullName || 'No Name Set'}</p>
+                    <p className="text-xs opacity-40 mt-1">Profile Photo imported from login provider</p>
+                  </div>
+
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-6`}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
@@ -156,35 +182,11 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">Email</label>
-                        <input value={userProfile.email} onChange={e => handleUpdate('email', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="email@example.com" />
+                        <input value={userProfile.email} readOnly className={`w-full px-4 py-3 rounded-2xl border text-sm opacity-50 cursor-not-allowed ${inputBg} ${textPrimary}`} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">Phone</label>
                         <input value={userProfile.phone} onChange={e => handleUpdate('phone', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="+1 (555) 000-0000" />
-                      </div>
-                      <div className="space-y-2 md:col-span-2 border-t border-slate-200 dark:border-white/5 pt-4 mt-2">
-                        <label className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-4 block">Professional Links</label>
-                      </div>
-                      <div className="space-y-2">
-                         <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">LinkedIn Profile</label>
-                            <Linkedin size={12} className="opacity-50" />
-                         </div>
-                         <input value={userProfile.linkedIn} onChange={e => handleUpdate('linkedIn', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="linkedin.com/in/username" />
-                      </div>
-                      <div className="space-y-2">
-                         <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">GitHub / GitLab</label>
-                            <Github size={12} className="opacity-50" />
-                         </div>
-                         <input value={userProfile.github || ''} onChange={e => handleUpdate('github', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="github.com/username" />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                         <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">Portfolio / Website</label>
-                            <Globe size={12} className="opacity-50" />
-                         </div>
-                         <input value={userProfile.portfolio || ''} onChange={e => handleUpdate('portfolio', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="www.myportfolio.com" />
                       </div>
                     </div>
                   </div>
@@ -194,7 +196,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
               {activeTab === 'master-resume' && (
                 <div className="space-y-8">
                   {renderBackHeader('Master Resume')}
-                  <p className={`text-sm ${textSecondary}`}>Upload your most comprehensive resume here. Zysculpt uses this as the base information to create perfectly tailored documents for every job you apply to.</p>
+                  <p className={`text-sm ${textSecondary}`}>Upload your most comprehensive resume here. Zysculpt uses this as the base information to create perfectly tailored documents.</p>
                   
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg}`}>
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} accept=".txt,.pdf,.docx" />
@@ -277,8 +279,6 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
               {activeTab === 'observability' && (
                 <div className="space-y-8">
                   {renderBackHeader('App Health & Monitoring')}
-                  <p className={`text-sm ${textSecondary}`}>Use these tools to verify that your Datadog Detection Rules and Monitors are working correctly.</p>
-                  
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-4`}>
                     <div className="flex items-center gap-3 mb-4">
                        <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500"><BarChart3 size={20} /></div>
@@ -286,32 +286,15 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                      <button 
-                        onClick={simulateError}
-                        className="w-full p-4 rounded-2xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 font-bold text-sm flex items-center justify-between group transition-all"
-                      >
+                      <button onClick={simulateError} className="w-full p-4 rounded-2xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 font-bold text-sm flex items-center justify-between group transition-all">
                         <span className="flex items-center gap-2"><AlertTriangle size={18} /> Simulate API Error</span>
                         <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
                       </button>
-
-                      <button 
-                        onClick={simulateHighLatency}
-                        className="w-full p-4 rounded-2xl border border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 text-orange-500 font-bold text-sm flex items-center justify-between group transition-all"
-                      >
+                      <button onClick={simulateHighLatency} className="w-full p-4 rounded-2xl border border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 text-orange-500 font-bold text-sm flex items-center justify-between group transition-all">
                         <span className="flex items-center gap-2"><Clock size={18} /> Simulate High Latency (15s)</span>
                         <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
                       </button>
-
-                      <button 
-                        onClick={simulateCostSpike}
-                        className="w-full p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 font-bold text-sm flex items-center justify-between group transition-all"
-                      >
-                        <span className="flex items-center gap-2"><CreditCard size={18} /> Simulate Cost Spike ($6.00)</span>
-                        <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
-                      </button>
                     </div>
-
-                    <p className="text-[10px] opacity-40 mt-4 text-center">These actions send real signals to your Datadog Monitors.</p>
                   </div>
                 </div>
               )}

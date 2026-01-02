@@ -36,7 +36,8 @@ const App: React.FC = () => {
     portfolio: '',
     baseResumeText: '',
     dailyAvailability: 2,
-    voiceId: 'IKne3meq5aSn9XLyUdCD'
+    voiceId: 'IKne3meq5aSn9XLyUdCD',
+    avatarUrl: ''
   });
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -81,6 +82,7 @@ const App: React.FC = () => {
         base_resume_text: profile.baseResumeText,
         daily_availability: profile.dailyAvailability,
         voice_id: profile.voiceId,
+        avatar_url: profile.avatarUrl,
         updated_at: new Date().toISOString()
       });
     } catch (e) {
@@ -108,29 +110,36 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const fetchData = async (userId: string) => {
+  const fetchData = async (userId: string, authUser: any) => {
     try {
       const profilePromise = supabase.from('profiles').select('*').eq('id', userId).single();
       const sessionsPromise = supabase.from('sessions').select('*').eq('user_id', userId).order('last_updated', { ascending: false });
 
       const [profileRes, sessionsRes] = await Promise.all([profilePromise, sessionsPromise]);
 
-      if (profileRes.data) {
-        const profile = {
-          fullName: profileRes.data.full_name || '',
-          title: profileRes.data.title || '',
-          email: profileRes.data.email || '',
-          phone: profileRes.data.phone || '',
-          location: profileRes.data.location || '',
-          linkedIn: profileRes.data.linkedin || '',
-          github: profileRes.data.github || '',
-          portfolio: profileRes.data.portfolio || '',
-          baseResumeText: profileRes.data.base_resume_text || '',
-          dailyAvailability: profileRes.data.daily_availability || 2,
-          voiceId: profileRes.data.voice_id || 'IKne3meq5aSn9XLyUdCD'
-        };
-        setUserProfile(profile);
-        setDatadogUser({ id: userId, email: profile.email, name: profile.fullName });
+      // Seed profile from auth metadata if not found in table
+      const metadata = authUser.user_metadata || {};
+      const seededProfile = {
+        fullName: profileRes.data?.full_name || metadata.full_name || metadata.name || '',
+        title: profileRes.data?.title || '',
+        email: profileRes.data?.email || authUser.email || '',
+        phone: profileRes.data?.phone || '',
+        location: profileRes.data?.location || '',
+        linkedIn: profileRes.data?.linkedin || '',
+        github: profileRes.data?.github || '',
+        portfolio: profileRes.data?.portfolio || '',
+        baseResumeText: profileRes.data?.base_resume_text || '',
+        dailyAvailability: profileRes.data?.daily_availability || 2,
+        voiceId: profileRes.data?.voice_id || 'IKne3meq5aSn9XLyUdCD',
+        avatarUrl: profileRes.data?.avatar_url || metadata.avatar_url || metadata.picture || ''
+      };
+
+      setUserProfile(seededProfile);
+      setDatadogUser({ id: userId, email: seededProfile.email, name: seededProfile.fullName });
+
+      // If profile didn't exist in DB, create it now with seeded data
+      if (!profileRes.data) {
+        syncProfile(seededProfile, userId);
       }
 
       if (sessionsRes.data && sessionsRes.data.length > 0) {
@@ -167,7 +176,7 @@ const App: React.FC = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
-        fetchData(session.user.id);
+        fetchData(session.user.id, session.user);
       } else {
         setAuthLoading(false);
       }
@@ -177,7 +186,7 @@ const App: React.FC = () => {
       setSession(session);
       if (session) {
         setDatadogUser({ id: session.user.id, email: session.user.email });
-        // Initial fetch is handled by getSession
+        fetchData(session.user.id, session.user);
       } else {
         clearDatadogUser();
         setSessions([]);

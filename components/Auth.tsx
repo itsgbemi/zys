@@ -14,9 +14,7 @@ import {
   EyeOff, 
   Github, 
   Chrome, 
-  ArrowLeft,
-  Linkedin,
-  Disc
+  ArrowLeft
 } from 'lucide-react';
 
 type AuthView = 'signin' | 'signup' | 'forgot-password';
@@ -53,7 +51,11 @@ export const Auth: React.FC = () => {
           email, 
           password,
           options: {
-            data: { full_name: fullName },
+            data: { 
+              full_name: fullName,
+              // Initial avatar can be a generic one or null
+              avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=6366f1&color=fff`
+            },
             emailRedirectTo: window.location.origin
           }
         });
@@ -79,7 +81,7 @@ export const Auth: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'github' | 'linkedin_oidc' | 'discord') => {
+  const handleSocialLogin = async (provider: 'google' | 'github') => {
     setError(null);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -90,7 +92,6 @@ export const Auth: React.FC = () => {
       });
       if (error) throw error;
     } catch (err: any) {
-      // If linkedin_oidc fails, it might be a legacy project, but for new ones oidc is required
       setError(err.message);
     }
   };
@@ -103,10 +104,10 @@ export const Auth: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
-        <div className="flex flex-col items-center mb-10">
-          <ZysculptLogo theme="dark" size={64} />
-          <h1 className="text-4xl font-black text-white mt-4 tracking-tighter" style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</h1>
-          <p className="text-slate-400 mt-2 text-center text-sm">Your AI Career Copilot. Build your future.</p>
+        <div className="flex flex-col items-center mb-10 text-center">
+          <ZysculptLogo theme="dark" size={80} />
+          <h1 className="text-5xl font-black text-white mt-4 tracking-tighter" style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</h1>
+          <p className="text-slate-400 mt-2 text-sm max-w-[280px]">Your AI Career Copilot. Build your future, starting today.</p>
         </div>
 
         <div className="bg-[#1a1a1a] border border-white/5 p-8 rounded-[40px] shadow-2xl backdrop-blur-xl relative overflow-hidden">
@@ -240,31 +241,17 @@ export const Auth: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => handleSocialLogin('google')}
-                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
+                  className="flex items-center justify-center gap-3 py-3.5 px-3 bg-[#121212] border border-white/5 rounded-2xl text-xs font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
                 >
-                  <Chrome size={16} className="text-white" />
+                  <Chrome size={18} className="text-white" />
                   Google
                 </button>
                 <button 
-                  onClick={() => handleSocialLogin('linkedin_oidc')}
-                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
-                >
-                  <Linkedin size={16} className="text-[#0077B5]" />
-                  LinkedIn
-                </button>
-                <button 
                   onClick={() => handleSocialLogin('github')}
-                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
+                  className="flex items-center justify-center gap-3 py-3.5 px-3 bg-[#121212] border border-white/5 rounded-2xl text-xs font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
                 >
-                  <Github size={16} className="text-white" />
+                  <Github size={18} className="text-white" />
                   GitHub
-                </button>
-                <button 
-                  onClick={() => handleSocialLogin('discord')}
-                  className="flex items-center justify-center gap-2 py-3 px-3 bg-[#121212] border border-white/5 rounded-2xl text-[11px] font-bold text-white hover:bg-white/5 transition-all active:scale-[0.98]"
-                >
-                  <Disc size={16} className="text-[#5865F2]" />
-                  Discord
                 </button>
               </div>
             </>
@@ -294,7 +281,7 @@ export const Auth: React.FC = () => {
             <div className="mt-4 p-4 bg-black rounded-xl border border-white/5 font-mono text-[10px] text-emerald-500 overflow-x-auto">
               <p>VITE_SUPABASE_URL: {env.VITE_SUPABASE_URL ? 'FOUND' : 'MISSING'}</p>
               <p>VITE_SUPABASE_ANON_KEY: {env.VITE_SUPABASE_ANON_KEY ? 'FOUND' : 'MISSING'}</p>
-              <p className="mt-2 text-slate-500 italic">Ensure you enabled Google/GitHub/LinkedIn(OIDC)/Discord in Supabase Auth Dashboard.</p>
+              <p className="mt-2 text-slate-500 italic">Ensure Google and GitHub are enabled in Supabase Auth Dashboard.</p>
             </div>
           )}
         </div>
