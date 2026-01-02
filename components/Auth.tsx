@@ -37,14 +37,14 @@ export const Auth: React.FC = () => {
     setSuccess(null);
 
     if (!isSupabaseConfigured) {
-      setError("Authentication is currently unavailable. (Missing Supabase URL/Key)");
+      setError("Authentication is currently unavailable. (Missing Supabase configuration).");
       setLoading(false);
       return;
     }
 
     try {
       if (view === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ 
+        const { data, error: signupError } = await supabase.auth.signUp({ 
           email, 
           password,
           options: {
@@ -54,31 +54,32 @@ export const Auth: React.FC = () => {
             }
           }
         });
-        if (error) throw error;
-        if (data?.user && data?.session === null) {
-          setSuccess("Account created! Please check your email to confirm your account.");
+        if (signupError) throw signupError;
+        if (data?.user && !data?.session) {
+          setSuccess("Account created! Check your email for a confirmation link.");
         }
       } else if (view === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { error: signinError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signinError) throw signinError;
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(err.message || "An authentication error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) {
+      setError("Social login is currently unavailable.");
+      return;
+    }
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { 
-          redirectTo: window.location.origin
-        }
+        options: { redirectTo: window.location.origin }
       });
-      if (error) throw error;
+      if (oauthError) throw oauthError;
     } catch (err: any) {
       setError(err.message || `Failed to sign in with ${provider}`);
     }
