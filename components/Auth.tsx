@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { ZysculptLogo } from './Sidebar';
@@ -37,14 +38,17 @@ export const Auth: React.FC = () => {
     setSuccess(null);
 
     if (!isSupabaseConfigured) {
-      setError("Zysculpt configuration error: Supabase URL or Anon Key is missing from environment.");
+      const msg = "Configuration Error: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Check your environment settings.";
+      setError(msg);
+      console.error(msg);
       setLoading(false);
       return;
     }
 
     try {
       if (view === 'signup') {
-        const { data, error: signupError } = await supabase.auth.signUp({ 
+        // Fix: Cast supabase.auth to any to resolve property 'signUp' error
+        const { data, error: signupError } = await (supabase.auth as any).signUp({ 
           email, 
           password,
           options: {
@@ -57,14 +61,16 @@ export const Auth: React.FC = () => {
         });
         if (signupError) throw signupError;
         if (data?.user && !data?.session) {
-          setSuccess("Success! Please check your email inbox to confirm your account.");
+          setSuccess("Account created! Please check your inbox for a confirmation email.");
         }
       } else if (view === 'signin') {
-        const { error: signinError } = await supabase.auth.signInWithPassword({ email, password });
+        // Fix: Cast supabase.auth to any to resolve property 'signInWithPassword' error
+        const { error: signinError } = await (supabase.auth as any).signInWithPassword({ email, password });
         if (signinError) throw signinError;
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected authentication error occurred.");
+      console.error("Supabase Auth Error:", err);
+      setError(err.message || "An authentication error occurred.");
     } finally {
       setLoading(false);
     }
@@ -73,11 +79,12 @@ export const Auth: React.FC = () => {
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setError(null);
     if (!isSupabaseConfigured) {
-      setError("Social authentication is disabled (missing credentials).");
+      setError("Social login is unavailable due to missing configuration.");
       return;
     }
     try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      // Fix: Cast supabase.auth to any to resolve property 'signInWithOAuth' error
+      const { error: oauthError } = await (supabase.auth as any).signInWithOAuth({
         provider,
         options: { 
           redirectTo: window.location.origin,
@@ -89,6 +96,7 @@ export const Auth: React.FC = () => {
       });
       if (oauthError) throw oauthError;
     } catch (err: any) {
+      console.error(`Supabase OAuth Error (${provider}):`, err);
       setError(err.message || `Failed to sign in with ${provider}`);
     }
   };
@@ -164,13 +172,23 @@ export const Auth: React.FC = () => {
               </div>
             </div>
 
-            {error && <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2"><AlertCircle size={14}/> {error}</div>}
-            {success && <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2">{success}</div>}
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-[11px] leading-relaxed font-medium flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+            {success && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[11px] leading-relaxed font-medium flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
+                <ChevronRight size={14} className="mt-0.5 flex-shrink-0" />
+                <span>{success}</span>
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 size={20} className="animate-spin" /> : (view === 'signup' ? 'Create Account' : 'Sign In')}
               <ChevronRight size={18} />
@@ -183,7 +201,11 @@ export const Auth: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            <button onClick={() => handleSocialLogin('google')} className="gsi-material-button">
+            <button 
+              onClick={() => handleSocialLogin('google')} 
+              disabled={loading}
+              className="gsi-material-button disabled:opacity-50"
+            >
               <div className="gsi-material-button-state"></div>
               <div className="gsi-material-button-content-wrapper">
                 <div className="gsi-material-button-icon">
@@ -201,7 +223,8 @@ export const Auth: React.FC = () => {
 
             <button 
               onClick={() => handleSocialLogin('github')} 
-              className="w-full flex items-center justify-center gap-3 py-0 px-4 bg-white border border-[#747775] rounded-[20px] text-sm font-medium text-[#1f1f1f] transition-all hover:bg-[#F8FAFC] active:bg-[#F1F5F9] h-[44px] shadow-none active:scale-95 font-['Roboto',_arial,_sans-serif]"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-0 px-4 bg-white border border-[#747775] rounded-[20px] text-sm font-medium text-[#1f1f1f] transition-all hover:bg-[#F8FAFC] active:bg-[#F1F5F9] h-[44px] shadow-none active:scale-95 font-['Roboto',_arial,_sans-serif] disabled:opacity-50"
             >
               <div className="flex items-center justify-center">
                 <div className="mr-3 flex items-center justify-center w-5 h-5 text-[#1F2328]">

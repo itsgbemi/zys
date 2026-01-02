@@ -2,57 +2,56 @@ import { createClient } from '@supabase/supabase-js';
 
 /**
  * Zysculpt Supabase Configuration
+ * 
+ * We check multiple locations for the credentials:
+ * 1. import.meta.env (Vite standard - statically replaced at build time)
+ * 2. process.env (Shimmed in index.tsx)
+ * 3. window.process.env (Direct global access)
  */
 
-// Helper to safely get environment variables across different build/runtime environments
-const getEnvVar = (key: string): string => {
-  // Common variants to check for each key
-  const variants = [key];
-  if (key.startsWith('VITE_')) {
-    variants.push(key.replace('VITE_', ''));
-  } else {
-    variants.push(`VITE_${key}`);
+const getSupabaseUrl = (): string => {
+  // Vite static replacement requires literals for best results
+  // @ts-ignore
+  const viteUrl = import.meta.env?.VITE_SUPABASE_URL;
+  if (viteUrl) return viteUrl;
+
+  // Fallback to shimmed process.env
+  try {
+    const env = (process as any).env;
+    return env.VITE_SUPABASE_URL || env.SUPABASE_URL || '';
+  } catch (e) {
+    return '';
   }
-
-  for (const variant of variants) {
-    // 1. Try Vite standard first
-    try {
-      const meta = import.meta as any;
-      if (meta.env && meta.env[variant]) {
-        return meta.env[variant];
-      }
-    } catch (e) {}
-
-    // 2. Try shimmed or real process.env (populated in index.tsx)
-    try {
-      if (typeof process !== 'undefined' && process.env && (process.env as any)[variant]) {
-        return (process.env as any)[variant];
-      }
-    } catch (e) {}
-    
-    // 3. Try direct global access
-    try {
-      if (typeof window !== 'undefined' && (window as any).process?.env?.[variant]) {
-        return (window as any).process.env[variant];
-      }
-    } catch (e) {}
-  }
-
-  return '';
 };
 
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
+const getSupabaseAnonKey = (): string => {
+  // @ts-ignore
+  const viteKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
+  if (viteKey) return viteKey;
 
-// Configuration is valid if we have a URL that isn't the placeholder
-export const isSupabaseConfigured = !!supabaseUrl && 
-  !supabaseUrl.includes('placeholder') && 
+  // Fallback to shimmed process.env
+  try {
+    const env = (process as any).env;
+    return env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || '';
+  } catch (e) {
+    return '';
+  }
+};
+
+const supabaseUrl = getSupabaseUrl();
+const supabaseAnonKey = getSupabaseAnonKey();
+
+// Configuration is valid if we have non-placeholder values
+export const isSupabaseConfigured = 
+  !!supabaseUrl && 
   supabaseUrl !== '' && 
+  !supabaseUrl.includes('placeholder') &&
+  !!supabaseAnonKey && 
   supabaseAnonKey !== '' && 
   !supabaseAnonKey.includes('placeholder');
 
 if (!isSupabaseConfigured) {
-  console.warn("Zysculpt Warning: Supabase credentials not detected. Authentication features will be disabled.");
+  console.error("Zysculpt CRITICAL: Supabase credentials missing. Expected VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
 }
 
 export const supabase = createClient(

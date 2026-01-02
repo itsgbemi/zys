@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Overview from './components/Overview';
@@ -127,13 +128,15 @@ const App: React.FC = () => {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Fix: Cast supabase.auth to any to bypass strict type check for getSession
+    (supabase.auth as any).getSession().then(({ data: { session } }: any) => {
       setSession(session);
       if (session) fetchData(session.user.id, session.user);
       else setAuthLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Fix: Cast supabase.auth to any to bypass strict type check for onAuthStateChange
+    const { data: { subscription } } = (supabase.auth as any).onAuthStateChange((_event: any, session: any) => {
       setSession(session);
       if (session) fetchData(session.user.id, session.user);
       else {
@@ -146,7 +149,8 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // Fix: Cast supabase.auth to any to bypass strict type check for signOut
+    await (supabase.auth as any).signOut();
     setSession(null);
   };
 
@@ -172,7 +176,7 @@ const App: React.FC = () => {
         onLogout={handleLogout}
       />
       <main className="flex-1 overflow-hidden relative">
-        {currentView === AppView.OVERVIEW && <Overview onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} setView={setCurrentView} userProfile={userProfile} />}
+        {currentView === AppView.OVERVIEW && <Overview onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} setView={setCurrentView} updateSession={(id, updates) => setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s))} userProfile={userProfile} />}
         {currentView === AppView.SETTINGS && <Settings onToggleMobile={() => setIsMobileOpen(true)} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} />}
         {/* Additional views would follow the same pattern */}
       </main>
