@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, 
@@ -40,7 +39,7 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
       }
       const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
       if (linkMatch) {
-        return <a key={i} href={linkMatch[2]} className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">{linkMatch[1]}</a>;
+        return <a key={i} href={linkMatch[2]} className="text-[#1918f0] hover:underline" target="_blank" rel="noopener noreferrer">{linkMatch[1]}</a>;
       }
       return part;
     });
@@ -265,7 +264,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
                     <button 
                       key={font.id}
                       onClick={() => { updatePrefs({ font: font.id as any }); setShowStyleMenu(false); }}
-                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-indigo-500 text-white' : 'hover:bg-slate-500/10'}`}
+                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-[#1918f0] text-white' : 'hover:bg-slate-500/10'}`}
                     >
                       {font.label}
                     </button>
@@ -274,7 +273,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               )}
             </div>
             <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><FileText size={14} /> Word</button>
-            <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
+            <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-[#1918f0] text-white rounded-lg font-bold text-xs md:text-sm hover:bg-[#0a09d0] transition-all shadow-lg shadow-[#1918f0]/20">Save PDF</button>
           </div>
         </header>
         <div className={`flex-1 overflow-y-auto p-4 md:p-8 pb-32 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
@@ -290,7 +289,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     <div className="flex flex-col h-full relative">
       <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <div className="flex flex-col">
@@ -299,7 +298,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
           </div>
         </div>
         {(activeSession.jobDescription || userProfile?.baseResumeText) && (
-          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-indigo-500 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 text-xs md:text-sm disabled:opacity-50">
+          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#1918f0] text-white rounded-full font-bold hover:bg-[#0a09d0] transition-all shadow-lg shadow-[#1918f0]/20 text-xs md:text-sm disabled:opacity-50">
             {isSculpting || isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
             <span className="hidden sm:inline">Sculpt Resume</span><span className="sm:hidden">Sculpt</span>
           </button>
@@ -317,7 +316,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm border relative group ${
               m.role === 'user' 
-                ? theme === 'dark' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
+                ? theme === 'dark' ? 'bg-[#1918f0] text-white border-[#1918f0]' : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
                 : theme === 'dark' ? 'bg-[#2a2a2a] text-white border-[#444]' : 'bg-white text-slate-900 border-slate-200'
             }`}>
               <div className="text-sm leading-relaxed"><MarkdownLite text={m.content} theme={theme} /></div>
@@ -327,7 +326,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         {(isTyping || isSculpting) && (
           <div className="flex justify-start">
             <div className={`rounded-2xl p-4 border flex items-center gap-3 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#333]' : 'bg-white border-[#e2e8f0]'}`}>
-              <Loader2 className="animate-spin text-indigo-500" size={18} />
+              <Loader2 className="animate-spin text-[#1918f0]" size={18} />
               {isSculpting && <span className="text-xs opacity-70">Sculpting...</span>}
             </div>
           </div>
@@ -345,7 +344,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               placeholder={isRecording ? "Recording..." : "Tell the builder about the role..."}
               disabled={isRecording || isSculpting}
               className={`w-full border rounded-2xl p-4 pr-12 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
-                theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-indigo-400'
+                theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-[#1918f0]'
               } ${isRecording ? 'opacity-50 animate-pulse' : ''}`}
               rows={1}
             />
@@ -354,12 +353,12 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               onMouseUp={stopRecording}
               onTouchStart={startRecording}
               onTouchEnd={stopRecording}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-indigo-500 hover:bg-white/5'}`}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-[#1918f0] hover:bg-white/5'}`}
             >
               {isRecording ? <Square size={18} /> : <Mic size={18} />}
             </button>
           </div>
-          <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording || isSculpting} className="p-4 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 transition-colors shadow-md disabled:opacity-30 flex-shrink-0">
+          <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording || isSculpting} className="p-4 bg-[#1918f0] text-white rounded-2xl hover:bg-[#0a09d0] transition-colors shadow-md disabled:opacity-30 flex-shrink-0">
             <Send size={18} />
           </button>
         </div>

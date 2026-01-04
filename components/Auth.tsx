@@ -81,7 +81,7 @@ export const Auth: React.FC = () => {
           options: {
             data: { 
               full_name: fullName,
-              avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=6366f1&color=fff`
+              avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=1918f0&color=fff`
             },
             emailRedirectTo: window.location.origin
           }
@@ -123,9 +123,9 @@ export const Auth: React.FC = () => {
       <div className="w-full max-w-6xl min-h-[700px] flex flex-col md:flex-row bg-white md:rounded-[48px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.08)] md:border border-slate-200">
         
         {/* Intro Slides Card */}
-        <div className="w-full md:w-1/2 bg-indigo-600 p-8 md:p-16 flex flex-col relative overflow-hidden">
+        <div className="w-full md:w-1/2 bg-[#1918f0] p-8 md:p-16 flex flex-col relative overflow-hidden">
           {/* Decorative background elements */}
-          <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-indigo-500 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-white/10 rounded-full opacity-20 blur-3xl"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-indigo-400 rounded-full opacity-20 blur-3xl"></div>
           
           <div className="relative z-10 flex items-center gap-3 mb-16">
@@ -193,7 +193,7 @@ export const Auth: React.FC = () => {
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-[#0F172A] outline-none focus:border-indigo-500 transition-all text-sm"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-[#0F172A] outline-none focus:border-[#1918f0] transition-all text-sm"
                       placeholder="Jane Doe"
                     />
                   </div>
@@ -201,7 +201,7 @@ export const Auth: React.FC = () => {
               )}
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
@@ -209,8 +209,8 @@ export const Auth: React.FC = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-[#0F172A] outline-none focus:border-indigo-500 transition-all text-sm"
-                    placeholder="name@company.com"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-[#0F172A] outline-none focus:border-[#1918f0] transition-all text-sm"
+                    placeholder="name@email.com"
                   />
                 </div>
               </div>
@@ -224,10 +224,10 @@ export const Auth: React.FC = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-12 text-[#0F172A] outline-none focus:border-indigo-500 transition-all text-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-12 text-[#0F172A] outline-none focus:border-[#1918f0] transition-all text-sm"
                     placeholder="••••••••"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1918f0]">
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -249,37 +249,45 @@ export const Auth: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50"
+                className="w-full bg-[#1918f0] hover:bg-[#0a09d0] text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-[#1918f0]/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : (view === 'signup' ? 'Create Account' : 'Sign In')}
                 <ChevronRight size={18} />
               </button>
             </form>
 
-            <div className="relative my-8">
+            <div className="relative my-10">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black"><span className="bg-white px-4 text-slate-400">Social Login</span></div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black"><span className="bg-white px-4 text-slate-400">OR</span></div>
             </div>
 
-            <div className="flex gap-3">
-              <button 
-                onClick={() => handleSocialLogin('google')} 
-                className="flex-1 flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all active:scale-95"
-              >
-                <svg viewBox="0 0 48 48" width="20" height="20">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                </svg>
-                <span className="text-sm font-bold">Google</span>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => handleSocialLogin('google')} className="gsi-material-button">
+                <div className="gsi-material-button-state"></div>
+                <div className="gsi-material-button-content-wrapper">
+                  <div className="gsi-material-button-icon">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: 'block' }}>
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                      <path fill="none" d="M0 0h48v48H0z"></path>
+                    </svg>
+                  </div>
+                  <span className="gsi-material-button-contents">Continue with Google</span>
+                </div>
               </button>
+
               <button 
                 onClick={() => handleSocialLogin('github')} 
-                className="flex-1 flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all active:scale-95"
+                className="w-full flex items-center justify-center gap-3 py-0 px-4 bg-white border border-[#747775] rounded-[20px] text-sm font-medium text-[#1f1f1f] transition-all hover:bg-[#F8FAFC] active:bg-[#F1F5F9] h-[44px] shadow-none active:scale-95 font-['Roboto',_arial,_sans-serif]"
               >
-                <GithubFilledIcon />
-                <span className="text-sm font-bold">GitHub</span>
+                <div className="flex items-center justify-center">
+                  <div className="mr-3 flex items-center justify-center w-5 h-5 text-[#1F2328]">
+                    <GithubFilledIcon />
+                  </div>
+                  <span>Continue with GitHub</span>
+                </div>
               </button>
             </div>
 
@@ -290,7 +298,7 @@ export const Auth: React.FC = () => {
                   setSuccess(null);
                   setView(view === 'signin' ? 'signup' : 'signin');
                 }}
-                className="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors"
+                className="text-sm font-bold text-slate-500 hover:text-[#1918f0] transition-colors"
               >
                 {view === 'signup' ? 'Already have an account? Sign in' : "Don't have an account? Join Zysculpt"}
               </button>
