@@ -166,7 +166,7 @@ export const Auth: React.FC = () => {
              </button>
           </div>
 
-          <div className="w-full max-w-sm">
+          <div className="w-full max-sm">
             <div className="md:hidden flex items-center gap-3 mb-8">
               <ZysculptLogo theme={theme} size={32} />
               <h1 className={`text-2xl font-black tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-[#1918f0]'}`}>zysculpt</h1>
@@ -251,7 +251,7 @@ export const Auth: React.FC = () => {
                       <path fill="none" d="M0 0h48v48H0z"></path>
                     </svg>
                   </div>
-                  <span className="gsi-material-button-contents">Sign in with Google</span>
+                  <span className="gsi-material-button-contents">{view === 'signup' ? 'Sign up' : 'Sign in'} with Google</span>
                 </div>
               </button>
 
@@ -264,7 +264,7 @@ export const Auth: React.FC = () => {
                   <div className={`gsi-material-button-icon ${theme === 'dark' ? 'text-white' : 'text-[#1F2328]'}`}>
                     <GithubFilledIcon />
                   </div>
-                  <span className="gsi-material-button-contents">Sign in with GitHub</span>
+                  <span className="gsi-material-button-contents">{view === 'signup' ? 'Sign up' : 'Sign in'} with GitHub</span>
                 </div>
               </button>
             </div>
