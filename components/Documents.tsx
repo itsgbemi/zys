@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Menu, FileText, Download, Eye, Clock, Grid, List as ListIcon, Filter, Search, ChevronRight, Mail, DoorOpen, File, X } from 'lucide-react';
+import { Menu, FileText, Grid, List as ListIcon, Search, ChevronRight, Mail, DoorOpen, File, Clock, Eye } from 'lucide-react';
 import { ChatSession, Theme } from '../types';
 
 interface DocumentsProps {
@@ -23,11 +22,11 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
   const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
   const borderClass = theme === 'dark' ? 'border-white/10' : 'border-slate-200';
-  const bgClass = theme === 'dark' ? 'bg-[#191919]' : 'bg-white';
+  const bgClass = theme === 'dark' ? 'bg-[#121212]' : 'bg-white';
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'resume': return <FileText size={18} className="text-indigo-500" />;
+      case 'resume': return <FileText size={18} className="text-[#1918f0]" />;
       case 'cover-letter': return <Mail size={18} className="text-emerald-500" />;
       case 'resignation-letter': return <DoorOpen size={18} className="text-orange-500" />;
       default: return <File size={18} className="text-slate-500" />;
@@ -35,29 +34,23 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
   };
 
   return (
-    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
+    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${bgClass} ${borderClass}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <div>
-            <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Documents</h2>
-            <p className={`text-[10px] md:text-xs ${textSecondary}`}>Manage your professional portfolio</p>
+            <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>My Documents</h2>
+            <p className={`text-[10px] md:text-xs ${textSecondary}`}>Manage your tailored professional files</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
            <div className={`flex items-center rounded-xl p-1 border ${borderClass} ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`}>
-              <button 
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? (theme === 'dark' ? 'bg-indigo-500 text-white' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400'}`}
-              >
+              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#1918f0] text-white shadow-sm' : 'text-slate-400'}`}>
                 <Grid size={16} />
               </button>
-              <button 
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? (theme === 'dark' ? 'bg-indigo-500 text-white' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400'}`}
-              >
+              <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#1918f0] text-white shadow-sm' : 'text-slate-400'}`}>
                 <ListIcon size={16} />
               </button>
            </div>
@@ -66,7 +59,6 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
-          {/* Controls Bar */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
             <div className="flex flex-wrap items-center gap-2">
               {[
@@ -80,7 +72,7 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
                   onClick={() => setFilter(item.id as any)}
                   className={`px-4 py-2 rounded-full text-[11px] md:text-xs font-bold transition-all border ${
                     filter === item.id 
-                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+                      ? 'bg-[#1918f0] border-[#1918f0] text-white shadow-lg shadow-indigo-500/20' 
                       : `${theme === 'dark' ? 'border-white/5 text-slate-400 hover:text-white' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`
                   }`}
                 >
@@ -96,7 +88,7 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                  className={`w-full pl-10 pr-4 py-2 rounded-xl text-sm border outline-none transition-all ${
-                   theme === 'dark' ? 'bg-[#191919] border-white/5 text-white focus:border-indigo-500' : 'bg-white border-slate-200 focus:border-indigo-500'
+                   theme === 'dark' ? 'bg-[#191919] border-white/5 text-white focus:border-[#1918f0]' : 'bg-white border-slate-200 focus:border-[#1918f0]'
                  }`}
                />
             </div>
@@ -104,11 +96,9 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
 
           {filteredSessions.length === 0 ? (
             <div className={`flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-3xl p-8 text-center transition-colors ${theme === 'dark' ? 'border-white/10' : 'border-slate-200 bg-white shadow-sm'}`}>
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}`}>
-                <FileText size={32} className={theme === 'dark' ? 'text-slate-700' : 'text-slate-300'} />
-              </div>
-              <h3 className={`text-lg font-bold mb-2 ${textPrimary}`}>No documents found</h3>
-              <p className="text-slate-500 text-sm max-w-xs">Try adjusting your filters or start a new document builder.</p>
+              <FileText size={48} className="text-slate-300 mb-4" />
+              <h3 className={`text-lg font-bold mb-2 ${textPrimary}`}>No documents yet</h3>
+              <p className="text-slate-500 text-sm max-w-xs">Start building a resume or letter to see it here.</p>
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -117,18 +107,18 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
                   key={session.id}
                   onClick={() => onSelectSession(session.id)}
                   className={`border rounded-2xl overflow-hidden group shadow-sm transition-all cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#191919] border-white/10 hover:border-indigo-500/50' : 'bg-white border-slate-200 hover:border-indigo-400 hover:shadow-md'
+                    theme === 'dark' ? 'bg-[#191919] border-white/10 hover:border-[#1918f0]' : 'bg-white border-slate-200 hover:border-[#1918f0]'
                   }`}
                 >
-                  <div className={`aspect-[3/4] p-4 md:p-6 relative overflow-hidden flex flex-col ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}`}>
-                    <div className="w-full h-full bg-white text-black p-4 text-[4px] leading-tight select-none opacity-40 overflow-hidden transform group-hover:scale-105 transition-transform rounded shadow-sm">
+                  <div className={`aspect-[3/4] p-6 relative overflow-hidden flex flex-col ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}`}>
+                    <div className="w-full h-full bg-white text-black p-3 text-[3px] leading-tight select-none opacity-40 overflow-hidden transform group-hover:scale-105 transition-transform rounded shadow-sm">
                        {session.finalResume}
                     </div>
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <div className="p-3 bg-white text-black rounded-full shadow-2xl"><Eye size={20} /></div>
                     </div>
                   </div>
-                  <div className={`p-4 border-t transition-colors ${borderClass}`}>
+                  <div className={`p-4 border-t ${borderClass}`}>
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className={`text-sm font-bold truncate ${textPrimary}`}>{session.title}</h4>
                       {getIcon(session.type)}
@@ -142,7 +132,7 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
               ))}
             </div>
           ) : (
-            <div className={`rounded-2xl overflow-hidden border ${borderClass} ${bgClass}`}>
+            <div className={`rounded-2xl overflow-hidden border ${borderClass} ${theme === 'dark' ? 'bg-[#191919]' : 'bg-white'}`}>
               {filteredSessions.map((session, i) => (
                 <div 
                   key={session.id}
@@ -165,7 +155,7 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
                         <Clock size={12} />
                         {new Date(session.lastUpdated).toLocaleDateString()}
                      </div>
-                     <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-500 transition-all" />
+                     <ChevronRight size={18} className="text-slate-300" />
                   </div>
                 </div>
               ))}

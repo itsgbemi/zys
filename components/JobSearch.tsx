@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { Search, MapPin, Briefcase, Filter, ArrowUpRight, Menu, TrendingUp, ChevronLeft, Building2, Calendar, DollarSign, Sparkles, Mail, Layout } from 'lucide-react';
-import { Theme } from '../types';
+import { Search, MapPin, Building2, ChevronLeft, DollarSign, Sparkles, Mail, Menu, ArrowUpRight } from 'lucide-react';
+import { Theme, AppView } from '../types';
 
 interface JobSearchProps {
   onToggleMobile?: () => void;
@@ -25,6 +24,7 @@ interface Job {
 
 const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptResume, onSculptLetter }) => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const jobs: Job[] = [
     { 
@@ -90,13 +90,13 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
   ];
 
   const headerBg = theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]';
-  const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] hover:border-white' : 'bg-white border-slate-200 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/5';
+  const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] hover:border-[#1918f0]' : 'bg-white border-slate-200 hover:border-[#1918f0] hover:shadow-xl hover:shadow-indigo-500/5';
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
   const textSecondary = theme === 'dark' ? 'text-[#a0a0a0]' : 'text-slate-500';
 
   if (selectedJob) {
     return (
-      <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#191919]' : 'bg-[#F8FAFC]'}`}>
+      <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
         <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${headerBg}`}>
           <div className="flex items-center gap-3">
             <button onClick={() => setSelectedJob(null)} className={`p-2 rounded-xl transition-colors ${theme === 'dark' ? 'hover:bg-white/5 text-white' : 'hover:bg-slate-100 text-slate-800'}`}>
@@ -113,15 +113,15 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
             </button>
             <button 
               onClick={() => onSculptResume({ title: selectedJob.title, company: selectedJob.company, description: selectedJob.description })}
-              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#1918f0] text-white rounded-xl text-xs font-bold hover:bg-[#1413c7] shadow-lg shadow-indigo-500/20"
             >
-              <Sparkles size={16} /> <span className="hidden sm:inline">Sculpt Resume</span><span className="sm:hidden">Sculpt</span>
+              <Sparkles size={16} /> <span className="hidden sm:inline">Sculpt Resume</span>
             </button>
           </div>
         </header>
         <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-4xl mx-auto w-full">
           <div className="mb-8 flex items-start gap-4 md:gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center font-bold text-2xl md:text-4xl text-white shadow-xl">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-gradient-to-br from-[#1918f0] to-indigo-800 flex items-center justify-center font-bold text-2xl md:text-4xl text-white shadow-xl">
               {selectedJob.company[0]}
             </div>
             <div>
@@ -129,7 +129,7 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
               <div className="flex flex-wrap items-center gap-y-2 gap-x-4">
                 <span className={`flex items-center gap-1.5 text-sm font-medium ${textSecondary}`}><Building2 size={16} /> {selectedJob.company}</span>
                 <span className={`flex items-center gap-1.5 text-sm font-medium ${textSecondary}`}><MapPin size={16} /> {selectedJob.location}</span>
-                <span className={`flex items-center gap-1.5 text-sm font-bold ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}><DollarSign size={16} /> {selectedJob.salary}</span>
+                <span className={`flex items-center gap-1.5 text-sm font-bold text-[#1918f0]`}><DollarSign size={16} /> {selectedJob.salary}</span>
               </div>
             </div>
           </div>
@@ -143,9 +143,9 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
               <span className={`text-[10px] font-bold uppercase tracking-widest ${textSecondary}`}>Posted</span>
               <p className={`font-bold mt-1 ${textPrimary}`}>{selectedJob.posted}</p>
             </div>
-            <div className={`p-4 rounded-2xl border ${theme === 'dark' ? 'bg-[#121212] border-indigo-500/30' : 'bg-indigo-50 border-indigo-200'}`}>
-              <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>ATS Match</span>
-              <p className={`font-extrabold mt-1 text-xl ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>{selectedJob.match}</p>
+            <div className={`p-4 rounded-2xl border ${theme === 'dark' ? 'bg-[#1918f0]/10 border-[#1918f0]/30' : 'bg-indigo-50 border-indigo-200'}`}>
+              <span className={`text-[10px] font-bold uppercase tracking-widest text-[#1918f0]`}>ATS Match</span>
+              <p className={`font-extrabold mt-1 text-xl text-[#1918f0]`}>{selectedJob.match}</p>
             </div>
           </div>
 
@@ -174,10 +174,10 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
   }
 
   return (
-    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#191919]' : 'bg-[#F8FAFC]'}`}>
+    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${headerBg}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <div>
@@ -199,37 +199,39 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
             <input 
               type="text" 
               placeholder="Search by title or skills..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full border rounded-2xl py-3.5 pl-12 pr-4 transition-all text-sm md:text-base outline-none ${
-                theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-white border-slate-200 text-[#0F172A] focus:border-indigo-500 shadow-sm'
+                theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-[#1918f0]' : 'bg-white border-slate-200 text-[#0F172A] focus:border-[#1918f0] shadow-sm'
               }`}
             />
           </div>
-          <button className="px-8 py-3.5 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95">
+          <button className="px-8 py-3.5 bg-[#1918f0] text-white rounded-2xl font-bold hover:bg-[#1413c7] transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95">
             Search
           </button>
         </div>
 
         <div className="space-y-4 pb-12">
-          {jobs.map(job => (
+          {jobs.filter(j => j.title.toLowerCase().includes(searchQuery.toLowerCase()) || j.company.toLowerCase().includes(searchQuery.toLowerCase())).map(job => (
             <div key={job.id} onClick={() => setSelectedJob(job)} className={`p-6 border rounded-3xl transition-all cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4 ${cardBg}`}>
               <div className="flex items-center gap-6">
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center font-bold text-xl md:text-2xl text-white shadow-lg shadow-indigo-500/10">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br from-[#1918f0] to-indigo-800 flex items-center justify-center font-bold text-xl md:text-2xl text-white shadow-lg shadow-indigo-500/10">
                   {job.company[0]}
                 </div>
                 <div>
-                  <h3 className={`text-lg md:text-xl font-bold mb-1 transition-colors group-hover:text-indigo-500 ${textPrimary}`}>{job.title}</h3>
+                  <h3 className={`text-lg md:text-xl font-bold mb-1 transition-colors group-hover:text-[#1918f0] ${textPrimary}`}>{job.title}</h3>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <span className={`text-xs md:text-sm font-medium ${textSecondary}`}>{job.company}</span>
                     <span className={`text-xs md:text-sm flex items-center gap-1 ${textSecondary}`}>
                       <MapPin size={14} /> {job.location}
                     </span>
-                    <span className={`text-xs md:text-sm font-bold ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>{job.salary}</span>
+                    <span className={`text-xs md:text-sm font-bold text-[#1918f0]`}>{job.salary}</span>
                   </div>
                 </div>
               </div>
               
               <div className="flex items-center justify-between md:justify-end gap-6 md:border-l md:pl-6 border-slate-200 dark:border-white/5">
-                <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 ${theme === 'dark' ? 'bg-[#1918f0]/10 text-[#1918f0]' : 'bg-indigo-50 text-[#1918f0]'}`}>
                    {job.match} Match
                 </div>
                 <div className={`flex items-center gap-1.5 text-xs font-bold transition-all group-hover:gap-2 ${textPrimary}`}>

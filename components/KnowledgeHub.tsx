@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { BookOpen, Zap, BrainCircuit, RefreshCw, ChevronRight, CheckCircle2, XCircle, Sparkles, Loader2, Menu } from 'lucide-react';
+import { BookOpen, Zap, BrainCircuit, RefreshCw, CheckCircle2, XCircle, Loader2, Menu } from 'lucide-react';
 import { Theme } from '../types';
 import { geminiService } from '../services/gemini';
 
@@ -31,6 +30,7 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
       setUserAnswer(null);
     } catch (e) {
       console.error(e);
+      alert("Failed to generate learning content. Please check your topic or API key.");
     } finally {
       setLoading(false);
     }
@@ -56,10 +56,12 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
   const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-slate-200 shadow-sm';
 
   return (
-    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#191919]' : 'bg-[#F8FAFC]'}`}>
-      <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
+      <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden"><Menu size={24} className={textPrimary}/></button>
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
+            <Menu size={24} />
+          </button>
           <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Knowledge Hub</h2>
         </div>
         <div className="flex gap-2">
@@ -81,11 +83,11 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
                 <input 
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  placeholder="e.g. React Native, SEO Strategy, AWS Architecting..."
-                  className={`w-full p-4 rounded-2xl border outline-none transition-all focus:border-orange-500 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200'}`}
+                  placeholder="e.g. React Native, SEO Strategy, AWS..."
+                  className={`w-full p-4 rounded-2xl border outline-none transition-all focus:border-[#1918f0] ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200'}`}
                 />
                 <div className="grid grid-cols-2 gap-4">
-                  <button onClick={() => startLearning('quiz')} disabled={loading} className="p-4 bg-indigo-600 text-white rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+                  <button onClick={() => startLearning('quiz')} disabled={loading} className="p-4 bg-[#1918f0] text-white rounded-2xl font-bold text-sm hover:bg-[#1413c7] transition-all flex items-center justify-center gap-2">
                     {loading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />} AI Quiz
                   </button>
                   <button onClick={() => startLearning('flashcards')} disabled={loading} className="p-4 bg-emerald-600 text-white rounded-2xl font-bold text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
@@ -107,7 +109,7 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
                      key={i} 
                      onClick={() => handleAnswer(i)}
                      className={`w-full p-4 text-left rounded-2xl border text-sm font-medium transition-all flex items-center justify-between
-                       ${userAnswer === null ? 'hover:border-indigo-500 hover:bg-indigo-500/5' : ''}
+                       ${userAnswer === null ? 'hover:border-[#1918f0] hover:bg-indigo-500/5' : ''}
                        ${userAnswer === i && i === content[currentIndex].correctIndex ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : ''}
                        ${userAnswer === i && i !== content[currentIndex].correctIndex ? 'border-red-500 bg-red-500/10 text-red-500' : ''}
                        ${userAnswer !== null && i === content[currentIndex].correctIndex ? 'border-emerald-500 text-emerald-500' : ''}
@@ -120,7 +122,7 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
                  ))}
                </div>
                {userAnswer !== null && (
-                 <button onClick={nextQuestion} className="w-full mt-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold transition-all hover:bg-indigo-700">
+                 <button onClick={nextQuestion} className="w-full mt-8 py-4 bg-[#1918f0] text-white rounded-2xl font-bold transition-all hover:bg-[#1413c7]">
                     {currentIndex === content.length - 1 ? 'Finish Hub Session' : 'Next Question'}
                  </button>
                )}

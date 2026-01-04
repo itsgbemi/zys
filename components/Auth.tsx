@@ -14,11 +14,8 @@ import {
   Sparkles,
   Zap,
   CheckCircle2,
-  Languages,
   Moon,
-  Sun,
-  Volume2,
-  StopCircle
+  Sun
 } from 'lucide-react';
 
 type AuthView = 'signin' | 'signup' | 'forgot-password';
@@ -58,7 +55,6 @@ export const Auth: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [theme, setTheme] = useState(() => (localStorage.getItem('zysculpt-theme') as 'light' | 'dark') || 'light');
-  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     document.body.className = `theme-${theme}`;
@@ -71,19 +67,6 @@ export const Auth: React.FC = () => {
     }, 5000);
     return () => clearInterval(timer);
   }, []);
-
-  const toggleReadAloud = () => {
-    if (isPlaying) {
-      window.speechSynthesis.cancel();
-      setIsPlaying(false);
-    } else {
-      const slide = INTRO_SLIDES[activeSlide];
-      const utterance = new SpeechSynthesisUtterance(`${slide.title}. ${slide.description}`);
-      utterance.onend = () => setIsPlaying(false);
-      window.speechSynthesis.speak(utterance);
-      setIsPlaying(true);
-    }
-  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,8 +121,8 @@ export const Auth: React.FC = () => {
     <div className={`min-h-screen transition-colors duration-300 flex items-center justify-center p-0 md:p-6 font-sans ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       <div className={`w-full max-w-6xl min-h-[700px] flex flex-col md:flex-row md:rounded-[48px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.12)] md:border transition-all ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200'}`}>
         
-        {/* Intro Slides Card */}
-        <div className="w-full md:w-1/2 bg-[#1918f0] p-8 md:p-16 flex flex-col relative overflow-hidden">
+        {/* Intro Slides Card - Hidden on Mobile */}
+        <div className="hidden md:flex w-full md:w-1/2 bg-[#1918f0] p-8 md:p-16 flex-col relative overflow-hidden">
           <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-white/10 rounded-full opacity-20 blur-[100px]"></div>
           
           <div className="relative z-10 flex items-center justify-between mb-16">
@@ -147,15 +130,8 @@ export const Auth: React.FC = () => {
               <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20">
                 <ZysculptLogo theme="dark" size={32} />
               </div>
-              <span className="text-2xl font-black text-white tracking-tighter" style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</span>
+              <span className="text-2xl font-black text-white tracking-tighter">zysculpt</span>
             </div>
-            <button 
-              onClick={toggleReadAloud}
-              className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md border border-white/20 text-white transition-all active:scale-90"
-              title="Listen to Overview"
-            >
-              {isPlaying ? <StopCircle size={20} className="animate-pulse" /> : <Volume2 size={20} />}
-            </button>
           </div>
 
           <div className="flex-1 relative z-10 flex flex-col justify-center">
@@ -164,7 +140,7 @@ export const Auth: React.FC = () => {
                 <div className="mb-6 bg-white/10 w-fit p-5 rounded-[24px] backdrop-blur-lg border border-white/10 shadow-2xl">
                   {slide.icon}
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight" style={{ fontFamily: "'DM Sans', sans-serif" }}>{slide.title}</h2>
+                <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">{slide.title}</h2>
                 <p className="text-lg md:text-xl text-indigo-100/80 leading-relaxed max-w-md">{slide.description}</p>
               </div>
             ))}
@@ -185,9 +161,7 @@ export const Auth: React.FC = () => {
 
         {/* Auth Form Area */}
         <div className={`w-full md:w-1/2 p-8 md:p-16 flex flex-col items-center justify-center relative transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-white'}`}>
-          {/* Top Controls: Theme + Translation */}
           <div className="absolute top-8 right-8 flex items-center gap-4 z-20">
-             <div id="google_translate_element" className={`${theme === 'dark' ? 'text-white' : 'text-slate-600'}`}></div>
              <button 
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className={`p-2 rounded-xl border transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
@@ -197,7 +171,12 @@ export const Auth: React.FC = () => {
           </div>
 
           <div className="w-full max-w-sm">
-            <h2 className={`text-3xl font-black mb-2 ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`} style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <div className="md:hidden flex items-center gap-3 mb-8">
+              <ZysculptLogo theme={theme} size={32} />
+              <h1 className={`text-2xl font-black tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-[#1918f0]'}`}>zysculpt</h1>
+            </div>
+
+            <h2 className={`text-3xl font-black mb-2 ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>
               {view === 'signup' ? 'Get Started' : 'Welcome Back'}
             </h2>
             <p className="text-slate-500 mb-8 font-medium">
@@ -282,7 +261,7 @@ export const Auth: React.FC = () => {
 
               <button 
                 onClick={() => handleSocialLogin('github')} 
-                className={`w-full flex items-center justify-center gap-3 py-0 px-4 rounded-[20px] text-sm font-medium transition-all h-[44px] active:scale-95 font-['Roboto',_arial,_sans-serif] ${theme === 'dark' ? 'bg-white text-[#1f1f1f] border-none' : 'bg-white border border-[#747775] text-[#1f1f1f] hover:bg-[#F8FAFC]'}`}
+                className={`w-full flex items-center justify-center gap-3 py-0 px-4 rounded-[20px] text-sm font-medium transition-all h-[44px] active:scale-95 font-sans ${theme === 'dark' ? 'bg-white text-[#1f1f1f] border-none' : 'bg-white border border-[#747775] text-[#1f1f1f] hover:bg-[#F8FAFC]'}`}
               >
                 <div className="flex items-center justify-center">
                   <div className="mr-3 flex items-center justify-center w-5 h-5 text-[#1F2328]">

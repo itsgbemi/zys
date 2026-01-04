@@ -8,11 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@800&family=Roboto:wght@400;700&family=EB+Garamond:wght@400;700&family=Tinos:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             margin: 0;
             overflow-x: hidden;
             transition: background-color 0.3s ease, color 0.3s ease;
@@ -20,16 +20,11 @@
         .theme-dark { background-color: #121212; color: white; }
         .theme-light { background-color: #F8FAFC; color: #0F172A; }
         
-        .font-sans { font-family: 'Inter', sans-serif !important; }
-        .font-serif { font-family: 'EB Garamond', serif !important; }
-        .font-mono { font-family: 'Roboto', sans-serif !important; }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .theme-dark::-webkit-scrollbar-thumb { background: #333; }
 
-        /* Google Translate Hiding header */
         .goog-te-banner-frame.skiptranslate { display: none !important; }
         body { top: 0px !important; }
         .goog-te-gadget-icon { display: none !important; }
@@ -42,9 +37,8 @@
             text-transform: uppercase !important;
             letter-spacing: 0.05em !important;
         }
-        .goog-te-menu-value span { color: inherit !important; font-family: 'Inter', sans-serif !important; }
+        .goog-te-menu-value span { color: inherit !important; font-family: 'DM Sans', sans-serif !important; }
 
-        /* Google Material Button Styles - Light Variant */
         .gsi-material-button {
           -moz-user-select: none;
           -webkit-user-select: none;
@@ -59,7 +53,7 @@
           box-sizing: border-box;
           color: #1f1f1f;
           cursor: pointer;
-          font-family: 'Roboto', arial, sans-serif;
+          font-family: 'DM Sans', sans-serif;
           font-size: 14px;
           font-weight: 500;
           height: 44px;
@@ -77,24 +71,6 @@
           display: flex;
           align-items: center;
           justify-content: center;
-        }
-        .gsi-material-button .gsi-material-button-icon {
-          height: 20px;
-          margin-right: 12px;
-          min-width: 20px;
-          width: 20px;
-        }
-        .gsi-material-button .gsi-material-button-content-wrapper {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .gsi-material-button:hover {
-          background-color: #F8FAFC;
-          box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
-        }
-        .gsi-material-button:active {
-          background-color: #F1F5F9;
         }
     </style>
 <script type="importmap">
