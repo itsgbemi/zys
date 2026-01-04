@@ -23,7 +23,8 @@ import {
   X,
   AlertCircle,
   Menu,
-  Languages
+  Languages,
+  Check
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
@@ -76,7 +77,29 @@ const Sidebar: React.FC<SidebarProps> = ({
     copilot: false
   });
   
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  
   const menuRef = useRef<HTMLDivElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (renamingId && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [renamingId]);
 
   const toggleSubmenu = (key: string) => {
     if (isCollapsed && !isMobileOpen) {
@@ -85,6 +108,19 @@ const Sidebar: React.FC<SidebarProps> = ({
     } else {
       setOpenSubmenus(prev => ({ ...prev, [key]: !prev[key] }));
     }
+  };
+
+  const handleStartRename = (id: string, currentTitle: string) => {
+    setRenamingId(id);
+    setRenameValue(currentTitle);
+    setActiveMenuId(null);
+  };
+
+  const submitRename = () => {
+    if (renamingId && renameValue.trim()) {
+      onRenameSession(renamingId, renameValue.trim());
+    }
+    setRenamingId(null);
   };
 
   const renderNavButton = (id: AppView, label: string, icon: React.ReactNode, typeKey?: string, onPlusClick?: () => void) => {
@@ -101,12 +137,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     });
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-1 font-['Roboto',_sans-serif]">
         <div 
           className={`flex items-center group rounded-xl transition-all ${
             isActive && !hasSubmenu
               ? 'bg-[#1918f0] text-white shadow-lg shadow-[#1918f0]/20' 
-              : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
+              : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-white/5 hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
           } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
         >
           <button
@@ -138,12 +174,45 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={`ml-9 mt-1 space-y-1 border-l pl-3 ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
             {filteredSessions.map(s => (
               <div key={s.id} className="group/item flex items-center relative pr-2">
-                <button 
-                  onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
-                  className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${activeSessionId === s.id && currentView === id ? 'text-white bg-[#1918f0]/10 font-semibold' : 'text-[#a0a0a0] hover:text-white'}`}
-                >
-                  {s.title}
-                </button>
+                {renamingId === s.id ? (
+                   <div className="flex-1 flex items-center gap-1 p-1">
+                      <input 
+                        ref={renameInputRef}
+                        className={`w-full bg-transparent border-b border-[#1918f0] text-[11px] outline-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
+                        value={renameValue}
+                        onChange={e => setRenameValue(e.target.value)}
+                        onBlur={submitRename}
+                        onKeyDown={e => e.key === 'Enter' && submitRename()}
+                      />
+                      <button onClick={submitRename} className="text-[#1918f0]"><Check size={14}/></button>
+                   </div>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
+                      className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${activeSessionId === s.id && currentView === id ? 'text-white bg-[#1918f0]/10 font-bold' : 'text-[#a0a0a0] hover:text-white'}`}
+                    >
+                      {s.title}
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === s.id ? null : s.id); }}
+                      className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-white/5 rounded-lg transition-all text-[#a0a0a0] hover:text-white"
+                    >
+                      <MoreHorizontal size={14} />
+                    </button>
+                    
+                    {activeMenuId === s.id && (
+                      <div ref={menuRef} className={`absolute right-[-10px] top-8 z-50 min-w-[120px] rounded-xl border shadow-2xl p-1 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+                        <button onClick={() => handleStartRename(s.id, s.title)} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-[#1918f0]/10 transition-colors text-left">
+                           <Edit2 size={12}/> Rename
+                        </button>
+                        <button onClick={() => { onDeleteSession(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500/10 text-red-500 transition-colors text-left">
+                           <Trash2 size={12}/> Delete
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -153,13 +222,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white' : 'bg-white border-[#e2e8f0] text-slate-900'} border-r ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl shadow-black/50' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
+    <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white' : 'bg-white border-[#e2e8f0] text-slate-900'} border-r ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl shadow-black/50' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
       
-      {/* Sidebar Header */}
       <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
           <ZysculptLogo theme={theme} size={32} />
-          {(!isCollapsed || isMobileOpen) && <span className="text-2xl font-black tracking-tighter" style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</span>}
+          {(!isCollapsed || isMobileOpen) && <span className="text-2xl font-black tracking-tighter">zysculpt</span>}
         </div>
         {isMobileOpen && (
           <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
@@ -168,7 +236,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
       
-      {/* Navigation */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2">
         {renderNavButton(AppView.OVERVIEW, 'Overview', <LayoutDashboard size={20} />)}
         {renderNavButton(AppView.CAREER_COPILOT, 'Roadmap', <Compass size={20} />, 'copilot', () => onNewSession('career-copilot'))}
@@ -182,9 +249,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {renderNavButton(AppView.SETTINGS, 'Settings', <SettingsIcon size={20} />)}
       </nav>
 
-      {/* Sidebar Footer */}
       <div className={`p-4 space-y-2 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-        {/* Translation Widget Container */}
         <div className={`flex items-center gap-4 px-3 py-2 rounded-xl mb-2 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}`}>
           <Languages size={18} className="text-[#1918f0] flex-shrink-0" />
           <div id="google_translate_element" className="flex-1 overflow-hidden"></div>
@@ -192,17 +257,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         <button onClick={toggleTheme} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
           {theme === 'dark' ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-[#1918f0]" />}
-          {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
-        </button>
-
-        <button onClick={() => setIsCollapsed(!isCollapsed)} className={`hidden md:flex w-full items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-[#a0a0a0] hover:bg-white/5 hover:text-white' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'} ${isCollapsed ? 'justify-center' : ''}`}>
-          {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
-          {!isCollapsed && <span className="font-medium text-sm">Minimize</span>}
+          {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
 
         <button onClick={onLogout} className={`w-full flex items-center gap-4 p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all active:scale-95 ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
           <LogOut size={20} />
-          {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">Logout</span>}
+          {(!isCollapsed || isMobileOpen) && <span className="font-black text-sm">Logout</span>}
         </button>
       </div>
     </aside>

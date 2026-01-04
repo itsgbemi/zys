@@ -8,11 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             overflow-x: hidden;
             transition: background-color 0.3s ease, color 0.3s ease;
@@ -37,23 +37,36 @@
             text-transform: uppercase !important;
             letter-spacing: 0.05em !important;
         }
-        .goog-te-menu-value span { color: inherit !important; font-family: 'DM Sans', sans-serif !important; }
+        .goog-te-menu-value span { color: inherit !important; font-family: 'Roboto', sans-serif !important; }
+
+        /* GSI Material Button - Light */
+        .theme-light .gsi-material-button {
+          background-color: WHITE;
+          border: 1px solid #747775;
+          color: #1f1f1f;
+        }
+        .theme-light .gsi-material-button:hover { background-color: #F8FAFC; }
+        
+        /* GSI Material Button - Dark */
+        .theme-dark .gsi-material-button {
+          background-color: #131314;
+          border: 1px solid #8e918f;
+          color: #e3e3e3;
+        }
+        .theme-dark .gsi-material-button:hover { background-color: #1a1a1b; }
 
         .gsi-material-button {
           -moz-user-select: none;
           -webkit-user-select: none;
           -ms-user-select: none;
           -webkit-appearance: none;
-          background-color: WHITE;
           background-image: none;
-          border: 1px solid #747775;
           -webkit-border-radius: 20px;
           border-radius: 20px;
           -webkit-box-sizing: border-box;
           box-sizing: border-box;
-          color: #1f1f1f;
           cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Roboto', arial, sans-serif;
           font-size: 14px;
           font-weight: 500;
           height: 44px;
@@ -68,6 +81,17 @@
           vertical-align: middle;
           white-space: nowrap;
           width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .gsi-material-button .gsi-material-button-icon {
+          height: 20px;
+          margin-right: 12px;
+          min-width: 20px;
+          width: 20px;
+        }
+        .gsi-material-button .gsi-material-button-content-wrapper {
           display: flex;
           align-items: center;
           justify-content: center;

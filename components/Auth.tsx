@@ -118,11 +118,11 @@ export const Auth: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 flex items-center justify-center p-0 md:p-6 font-sans ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
+    <div className={`min-h-screen transition-colors duration-300 flex items-center justify-center p-0 md:p-6 font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       <div className={`w-full max-w-6xl min-h-[700px] flex flex-col md:flex-row md:rounded-[48px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.12)] md:border transition-all ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200'}`}>
         
-        {/* Intro Slides Card - Hidden on Mobile */}
-        <div className="hidden md:flex w-full md:w-1/2 bg-[#1918f0] p-8 md:p-16 flex-col relative overflow-hidden">
+        {/* Intro Card - Hidden on Mobile */}
+        <div className="hidden md:flex w-full md:w-1/2 bg-[#1918f0] p-8 md:p-16 flex flex-col relative overflow-hidden">
           <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-white/10 rounded-full opacity-20 blur-[100px]"></div>
           
           <div className="relative z-10 flex items-center justify-between mb-16">
@@ -152,10 +152,6 @@ export const Auth: React.FC = () => {
                 <div key={i} className={`h-1.5 transition-all duration-300 rounded-full ${activeSlide === i ? 'w-8 bg-white' : 'w-2 bg-white/30'}`} />
               ))}
             </div>
-            <div className="flex items-center gap-2 py-1.5 px-3 rounded-full bg-white/10 border border-white/10 backdrop-blur-md">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-              <span className="text-[10px] font-bold text-white uppercase tracking-widest">Live Platform</span>
-            </div>
           </div>
         </div>
 
@@ -180,7 +176,7 @@ export const Auth: React.FC = () => {
               {view === 'signup' ? 'Get Started' : 'Welcome Back'}
             </h2>
             <p className="text-slate-500 mb-8 font-medium">
-              {view === 'signup' ? 'Create your career pilot account today.' : 'Sign in to access your roadmaps.'}
+              {view === 'signup' ? 'Create your account today.' : 'Sign in to access your roadmaps.'}
             </p>
 
             <form onSubmit={handleAuth} className="space-y-4">
@@ -255,16 +251,16 @@ export const Auth: React.FC = () => {
                       <path fill="none" d="M0 0h48v48H0z"></path>
                     </svg>
                   </div>
-                  <span className="gsi-material-button-contents">Continue with Google</span>
+                  <span className="gsi-material-button-contents">Sign in with Google</span>
                 </div>
               </button>
 
               <button 
                 onClick={() => handleSocialLogin('github')} 
-                className={`w-full flex items-center justify-center gap-3 py-0 px-4 rounded-[20px] text-sm font-medium transition-all h-[44px] active:scale-95 font-sans ${theme === 'dark' ? 'bg-white text-[#1f1f1f] border-none' : 'bg-white border border-[#747775] text-[#1f1f1f] hover:bg-[#F8FAFC]'}`}
+                className={`w-full flex items-center justify-center gap-3 py-0 px-4 rounded-[20px] text-sm font-medium transition-all h-[44px] active:scale-95 font-sans ${theme === 'dark' ? 'bg-[#24292f] text-white border-none' : 'bg-white border border-[#747775] text-[#1f1f1f] hover:bg-[#F8FAFC]'}`}
               >
                 <div className="flex items-center justify-center">
-                  <div className="mr-3 flex items-center justify-center w-5 h-5 text-[#1F2328]">
+                  <div className={`mr-3 flex items-center justify-center w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-[#1F2328]'}`}>
                     <GithubFilledIcon />
                   </div>
                   <span>Continue with GitHub</span>

@@ -1,4 +1,3 @@
-
 export enum AppView {
   OVERVIEW = 'OVERVIEW',
   RESUME_BUILDER = 'RESUME_BUILDER',

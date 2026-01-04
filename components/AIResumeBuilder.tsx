@@ -1,21 +1,20 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, 
-  Paperclip, 
   Loader2, 
   Undo,
   Sparkles,
   FileText,
-  List as ListIcon,
-  ChevronUp,
-  Type as TypeIcon,
-  Plus,
   Palette,
   Mic,
   Square,
   Menu,
-  AlertCircle
+  AlertCircle,
+  Paperclip,
+  Cpu,
+  Zap,
+  Globe,
+  Plus
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { geminiService } from '../services/gemini';
@@ -34,18 +33,18 @@ interface AIResumeBuilderProps {
 
 export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; prefs?: StylePrefs }> = ({ text, dark = false, theme = 'dark', prefs }) => {
   const lines = text.split('\n');
-  const fontClass = prefs?.font || 'font-sans';
+  const fontClass = "font-['Roboto',_sans-serif]";
   const listStyle = prefs?.listStyle || 'disc';
   
   const formatText = (content: string) => {
     const parts = content.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+        return <strong key={i} className="font-black">{part.slice(2, -2)}</strong>;
       }
       const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
       if (linkMatch) {
-        return <a key={i} href={linkMatch[2]} className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">{linkMatch[1]}</a>;
+        return <a key={i} href={linkMatch[2]} className="text-[#1918f0] hover:underline" target="_blank" rel="noopener noreferrer">{linkMatch[1]}</a>;
       }
       return part;
     });
@@ -64,13 +63,11 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
         const trimmed = line.trim();
         if (trimmed === '') return <div key={i} className="h-2" />;
         
-        if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-bold mt-4 mb-2">{formatText(trimmed.slice(4))}</h3>;
-        if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
-        if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center">{formatText(trimmed.slice(2))}</h1>;
+        if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-black mt-4 mb-2">{formatText(trimmed.slice(4))}</h3>;
+        if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-black mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
+        if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-black mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center">{formatText(trimmed.slice(2))}</h1>;
         
-        if (trimmed.startsWith('#### ')) {
-           return <h4 key={i} className="text-sm font-bold mt-3 mb-1">{formatText(trimmed.slice(5))}</h4>;
-        }
+        if (trimmed.startsWith('#### ')) return <h4 key={i} className="text-sm font-bold mt-3 mb-1">{formatText(trimmed.slice(5))}</h4>;
 
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
           return (
@@ -96,6 +93,8 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const [showPreview, setShowPreview] = useState(false);
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<'flash' | 'pro'>('flash');
+  const [showModelSelector, setShowModelSelector] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -167,8 +166,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       const context: any = { 
         jobDescription: activeSession.jobDescription, 
         resumeText: activeSession.resumeText || userProfile?.baseResumeText, 
-        type: 'resume',
-        userProfile
+        type: activeSession.type,
+        userProfile,
+        model: selectedModel === 'pro' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview'
       };
       if (audioData) context.audioPart = { inlineData: { data: audioData, mimeType: 'audio/webm' } };
 
@@ -187,10 +187,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       }
     } catch (e: any) {
       console.error("Gemini Chat Error:", e);
-      let errorText = "The AI is currently unavailable. Check the console for more details.";
-      if (e.message?.includes('API_KEY')) {
-        errorText = "Missing or invalid Gemini API Key. Ensure VITE_API_KEY is correctly set in your Vercel/Environment settings.";
-      }
+      let errorText = "The AI is currently unavailable.";
       setErrorMessage(errorText);
       updateSession(activeSessionId, { 
         messages: [...newMessages, { id: 'error', role: 'assistant', content: errorText, timestamp: Date.now() }] 
@@ -201,45 +198,14 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const handleSculpt = async () => {
     setErrorMessage(null);
     setIsSculpting(true);
-    
-    // Add temporary visual feedback in chat instead of modal
-    const tempMsgId = 'sculpting-loader';
-    const sculptingMsg: Message = { 
-      id: tempMsgId, 
-      role: 'assistant', 
-      content: "I'm sculpting your resume now based on your profile and target job description...", 
-      timestamp: Date.now() 
-    };
-    
-    const prevMessages = activeSession.messages;
-    updateSession(activeSessionId, { messages: [...prevMessages, sculptingMsg] });
-
     try {
       const combinedData = `Background: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
       const result = await geminiService.sculptResume(activeSession.jobDescription || 'Professional Resume', combinedData, userProfile);
-      
-      // Remove the temp message and set the result
-      updateSession(activeSessionId, { 
-        finalResume: result,
-        messages: prevMessages // Revert messages to remove the temp loader if desired, or keep it as history. Let's revert to keep chat clean.
-      });
+      updateSession(activeSessionId, { finalResume: result });
       setShowPreview(true);
     } catch (err: any) { 
       console.error("Gemini Sculpt Error:", err);
-      let errorText = "Failed to sculpt resume. Check your API_KEY and billing status.";
-      if (err.message?.includes('401') || err.message?.includes('API_KEY')) {
-        errorText = "API Key Error: Your API_KEY is invalid or missing in Vercel. Did you prefix it with VITE_?";
-      } else if (err.message?.includes('404')) {
-        // @ts-ignore
-        if (window.aistudio?.openSelectKey) {
-           errorText = "Project/Entity not found. Re-selecting your API key may fix this.";
-           // @ts-ignore
-           window.aistudio.openSelectKey();
-        }
-      }
-      setErrorMessage(errorText);
-      // Remove temp message on error too
-      updateSession(activeSessionId, { messages: prevMessages });
+      setErrorMessage("Failed to sculpt document.");
     } finally { setIsSculpting(false); }
   };
 
@@ -281,40 +247,56 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     }
   };
 
+  const renderWelcome = () => (
+    <div className={`p-8 rounded-[40px] border mb-8 animate-in fade-in zoom-in-95 duration-700 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5' : 'bg-white border-slate-200'}`}>
+       <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-[#1918f0] flex items-center justify-center text-white shadow-lg shadow-[#1918f0]/20">
+             <Sparkles size={24}/>
+          </div>
+          <div>
+            <h1 className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Welcome to Zysculpt AI</h1>
+            <p className="text-slate-500 text-sm font-medium">I'm your dedicated career architect. How can I help you today?</p>
+          </div>
+       </div>
+       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            { l: 'Tailor a Resume', d: 'Match your profile to a job description' },
+            { l: 'Draft a Cover Letter', d: 'Persuasive writing for specific roles' },
+            { l: 'Interview Prep', d: 'Simulate high-stakes interviews' },
+            { l: 'Career Advice', d: 'Navigate complex workplace transitions' }
+          ].map((action, i) => (
+            <button key={i} onClick={() => setInputValue(action.l)} className={`p-4 rounded-3xl border transition-all text-left hover:border-[#1918f0] hover:bg-[#1918f0]/5 group ${theme === 'dark' ? 'border-white/5 bg-[#121212]' : 'border-slate-100 bg-slate-50'}`}>
+               <span className={`text-sm font-black block group-hover:text-[#1918f0] ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>{action.l}</span>
+               <span className="text-[11px] text-slate-500">{action.d}</span>
+            </button>
+          ))}
+       </div>
+    </div>
+  );
+
   if (showPreview && activeSession.finalResume) {
     return (
-      <div className="flex flex-col h-full animate-in fade-in duration-500 relative">
+      <div className="flex flex-col h-full animate-in fade-in duration-500 relative font-['Roboto',_sans-serif]">
         <header className={`flex items-center justify-between p-4 md:p-6 border-b sticky top-0 z-10 no-print transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
           <div className="flex items-center gap-2">
-            <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resume Preview</h2>
+            <h2 className={`text-lg font-black ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Document Preview</h2>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowPreview(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Undo size={14} /> Back</button>
+            <button onClick={() => setShowPreview(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-black transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Undo size={14} /> Back</button>
             <div className="relative">
-              <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Palette size={14} /> Style</button>
+              <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-black transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Palette size={14} /> Style</button>
               {showStyleMenu && (
                 <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 p-2">ATS Fonts</p>
-                  {[
-                    { id: 'font-sans', label: 'Inter (Modern)' },
-                    { id: 'font-serif', label: 'Garamond (Serif)' },
-                    { id: 'font-mono', label: 'Roboto (Clean)' },
-                    { id: 'font-arial', label: 'Arial (Standard)' },
-                    { id: 'font-times', label: 'Tinos (Academic)' }
-                  ].map(font => (
-                    <button 
-                      key={font.id}
-                      onClick={() => { updatePrefs({ font: font.id as any }); setShowStyleMenu(false); }}
-                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-indigo-500 text-white' : 'hover:bg-slate-500/10'}`}
-                    >
-                      {font.label}
-                    </button>
+                  {['font-sans', 'font-serif', 'font-mono'].map(font => (
+                    <button key={font} onClick={() => { updatePrefs({ font: font as any }); setShowStyleMenu(false); }}
+                      className={`w-full text-left p-2 rounded-lg text-xs font-black transition-colors ${stylePrefs.font === font ? 'bg-[#1918f0] text-white' : 'hover:bg-white/5'}`}
+                    >{font.split('-')[1].toUpperCase()}</button>
                   ))}
                 </div>
               )}
             </div>
-            <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><FileText size={14} /> Word</button>
-            <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
+            <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-black transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><FileText size={14} /> Word</button>
+            <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-[#1918f0] text-white rounded-lg font-black text-xs md:text-sm hover:bg-[#0e0da8] transition-all shadow-lg shadow-[#1918f0]/20">Save PDF</button>
           </div>
         </header>
         <div className={`flex-1 overflow-y-auto p-4 md:p-8 pb-32 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
@@ -327,85 +309,106 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative font-['Roboto',_sans-serif]">
       <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <div className="flex flex-col">
-            <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resume Builder</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Sculpting a high-impact profile for target roles.</p>
+            <h2 className={`text-lg md:text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>
+              {activeSession.type === 'resume' ? 'Resume Builder' : activeSession.type === 'cover-letter' ? 'Cover Letter' : activeSession.type === 'resignation-letter' ? 'Resignation' : 'Career Copilot'}
+            </h2>
+            <p className={`text-[10px] md:text-xs font-bold opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Chat-based precision sculpting.</p>
           </div>
         </div>
-        {(activeSession.jobDescription || userProfile?.baseResumeText) && (
-          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-indigo-500 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 text-xs md:text-sm disabled:opacity-50">
+        {(activeSession.jobDescription || userProfile?.baseResumeText) && activeSession.type !== 'career-copilot' && (
+          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#1918f0] text-white rounded-full font-black hover:bg-[#0e0da8] transition-all shadow-lg shadow-[#1918f0]/20 text-xs md:text-sm disabled:opacity-50">
             {isSculpting || isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
-            <span className="hidden sm:inline">Sculpt Resume</span><span className="sm:hidden">Sculpt</span>
+            <span className="hidden sm:inline">Sculpt Document</span><span className="sm:hidden">Sculpt</span>
           </button>
         )}
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-        {errorMessage && (
-          <div className="mx-auto max-w-lg p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-xs font-medium animate-in slide-in-from-top-4">
-             <AlertCircle size={18} />
-             <p>{errorMessage}</p>
-          </div>
-        )}
+        {activeSession.messages.length === 0 && renderWelcome()}
+        
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm border relative group ${
+            <div className={`max-w-[85%] md:max-w-[75%] rounded-3xl p-5 shadow-sm border relative group ${
               m.role === 'user' 
-                ? theme === 'dark' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
-                : theme === 'dark' ? 'bg-[#2a2a2a] text-white border-[#444]' : 'bg-white text-slate-900 border-slate-200'
+                ? theme === 'dark' ? 'bg-[#1918f0] text-white border-[#1918f0]' : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
+                : theme === 'dark' ? 'bg-[#1a1a1a] text-white border-white/5' : 'bg-white text-slate-900 border-slate-200'
             }`}>
               <div className="text-sm leading-relaxed"><MarkdownLite text={m.content} theme={theme} /></div>
             </div>
           </div>
         ))}
-        {/* Unified loading state for chat and sculpting actions */}
         {(isTyping || isSculpting) && (
           <div className="flex justify-start">
-            <div className={`rounded-2xl p-4 border flex items-center gap-3 ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#333]' : 'bg-white border-[#e2e8f0]'}`}>
-              <Loader2 className="animate-spin text-indigo-500" size={18} />
-              {isSculpting && <span className="text-xs opacity-70">Sculpting document...</span>}
+            <div className={`rounded-3xl p-5 border flex items-center gap-3 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5' : 'bg-white border-slate-200'}`}>
+              <Loader2 className="animate-spin text-[#1918f0]" size={18} />
+              {isSculpting && <span className="text-xs font-black opacity-70">Sculpting...</span>}
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Modern Integrated Chat Box */}
       <div className={`p-4 md:p-6 border-t transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
-        <div className="max-w-4xl mx-auto relative flex items-center gap-3">
-          <div className="flex-1 relative">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={isRecording ? "Recording..." : "Tell the builder about your target role..."}
-              disabled={isRecording || isSculpting}
-              className={`w-full border rounded-2xl p-4 pr-12 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
-                theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-indigo-400'
-              } ${isRecording ? 'opacity-50 animate-pulse' : ''}`}
-              rows={1}
-            />
-            <button 
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-indigo-500 hover:bg-white/5'}`}
-              title="Hold to record voice message"
-            >
-              {isRecording ? <Square size={18} /> : <Mic size={18} />}
+        <div className="max-w-4xl mx-auto space-y-4">
+           {/* Tool Bar */}
+           <div className="flex items-center gap-2">
+              <div className="relative">
+                <button onClick={() => setShowModelSelector(!showModelSelector)} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-[#1918f0]'}`}>
+                   {selectedModel === 'pro' ? <Zap size={14} className="text-amber-500" /> : <Cpu size={14}/>}
+                   {selectedModel === 'pro' ? 'Gemini 3 Pro' : 'Gemini 3 Flash'}
+                </button>
+                {showModelSelector && (
+                  <div className={`absolute bottom-full mb-2 left-0 w-48 border rounded-2xl shadow-2xl p-2 z-50 animate-in slide-in-from-bottom-2 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+                     <button onClick={() => { setSelectedModel('flash'); setShowModelSelector(false); }} className={`w-full flex items-center gap-2 p-3 rounded-xl text-[11px] font-bold text-left transition-colors ${selectedModel === 'flash' ? 'bg-[#1918f0]/10 text-[#1918f0]' : 'hover:bg-white/5'}`}>
+                        <Cpu size={14}/> Gemini 3 Flash (Fast)
+                     </button>
+                     <button onClick={() => { setSelectedModel('pro'); setShowModelSelector(false); }} className={`w-full flex items-center gap-2 p-3 rounded-xl text-[11px] font-bold text-left transition-colors ${selectedModel === 'pro' ? 'bg-[#1918f0]/10 text-[#1918f0]' : 'hover:bg-white/5'}`}>
+                        <Zap size={14} className="text-amber-500"/> Gemini 3 Pro (Complex Reasoning)
+                     </button>
+                  </div>
+                )}
+              </div>
+              <button className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-[#1918f0]'}`}>
+                 <Paperclip size={14}/> Attach File
+              </button>
+           </div>
+
+           <div className="relative flex items-center gap-3">
+            <div className="flex-1 relative">
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder={isRecording ? "Listening..." : "Message Zysculpt..."}
+                disabled={isRecording || isSculpting}
+                className={`w-full border rounded-[32px] p-5 pr-14 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none shadow-sm ${
+                  theme === 'dark' ? 'bg-[#121212] border-white/5 text-white focus:border-[#1918f0]' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-[#1918f0]'
+                } ${isRecording ? 'opacity-50 animate-pulse' : ''}`}
+                rows={1}
+              />
+              <button 
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                className={`absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-2xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-[#1918f0] hover:bg-white/5'}`}
+              >
+                {isRecording ? <Square size={20} /> : <Mic size={20} />}
+              </button>
+            </div>
+            <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording || isSculpting} className="p-5 bg-[#1918f0] text-white rounded-[32px] hover:bg-[#0e0da8] transition-all shadow-xl shadow-[#1918f0]/20 flex-shrink-0 active:scale-95 disabled:opacity-50">
+              <Send size={24} />
             </button>
           </div>
-          <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording || isSculpting} className="p-4 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 transition-colors shadow-md disabled:opacity-30 flex-shrink-0">
-            <Send size={18} />
-          </button>
         </div>
-        {isRecording && <p className="text-[10px] text-center mt-2 text-red-500 font-bold uppercase tracking-widest animate-pulse">Recording voice message... release to send.</p>}
       </div>
     </div>
   );
