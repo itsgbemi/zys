@@ -23,8 +23,8 @@ import {
   X,
   AlertCircle,
   Menu,
-  Languages,
-  Check
+  Check,
+  ChevronRight
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
@@ -229,11 +229,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           <ZysculptLogo theme={theme} size={32} />
           {(!isCollapsed || isMobileOpen) && <span className="text-2xl font-black tracking-tighter">zysculpt</span>}
         </div>
-        {isMobileOpen && (
-          <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
-            <X size={20} />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+           <button 
+            onClick={() => setIsCollapsed(!isCollapsed)} 
+            className={`hidden md:flex p-2 hover:bg-white/5 rounded-xl transition-all ${isCollapsed ? 'rotate-180' : ''}`}
+            title={isCollapsed ? "Expand sidebar" : "Minimize sidebar"}
+           >
+              <PanelLeftClose size={20} className={theme === 'dark' ? 'text-white/40' : 'text-slate-400'} />
+           </button>
+           {isMobileOpen && (
+              <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
+                <X size={20} />
+              </button>
+           )}
+        </div>
       </div>
       
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2">
@@ -250,11 +259,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <div className={`p-4 space-y-2 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-        <div className={`flex items-center gap-4 px-3 py-2 rounded-xl mb-2 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}`}>
-          <Languages size={18} className="text-[#1918f0] flex-shrink-0" />
-          <div id="google_translate_element" className="flex-1 overflow-hidden"></div>
-        </div>
-
         <button onClick={toggleTheme} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
           {theme === 'dark' ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-[#1918f0]" />}
           {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}

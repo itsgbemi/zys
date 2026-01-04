@@ -15,7 +15,8 @@ import {
   Zap,
   CheckCircle2,
   Moon,
-  Sun
+  Sun,
+  ArrowLeft
 } from 'lucide-react';
 
 type AuthView = 'signin' | 'signup' | 'forgot-password';
@@ -95,6 +96,12 @@ export const Auth: React.FC = () => {
       } else if (view === 'signin') {
         const { error: signinError } = await (supabase.auth as any).signInWithPassword({ email, password });
         if (signinError) throw signinError;
+      } else if (view === 'forgot-password') {
+        const { error: resetError } = await (supabase.auth as any).resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (resetError) throw resetError;
+        setSuccess("Password reset link sent! Please check your email.");
       }
     } catch (err: any) {
       setError(err.message || "An authentication error occurred.");
@@ -166,17 +173,26 @@ export const Auth: React.FC = () => {
              </button>
           </div>
 
-          <div className="w-full max-sm">
+          <div className="w-full max-w-sm">
             <div className="md:hidden flex items-center gap-3 mb-8">
               <ZysculptLogo theme={theme} size={32} />
               <h1 className={`text-2xl font-black tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-[#1918f0]'}`}>zysculpt</h1>
             </div>
 
+            {view === 'forgot-password' && (
+              <button 
+                onClick={() => setView('signin')}
+                className={`flex items-center gap-2 text-sm font-bold mb-6 ${theme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-[#1918f0]'} transition-all`}
+              >
+                <ArrowLeft size={16} /> Back to Sign In
+              </button>
+            )}
+
             <h2 className={`text-3xl font-black mb-2 ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>
-              {view === 'signup' ? 'Get Started' : 'Welcome Back'}
+              {view === 'signup' ? 'Get Started' : view === 'forgot-password' ? 'Reset Password' : 'Welcome Back'}
             </h2>
             <p className="text-slate-500 mb-8 font-medium">
-              {view === 'signup' ? 'Create your account today.' : 'Sign in to access your roadmaps.'}
+              {view === 'signup' ? 'Create your account today.' : view === 'forgot-password' ? 'Enter your email to receive a reset link.' : 'Sign in to access your roadmaps.'}
             </p>
 
             <form onSubmit={handleAuth} className="space-y-4">
@@ -206,20 +222,33 @@ export const Auth: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
-                    className={`w-full border rounded-2xl py-4 pl-12 pr-12 outline-none focus:border-[#1918f0] transition-all text-sm ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-[#0F172A]'}`}
-                    placeholder="••••••••"
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1918f0]`}>
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+              {view !== 'forgot-password' && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                    {view === 'signin' && (
+                      <button 
+                        type="button" 
+                        onClick={() => setView('forgot-password')}
+                        className="text-[10px] font-bold text-[#1918f0] uppercase tracking-widest hover:underline"
+                      >
+                        Forgot?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
+                      className={`w-full border rounded-2xl py-4 pl-12 pr-12 outline-none focus:border-[#1918f0] transition-all text-sm ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-[#0F172A]'}`}
+                      placeholder="••••••••"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1918f0]`}>
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {error && <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] leading-relaxed font-bold flex items-start gap-2 animate-in fade-in slide-in-from-top-2"><AlertCircle size={14} className="mt-0.5 flex-shrink-0" /><span>{error}</span></div>}
               {success && <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] leading-relaxed font-bold flex items-start gap-2 animate-in fade-in slide-in-from-top-2"><CheckCircle2 size={14} className="mt-0.5 flex-shrink-0" /><span>{success}</span></div>}
@@ -228,53 +257,57 @@ export const Auth: React.FC = () => {
                 type="submit" disabled={loading}
                 className="w-full bg-[#1918f0] hover:bg-[#1413c7] text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-[#1918f0]/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50"
               >
-                {loading ? <Loader2 size={20} className="animate-spin" /> : (view === 'signup' ? 'Create Account' : 'Sign In')}
+                {loading ? <Loader2 size={20} className="animate-spin" /> : (view === 'signup' ? 'Create Account' : view === 'forgot-password' ? 'Send Reset Link' : 'Sign In')}
                 <ChevronRight size={18} />
               </button>
             </form>
 
-            <div className="relative my-10">
-              <div className={`absolute inset-0 flex items-center`}><div className={`w-full border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}></div></div>
-              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black"><span className={`px-4 text-slate-400 ${theme === 'dark' ? 'bg-[#121212]' : 'bg-white'}`}>OR</span></div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <button onClick={() => handleSocialLogin('google')} className="gsi-material-button">
-                <div className="gsi-material-button-state"></div>
-                <div className="gsi-material-button-content-wrapper">
-                  <div className="gsi-material-button-icon">
-                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: 'block' }}>
-                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                      <path fill="none" d="M0 0h48v48H0z"></path>
-                    </svg>
-                  </div>
-                  <span className="gsi-material-button-contents">{view === 'signup' ? 'Sign up' : 'Sign in'} with Google</span>
+            {view !== 'forgot-password' && (
+              <>
+                <div className="relative my-10">
+                  <div className={`absolute inset-0 flex items-center`}><div className={`w-full border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}></div></div>
+                  <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black"><span className={`px-4 text-slate-400 ${theme === 'dark' ? 'bg-[#121212]' : 'bg-white'}`}>OR</span></div>
                 </div>
-              </button>
 
-              <button 
-                onClick={() => handleSocialLogin('github')} 
-                className={`gsi-material-button`}
-              >
-                <div className="gsi-material-button-state"></div>
-                <div className="gsi-material-button-content-wrapper">
-                  <div className={`gsi-material-button-icon ${theme === 'dark' ? 'text-white' : 'text-[#1F2328]'}`}>
-                    <GithubFilledIcon />
-                  </div>
-                  <span className="gsi-material-button-contents">{view === 'signup' ? 'Sign up' : 'Sign in'} with GitHub</span>
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => handleSocialLogin('google')} className="gsi-material-button">
+                    <div className="gsi-material-button-state"></div>
+                    <div className="gsi-material-button-content-wrapper">
+                      <div className="gsi-material-button-icon">
+                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: 'block' }}>
+                          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                          <path fill="none" d="M0 0h48v48H0z"></path>
+                        </svg>
+                      </div>
+                      <span className="gsi-material-button-contents">{view === 'signup' ? 'Sign up' : 'Sign in'} with Google</span>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => handleSocialLogin('github')} 
+                    className={`gsi-material-button`}
+                  >
+                    <div className="gsi-material-button-state"></div>
+                    <div className="gsi-material-button-content-wrapper">
+                      <div className={`gsi-material-button-icon ${theme === 'dark' ? 'text-white' : 'text-[#1F2328]'}`}>
+                        <GithubFilledIcon />
+                      </div>
+                      <span className="gsi-material-button-contents">{view === 'signup' ? 'Sign up' : 'Sign in'} with GitHub</span>
+                    </div>
+                  </button>
                 </div>
-              </button>
-            </div>
+              </>
+            )}
 
             <div className="mt-10 text-center">
               <button
                 onClick={() => { setError(null); setSuccess(null); setView(view === 'signin' ? 'signup' : 'signin'); }}
                 className="text-sm font-bold text-slate-500 hover:text-[#1918f0] transition-colors"
               >
-                {view === 'signup' ? 'Already have an account? Sign in' : "Don't have an account? Join Zysculpt"}
+                {view === 'signup' ? 'Already have an account? Sign in' : view === 'forgot-password' ? '' : "Don't have an account? Join Zysculpt"}
               </button>
             </div>
           </div>

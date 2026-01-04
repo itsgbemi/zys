@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { 
   User, 
@@ -19,7 +18,11 @@ import {
   Menu,
   AlertTriangle,
   BarChart3,
-  Camera
+  Camera,
+  ExternalLink,
+  Phone,
+  Mail,
+  MapPin
 } from 'lucide-react';
 import { Theme, UserProfile } from '../types';
 import { simulateError, simulateHighLatency, simulateCostSpike } from '../services/datadog';
@@ -42,6 +45,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
   const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
   const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-slate-200 shadow-sm';
   const inputBg = theme === 'dark' ? 'bg-[#191919] border-white/5' : 'bg-slate-50 border-slate-200';
+  const accentColor = '#1918f0';
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,16 +90,16 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
       </button>
       <div>
         <h3 className={`text-xl font-bold ${textPrimary}`}>{title}</h3>
-        {isSaving && <span className="text-[10px] font-bold text-indigo-500 animate-pulse">Syncing...</span>}
+        {isSaving && <span className="text-[10px] font-bold text-[#1918f0] animate-pulse">Syncing...</span>}
       </div>
     </div>
   );
 
   return (
-    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#191919]' : 'bg-[#F8FAFC]'}`}>
-      <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
+      <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Settings</h2>
@@ -109,7 +113,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
               <div className={`p-6 md:p-8 rounded-[32px] md:rounded-[40px] border shadow-2xl relative overflow-hidden ${cardBg}`}>
                 <div className="flex items-center gap-6">
                   <div className="relative group">
-                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl md:text-4xl shadow-xl shadow-indigo-600/30 overflow-hidden">
+                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-[#1918f0] text-white flex items-center justify-center font-bold text-2xl md:text-4xl shadow-xl shadow-[#1918f0]/30 overflow-hidden">
                       {userProfile.avatarUrl ? (
                         <img src={userProfile.avatarUrl} alt={userProfile.fullName} className="w-full h-full object-cover" />
                       ) : (
@@ -121,7 +125,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                     <h3 className={`text-xl md:text-2xl font-black ${textPrimary}`}>{userProfile.fullName || 'Zysculpt Pilot'}</h3>
                     <p className={`text-sm ${textSecondary}`}>{userProfile.email || 'Complete your profile info'}</p>
                     <div className="mt-2 flex gap-2">
-                       <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 rounded-full text-[10px] font-bold uppercase border border-indigo-500/20">Free Member</span>
+                       <span className="px-3 py-1 bg-[#1918f0]/10 text-[#1918f0] rounded-full text-[10px] font-bold uppercase border border-[#1918f0]/20">Free Member</span>
                        {userProfile.avatarUrl?.includes('github') && <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[10px] font-bold uppercase border border-white/10 flex items-center gap-1.5"><Github size={10}/> Linked</span>}
                        {userProfile.avatarUrl?.includes('google') && <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[10px] font-bold uppercase border border-white/10 flex items-center gap-1.5"><Globe size={10}/> Linked</span>}
                     </div>
@@ -134,16 +138,16 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as SettingsTab)}
-                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border transition-all text-left group ${cardBg} hover:border-indigo-500/50 hover:translate-x-1`}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border transition-all text-left group ${cardBg} hover:border-[#1918f0]/50 hover:translate-x-1`}
                   >
-                    <div className={`p-3 rounded-2xl ${theme === 'dark' ? 'bg-white/5 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                    <div className={`p-3 rounded-2xl ${theme === 'dark' ? 'bg-white/5 text-[#1918f0]' : 'bg-indigo-50 text-[#1918f0]'}`}>
                       {item.icon}
                     </div>
                     <div className="flex-1">
                       <h4 className={`text-sm font-bold ${textPrimary}`}>{item.label}</h4>
                       <p className="text-xs text-slate-500">{item.desc}</p>
                     </div>
-                    <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-500 transition-all" />
+                    <ChevronRight size={18} className="text-slate-300 group-hover:text-[#1918f0] transition-all" />
                   </button>
                 ))}
               </div>
@@ -156,7 +160,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                   
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} flex flex-col items-center mb-6`}>
                     <div className="relative mb-4">
-                      <div className="w-24 h-24 rounded-[32px] bg-indigo-600 overflow-hidden shadow-2xl border-4 border-white/5">
+                      <div className="w-24 h-24 rounded-[32px] bg-[#1918f0] overflow-hidden shadow-2xl border-4 border-white/5">
                         {userProfile.avatarUrl ? (
                           <img src={userProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -167,26 +171,78 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                       </div>
                     </div>
                     <p className={`text-sm font-bold ${textPrimary}`}>{userProfile.fullName || 'No Name Set'}</p>
-                    <p className="text-xs opacity-40 mt-1">Profile Photo imported from login provider</p>
+                    <p className="text-xs opacity-40 mt-1">Profile Photo from login provider</p>
                   </div>
 
-                  <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-6`}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">Full Name</label>
-                        <input value={userProfile.fullName} onChange={e => handleUpdate('fullName', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="John Doe" />
+                  <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-8`}>
+                    <div>
+                      <h4 className={`text-sm font-black mb-6 uppercase tracking-widest ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>Basic Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>Full Name</label>
+                          <div className="relative">
+                            <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.fullName} onChange={e => handleUpdate('fullName', e.target.value)} className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="John Doe" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>Current Title</label>
+                          <div className="relative">
+                            <Zap size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.title} onChange={e => handleUpdate('title', e.target.value)} className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="Software Engineer" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>Email</label>
+                          <div className="relative">
+                            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.email} readOnly className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm opacity-50 cursor-not-allowed ${inputBg} ${textPrimary}`} />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>Phone</label>
+                          <div className="relative">
+                            <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.phone} onChange={e => handleUpdate('phone', e.target.value)} className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="+1 (555) 000-0000" />
+                          </div>
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>Location</label>
+                          <div className="relative">
+                            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.location} onChange={e => handleUpdate('location', e.target.value)} className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="New York, USA" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">Current Title</label>
-                        <input value={userProfile.title} onChange={e => handleUpdate('title', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="Software Engineer" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">Email</label>
-                        <input value={userProfile.email} readOnly className={`w-full px-4 py-3 rounded-2xl border text-sm opacity-50 cursor-not-allowed ${inputBg} ${textPrimary}`} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold opacity-50 ml-1 uppercase tracking-widest">Phone</label>
-                        <input value={userProfile.phone} onChange={e => handleUpdate('phone', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm ${inputBg} ${textPrimary}`} placeholder="+1 (555) 000-0000" />
+                    </div>
+
+                    <div className="pt-4">
+                      <h4 className={`text-sm font-black mb-6 uppercase tracking-widest ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>Professional Links</h4>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>LinkedIn Profile</label>
+                          <div className="relative">
+                            <Linkedin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.linkedIn} onChange={e => handleUpdate('linkedIn', e.target.value)} className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://linkedin.com/in/username" />
+                            {userProfile.linkedIn && <a href={userProfile.linkedIn} target="_blank" rel="noreferrer" className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1918f0]"><ExternalLink size={14} /></a>}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>GitHub Profile</label>
+                          <div className="relative">
+                            <Github size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.github} onChange={e => handleUpdate('github', e.target.value)} className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://github.com/username" />
+                            {userProfile.github && <a href={userProfile.github} target="_blank" rel="noreferrer" className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1918f0]"><ExternalLink size={14} /></a>}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${theme === 'dark' ? 'text-white/40' : 'text-slate-500'}`}>Portfolio Website</label>
+                          <div className="relative">
+                            <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={userProfile.portfolio} onChange={e => handleUpdate('portfolio', e.target.value)} className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://yourportfolio.com" />
+                            {userProfile.portfolio && <a href={userProfile.portfolio} target="_blank" rel="noreferrer" className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1918f0]"><ExternalLink size={14} /></a>}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -203,15 +259,15 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                     <button 
                       onClick={() => fileInputRef.current?.click()}
                       className={`w-full py-12 md:py-16 border-2 border-dashed rounded-[32px] md:rounded-[40px] transition-all relative flex flex-col items-center justify-center ${
-                        userProfile.baseResumeText ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-indigo-500/20 hover:border-indigo-500 bg-indigo-500/5'
+                        userProfile.baseResumeText ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-[#1918f0]/20 hover:border-[#1918f0] bg-[#1918f0]/5'
                       }`}
                     >
                       {uploadProgress !== null && (
-                        <div className="absolute inset-0 bg-indigo-600/10 flex items-center justify-center rounded-[32px] md:rounded-[40px]">
-                           <Loader2 className="animate-spin text-indigo-500" />
+                        <div className="absolute inset-0 bg-[#1918f0]/10 flex items-center justify-center rounded-[32px] md:rounded-[40px]">
+                           <Loader2 className="animate-spin text-[#1918f0]" />
                         </div>
                       )}
-                      <FileText size={48} className={userProfile.baseResumeText ? "text-emerald-500 mb-4" : "text-indigo-500 mb-4"} />
+                      <FileText size={48} className={userProfile.baseResumeText ? "text-emerald-500 mb-4" : "text-[#1918f0] mb-4"} />
                       <span className={`text-lg font-bold ${textPrimary}`}>{userProfile.baseResumeText ? 'Master Resume Active' : 'Click to Upload Resume'}</span>
                     </button>
                   </div>
@@ -224,13 +280,13 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg}`}>
                     <div className="flex items-center justify-between mb-8">
                        <span className={`font-bold ${textPrimary}`}>Intensity (Hours/Day)</span>
-                       <span className="text-3xl font-black text-indigo-500">{userProfile.dailyAvailability}h</span>
+                       <span className="text-3xl font-black text-[#1918f0]">{userProfile.dailyAvailability}h</span>
                     </div>
                     <input 
                       type="range" min="1" max="12" 
                       value={userProfile.dailyAvailability} 
                       onChange={e => handleUpdate('dailyAvailability', parseInt(e.target.value))} 
-                      className="w-full accent-indigo-600 h-2 bg-slate-200 dark:bg-white/10 rounded-full cursor-pointer appearance-none" 
+                      className="w-full accent-[#1918f0] h-2 bg-slate-200 dark:bg-white/10 rounded-full cursor-pointer appearance-none" 
                     />
                   </div>
                 </div>
@@ -245,17 +301,17 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                       <p className="text-[10px] text-slate-500 mb-6 uppercase font-bold tracking-widest">Free Plan</p>
                       <div className="space-y-4">
                         <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-indigo-500 w-1/5"></div>
+                          <div className="h-full bg-[#1918f0] w-1/5"></div>
                         </div>
                         <p className="text-[10px] font-bold opacity-40 uppercase">1 of 5 tailored resumes used</p>
                       </div>
                     </div>
 
-                    <div className={`p-6 md:p-8 rounded-[32px] border border-indigo-500/30 bg-indigo-600/5 group relative overflow-hidden`}>
-                       <Zap className="text-indigo-500 mb-4" size={24} />
+                    <div className={`p-6 md:p-8 rounded-[32px] border border-[#1918f0]/30 bg-[#1918f0]/5 group relative overflow-hidden`}>
+                       <Zap className="text-[#1918f0] mb-4" size={24} />
                        <h4 className="font-bold text-sm mb-1">Zysculpt Pro</h4>
                        <p className="text-xs text-slate-500 mb-6">Unlimited AI document sculpting & roadmaps.</p>
-                       <button className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm group-hover:scale-105 transition-all">Go Pro - $12/mo</button>
+                       <button className="w-full py-3 bg-[#1918f0] text-white rounded-xl font-bold text-sm group-hover:scale-105 transition-all">Go Pro - $12/mo</button>
                     </div>
                   </div>
                 </div>
@@ -281,7 +337,7 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                   {renderBackHeader('App Health & Monitoring')}
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-4`}>
                     <div className="flex items-center gap-3 mb-4">
-                       <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500"><BarChart3 size={20} /></div>
+                       <div className="p-2 rounded-lg bg-[#1918f0]/10 text-[#1918f0]"><BarChart3 size={20} /></div>
                        <h4 className={`font-bold ${textPrimary}`}>Signal Generation</h4>
                     </div>
 
