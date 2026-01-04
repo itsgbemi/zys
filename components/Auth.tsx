@@ -257,13 +257,14 @@ export const Auth: React.FC = () => {
 
               <button 
                 onClick={() => handleSocialLogin('github')} 
-                className={`w-full flex items-center justify-center gap-3 py-0 px-4 rounded-[20px] text-sm font-medium transition-all h-[44px] active:scale-95 font-sans ${theme === 'dark' ? 'bg-[#24292f] text-white border-none' : 'bg-white border border-[#747775] text-[#1f1f1f] hover:bg-[#F8FAFC]'}`}
+                className={`gsi-material-button`}
               >
-                <div className="flex items-center justify-center">
-                  <div className={`mr-3 flex items-center justify-center w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-[#1F2328]'}`}>
+                <div className="gsi-material-button-state"></div>
+                <div className="gsi-material-button-content-wrapper">
+                  <div className={`gsi-material-button-icon ${theme === 'dark' ? 'text-white' : 'text-[#1F2328]'}`}>
                     <GithubFilledIcon />
                   </div>
-                  <span>Continue with GitHub</span>
+                  <span className="gsi-material-button-contents">Sign in with GitHub</span>
                 </div>
               </button>
             </div>

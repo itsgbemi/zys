@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Overview from './components/Overview';
@@ -13,7 +12,6 @@ import KnowledgeHub from './components/KnowledgeHub';
 import { Auth } from './components/Auth';
 import { AppView, ChatSession, Theme, UserProfile } from './types';
 import { supabase, isSupabaseConfigured } from './services/supabase';
-// Added Plus to the lucide-react imports to fix the "Cannot find name 'Plus'" error on line 209
 import { Sparkles, Plus } from 'lucide-react';
 import { setDatadogUser, clearDatadogUser } from './services/datadog';
 
@@ -146,10 +144,11 @@ const App: React.FC = () => {
     } catch (e) { console.error(e); }
   };
 
-  const handleNewSession = async (type: any = 'resume') => {
+  const handleNewSession = async (type: any = 'resume', initialPrompt?: string) => {
     const newId = Date.now().toString();
+    const messages = initialPrompt ? [{ id: 'init', role: 'user', content: initialPrompt, timestamp: Date.now() }] : [];
     const newSess: ChatSession = {
-      id: newId, title: `New ${type.replace('-', ' ')}`, type, messages: [], lastUpdated: Date.now()
+      id: newId, title: `New ${type.replace('-', ' ')}`, type, messages: messages as any, lastUpdated: Date.now()
     };
     setSessions(prev => [newSess, ...prev]);
     setActiveSessionId(newId);
@@ -192,7 +191,7 @@ const App: React.FC = () => {
         onLogout={handleLogout}
       />
       <main className="flex-1 overflow-hidden relative">
-        {currentView === AppView.OVERVIEW && <Overview onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} setView={setCurrentView} updateSession={updateSession} userProfile={userProfile} />}
+        {currentView === AppView.OVERVIEW && <Overview onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} setView={setCurrentView} updateSession={updateSession} onNewSession={handleNewSession} userProfile={userProfile} />}
         {currentView === AppView.SETTINGS && <Settings onToggleMobile={() => setIsMobileOpen(true)} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} />}
         {(currentView === AppView.RESUME_BUILDER || currentView === AppView.COVER_LETTER || currentView === AppView.RESIGNATION_LETTER || currentView === AppView.CAREER_COPILOT) && (
            activeSess ? (
@@ -216,7 +215,7 @@ const App: React.FC = () => {
              </div>
            )
         )}
-        {currentView === AppView.FIND_JOB && <JobSearch onToggleMobile={() => setIsMobileOpen(true)} theme={theme} onSculptResume={() => handleNewSession('resume')} onSculptLetter={() => handleNewSession('cover-letter')} />}
+        {currentView === AppView.FIND_JOB && <JobSearch onToggleMobile={() => setIsMobileOpen(true)} theme={theme} onSculptResume={(j) => handleNewSession('resume', `I want to tailor my resume for this job: ${j.title} at ${j.company}.\nDescription: ${j.description}`)} onSculptLetter={(j) => handleNewSession('cover-letter', `I want to write a cover letter for this job: ${j.title} at ${j.company}.\nDescription: ${j.description}`)} />}
         {currentView === AppView.KNOWLEDGE_HUB && <KnowledgeHub onToggleMobile={() => setIsMobileOpen(true)} theme={theme} />}
         {currentView === AppView.DOCUMENTS && <Documents onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} onSelectSession={id => { setActiveSessionId(id); setCurrentView(AppView.RESUME_BUILDER); }} />}
       </main>

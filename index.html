@@ -39,22 +39,7 @@
         }
         .goog-te-menu-value span { color: inherit !important; font-family: 'Roboto', sans-serif !important; }
 
-        /* GSI Material Button - Light */
-        .theme-light .gsi-material-button {
-          background-color: WHITE;
-          border: 1px solid #747775;
-          color: #1f1f1f;
-        }
-        .theme-light .gsi-material-button:hover { background-color: #F8FAFC; }
-        
-        /* GSI Material Button - Dark */
-        .theme-dark .gsi-material-button {
-          background-color: #131314;
-          border: 1px solid #8e918f;
-          color: #e3e3e3;
-        }
-        .theme-dark .gsi-material-button:hover { background-color: #1a1a1b; }
-
+        /* GSI Material Button Base Styling */
         .gsi-material-button {
           -moz-user-select: none;
           -webkit-user-select: none;
@@ -85,17 +70,44 @@
           align-items: center;
           justify-content: center;
         }
+
         .gsi-material-button .gsi-material-button-icon {
           height: 20px;
           margin-right: 12px;
           min-width: 20px;
           width: 20px;
-        }
-        .gsi-material-button .gsi-material-button-content-wrapper {
           display: flex;
           align-items: center;
           justify-content: center;
         }
+
+        .gsi-material-button .gsi-material-button-content-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+        }
+
+        .gsi-material-button-contents {
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        /* GSI Material Button - Light Theme */
+        .theme-light .gsi-material-button {
+          background-color: WHITE;
+          border: 1px solid #747775;
+          color: #1f1f1f;
+        }
+        .theme-light .gsi-material-button:hover { background-color: #F8FAFC; }
+        
+        /* GSI Material Button - Dark Theme */
+        .theme-dark .gsi-material-button {
+          background-color: #131314;
+          border: 1px solid #8e918f;
+          color: #e3e3e3;
+        }
+        .theme-dark .gsi-material-button:hover { background-color: #1a1a1b; }
     </style>
 <script type="importmap">
 {
