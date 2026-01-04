@@ -13,7 +13,12 @@ import {
   Compass,
   Sparkles,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  Languages,
+  Moon,
+  Sun,
+  Volume2,
+  StopCircle
 } from 'lucide-react';
 
 type AuthView = 'signin' | 'signup' | 'forgot-password';
@@ -52,6 +57,13 @@ export const Auth: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [theme, setTheme] = useState(() => (localStorage.getItem('zysculpt-theme') as 'light' | 'dark') || 'light');
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    document.body.className = `theme-${theme}`;
+    localStorage.setItem('zysculpt-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -60,6 +72,19 @@ export const Auth: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const toggleReadAloud = () => {
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+    } else {
+      const slide = INTRO_SLIDES[activeSlide];
+      const utterance = new SpeechSynthesisUtterance(`${slide.title}. ${slide.description}`);
+      utterance.onend = () => setIsPlaying(false);
+      window.speechSynthesis.speak(utterance);
+      setIsPlaying(true);
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -67,8 +92,7 @@ export const Auth: React.FC = () => {
     setSuccess(null);
 
     if (!isSupabaseConfigured) {
-      const msg = "Configuration Error: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing.";
-      setError(msg);
+      setError("Configuration Error: Credentials missing.");
       setLoading(false);
       return;
     }
@@ -79,17 +103,12 @@ export const Auth: React.FC = () => {
           email, 
           password,
           options: {
-            data: { 
-              full_name: fullName,
-              avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=1918f0&color=fff`
-            },
+            data: { full_name: fullName, avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=1918f0&color=fff` },
             emailRedirectTo: window.location.origin
           }
         });
         if (signupError) throw signupError;
-        if (data?.user && !data?.session) {
-          setSuccess("Success! Check your inbox for a confirmation email.");
-        }
+        if (data?.user && !data?.session) setSuccess("Success! Check your inbox.");
       } else if (view === 'signin') {
         const { error: signinError } = await (supabase.auth as any).signInWithPassword({ email, password });
         if (signinError) throw signinError;
@@ -104,14 +123,11 @@ export const Auth: React.FC = () => {
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setError(null);
     if (!isSupabaseConfigured) {
-      setError("Social login is unavailable due to missing configuration.");
+      setError("Social login is unavailable.");
       return;
     }
     try {
-      const { error: oauthError } = await (supabase.auth as any).signInWithOAuth({
-        provider,
-        options: { redirectTo: window.location.origin }
-      });
+      const { error: oauthError } = await (supabase.auth as any).signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
       if (oauthError) throw oauthError;
     } catch (err: any) {
       setError(err.message || `Failed to sign in with ${provider}`);
@@ -119,39 +135,37 @@ export const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-0 md:p-6 font-sans">
-      <div className="w-full max-w-6xl min-h-[700px] flex flex-col md:flex-row bg-white md:rounded-[48px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.08)] md:border border-slate-200">
+    <div className={`min-h-screen transition-colors duration-300 flex items-center justify-center p-0 md:p-6 font-sans ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
+      <div className={`w-full max-w-6xl min-h-[700px] flex flex-col md:flex-row md:rounded-[48px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.12)] md:border transition-all ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200'}`}>
         
         {/* Intro Slides Card */}
         <div className="w-full md:w-1/2 bg-[#1918f0] p-8 md:p-16 flex flex-col relative overflow-hidden">
-          {/* Decorative background elements */}
-          <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-white/10 rounded-full opacity-20 blur-3xl"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-indigo-400 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-white/10 rounded-full opacity-20 blur-[100px]"></div>
           
-          <div className="relative z-10 flex items-center gap-3 mb-16">
-            <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20">
-              <ZysculptLogo theme="dark" size={32} />
+          <div className="relative z-10 flex items-center justify-between mb-16">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20">
+                <ZysculptLogo theme="dark" size={32} />
+              </div>
+              <span className="text-2xl font-black text-white tracking-tighter" style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</span>
             </div>
-            <span className="text-2xl font-black text-white tracking-tighter" style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</span>
+            <button 
+              onClick={toggleReadAloud}
+              className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md border border-white/20 text-white transition-all active:scale-90"
+              title="Listen to Overview"
+            >
+              {isPlaying ? <StopCircle size={20} className="animate-pulse" /> : <Volume2 size={20} />}
+            </button>
           </div>
 
           <div className="flex-1 relative z-10 flex flex-col justify-center">
             {INTRO_SLIDES.map((slide, i) => (
-              <div 
-                key={i} 
-                className={`transition-all duration-700 absolute inset-0 flex flex-col justify-center ${
-                  activeSlide === i ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
-                }`}
-              >
+              <div key={i} className={`transition-all duration-700 absolute inset-0 flex flex-col justify-center ${activeSlide === i ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
                 <div className="mb-6 bg-white/10 w-fit p-5 rounded-[24px] backdrop-blur-lg border border-white/10 shadow-2xl">
                   {slide.icon}
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                  {slide.title}
-                </h2>
-                <p className="text-lg md:text-xl text-indigo-100/80 leading-relaxed max-w-md">
-                  {slide.description}
-                </p>
+                <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight" style={{ fontFamily: "'DM Sans', sans-serif" }}>{slide.title}</h2>
+                <p className="text-lg md:text-xl text-indigo-100/80 leading-relaxed max-w-md">{slide.description}</p>
               </div>
             ))}
           </div>
@@ -159,10 +173,7 @@ export const Auth: React.FC = () => {
           <div className="relative z-10 mt-auto flex items-center justify-between">
             <div className="flex gap-2">
               {INTRO_SLIDES.map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`h-1.5 transition-all duration-300 rounded-full ${activeSlide === i ? 'w-8 bg-white' : 'w-2 bg-white/30'}`}
-                />
+                <div key={i} className={`h-1.5 transition-all duration-300 rounded-full ${activeSlide === i ? 'w-8 bg-white' : 'w-2 bg-white/30'}`} />
               ))}
             </div>
             <div className="flex items-center gap-2 py-1.5 px-3 rounded-full bg-white/10 border border-white/10 backdrop-blur-md">
@@ -173,9 +184,20 @@ export const Auth: React.FC = () => {
         </div>
 
         {/* Auth Form Area */}
-        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col items-center justify-center bg-white relative">
+        <div className={`w-full md:w-1/2 p-8 md:p-16 flex flex-col items-center justify-center relative transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-white'}`}>
+          {/* Top Controls: Theme + Translation */}
+          <div className="absolute top-8 right-8 flex items-center gap-4 z-20">
+             <div id="google_translate_element" className={`${theme === 'dark' ? 'text-white' : 'text-slate-600'}`}></div>
+             <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className={`p-2 rounded-xl border transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+             >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+             </button>
+          </div>
+
           <div className="w-full max-w-sm">
-            <h2 className="text-3xl font-black text-[#0F172A] mb-2" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <h2 className={`text-3xl font-black mb-2 ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`} style={{ fontFamily: "'DM Sans', sans-serif" }}>
               {view === 'signup' ? 'Get Started' : 'Welcome Back'}
             </h2>
             <p className="text-slate-500 mb-8 font-medium">
@@ -189,11 +211,8 @@ export const Auth: React.FC = () => {
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-[#0F172A] outline-none focus:border-[#1918f0] transition-all text-sm"
+                      type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)}
+                      className={`w-full border rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#1918f0] transition-all text-sm ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-[#0F172A]'}`}
                       placeholder="Jane Doe"
                     />
                   </div>
@@ -205,11 +224,8 @@ export const Auth: React.FC = () => {
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-[#0F172A] outline-none focus:border-[#1918f0] transition-all text-sm"
+                    type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                    className={`w-full border rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#1918f0] transition-all text-sm ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-[#0F172A]'}`}
                     placeholder="name@email.com"
                   />
                 </div>
@@ -220,36 +236,22 @@ export const Auth: React.FC = () => {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-12 text-[#0F172A] outline-none focus:border-[#1918f0] transition-all text-sm"
+                    type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
+                    className={`w-full border rounded-2xl py-4 pl-12 pr-12 outline-none focus:border-[#1918f0] transition-all text-sm ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-[#0F172A]'}`}
                     placeholder="••••••••"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1918f0]">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1918f0]`}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              {error && (
-                <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-[11px] leading-relaxed font-medium flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
-                  <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-              {success && (
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[11px] leading-relaxed font-medium flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
-                  <CheckCircle2 size={14} className="mt-0.5 flex-shrink-0" />
-                  <span>{success}</span>
-                </div>
-              )}
+              {error && <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] leading-relaxed font-bold flex items-start gap-2 animate-in fade-in slide-in-from-top-2"><AlertCircle size={14} className="mt-0.5 flex-shrink-0" /><span>{error}</span></div>}
+              {success && <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] leading-relaxed font-bold flex items-start gap-2 animate-in fade-in slide-in-from-top-2"><CheckCircle2 size={14} className="mt-0.5 flex-shrink-0" /><span>{success}</span></div>}
 
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#1918f0] hover:bg-[#0a09d0] text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-[#1918f0]/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50"
+                type="submit" disabled={loading}
+                className="w-full bg-[#1918f0] hover:bg-[#1413c7] text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-[#1918f0]/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : (view === 'signup' ? 'Create Account' : 'Sign In')}
                 <ChevronRight size={18} />
@@ -257,8 +259,8 @@ export const Auth: React.FC = () => {
             </form>
 
             <div className="relative my-10">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black"><span className="bg-white px-4 text-slate-400">OR</span></div>
+              <div className={`absolute inset-0 flex items-center`}><div className={`w-full border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}></div></div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black"><span className={`px-4 text-slate-400 ${theme === 'dark' ? 'bg-[#121212]' : 'bg-white'}`}>OR</span></div>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -280,7 +282,7 @@ export const Auth: React.FC = () => {
 
               <button 
                 onClick={() => handleSocialLogin('github')} 
-                className="w-full flex items-center justify-center gap-3 py-0 px-4 bg-white border border-[#747775] rounded-[20px] text-sm font-medium text-[#1f1f1f] transition-all hover:bg-[#F8FAFC] active:bg-[#F1F5F9] h-[44px] shadow-none active:scale-95 font-['Roboto',_arial,_sans-serif]"
+                className={`w-full flex items-center justify-center gap-3 py-0 px-4 rounded-[20px] text-sm font-medium transition-all h-[44px] active:scale-95 font-['Roboto',_arial,_sans-serif] ${theme === 'dark' ? 'bg-white text-[#1f1f1f] border-none' : 'bg-white border border-[#747775] text-[#1f1f1f] hover:bg-[#F8FAFC]'}`}
               >
                 <div className="flex items-center justify-center">
                   <div className="mr-3 flex items-center justify-center w-5 h-5 text-[#1F2328]">
@@ -293,11 +295,7 @@ export const Auth: React.FC = () => {
 
             <div className="mt-10 text-center">
               <button
-                onClick={() => {
-                  setError(null);
-                  setSuccess(null);
-                  setView(view === 'signin' ? 'signup' : 'signin');
-                }}
+                onClick={() => { setError(null); setSuccess(null); setView(view === 'signin' ? 'signup' : 'signin'); }}
                 className="text-sm font-bold text-slate-500 hover:text-[#1918f0] transition-colors"
               >
                 {view === 'signup' ? 'Already have an account? Sign in' : "Don't have an account? Join Zysculpt"}

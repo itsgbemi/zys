@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -40,7 +39,7 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
 
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
   const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
-  const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-slate-200 shadow-sm';
+  const cardBg = theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200 shadow-sm';
 
   useEffect(() => {
     const timer = setInterval(() => setTipIndex(p => (p + 1) % PRO_TIPS.length), 8000);
@@ -88,23 +87,13 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
     });
   };
 
-  const handleLogWin = () => {
-    if (!selectedDay || !activeGoalSession || !updateSession) return;
-    const dateStr = `${currentYear}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${selectedDay.toString().padStart(2, '0')}`;
-    const newLog: DailyLog = { date: dateStr, win: winInput, completed: true };
-    const currentLogs = activeGoalSession.careerGoalData?.logs || [];
-    const updatedLogs = [...currentLogs.filter(l => l.date !== dateStr), newLog];
-    updateSession(activeGoalSession.id, { careerGoalData: { ...activeGoalSession.careerGoalData!, logs: updatedLogs } });
-    setWinInput('');
-  };
-
   const dayTasks = getTasksForSelectedDay();
 
   return (
-    <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#191919]' : 'bg-[#F8FAFC]'}`}>
-      <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+    <div className={`flex flex-col h-full transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
+      <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-indigo-500 transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Overview</h2>
@@ -114,7 +103,7 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
       <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
         {!isOnboarded ? (
           <div className="mb-12">
-            <div className={`p-6 md:p-8 rounded-[32px] md:rounded-[40px] border-2 border-dashed ${theme === 'dark' ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50/50 border-indigo-200'}`}>
+            <div className={`p-6 md:p-8 rounded-[32px] md:rounded-[40px] border-2 border-dashed ${theme === 'dark' ? 'bg-[#1918f0]/5 border-[#1918f0]/20' : 'bg-indigo-50/50 border-indigo-200'}`}>
               <div className="flex flex-col md:flex-row gap-8 items-center">
                 <div className="flex-1 w-full">
                   <h1 className={`text-2xl md:text-3xl font-extrabold mb-4 ${textPrimary}`}>Welcome to Zysculpt</h1>
@@ -149,7 +138,7 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
           <div className="lg:col-span-2 space-y-6">
             <div className={`p-6 md:p-8 rounded-[24px] md:rounded-[32px] border ${cardBg}`}>
               <div className="flex items-center justify-between mb-8">
-                <h3 className={`text-base md:text-lg font-bold flex items-center gap-2 ${textPrimary}`}><CalendarIcon size={20} className="text-indigo-500" /> {currentMonth}</h3>
+                <h3 className={`text-base md:text-lg font-bold flex items-center gap-2 ${textPrimary}`}><CalendarIcon size={20} className="text-[#1918f0]" /> {currentMonth}</h3>
               </div>
               <div className="grid grid-cols-7 gap-y-3 md:gap-y-4 text-center">
                 {['S','M','T','W','T','F','S'].map(d => <div key={d} className="text-[10px] font-bold opacity-30">{d}</div>)}
@@ -163,7 +152,7 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
                   return (
                     <button key={i} onClick={() => setSelectedDay(day)} className={`w-8 h-8 md:w-10 md:h-10 mx-auto rounded-lg md:rounded-xl flex items-center justify-center text-[11px] md:text-xs font-bold transition-all
                       ${isSelected ? 'scale-110 shadow-xl z-10' : ''}
-                      ${isToday ? 'bg-indigo-600 text-white' : hasLog ? 'bg-emerald-500 text-white' : isSelected ? 'bg-indigo-100 text-indigo-900 border-2 border-indigo-500' : 'hover:bg-slate-100 dark:hover:bg-white/5'}
+                      ${isToday ? 'bg-[#1918f0] text-white' : hasLog ? 'bg-emerald-500 text-white' : isSelected ? 'bg-[#1918f0]/10 text-[#1918f0] border-2 border-[#1918f0]' : 'hover:bg-slate-100 dark:hover:bg-white/5'}
                     `}>{day}</button>
                   );
                 })}
@@ -173,14 +162,14 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
             <div className={`p-6 md:p-8 rounded-[24px] md:rounded-[32px] border ${cardBg}`}>
                <div className="flex items-center justify-between mb-6">
                  <h3 className={`text-base md:text-lg font-bold ${textPrimary}`}>Plan for Day {selectedDay}</h3>
-                 <Target size={20} className="text-indigo-500" />
+                 <Target size={20} className="text-[#1918f0]" />
                </div>
                <div className="space-y-4">
                  {dayTasks.length === 0 ? (
-                   <p className={`text-sm italic ${textSecondary}`}>No active roadmap tasks for this date. Visit Career Roadmap to generate your 30-day plan.</p>
+                   <p className={`text-sm italic ${textSecondary}`}>No active roadmap tasks for this date.</p>
                  ) : (
                    dayTasks.map(task => (
-                     <div key={task.id} className="flex items-start gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
+                     <div key={task.id} className={`flex items-start gap-3 p-4 rounded-2xl border transition-colors ${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200'}`}>
                        <button onClick={() => toggleTask(task.id)} className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${task.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-400'}`}>
                          {task.completed && <CheckCircle2 size={12} />}
                        </button>
@@ -193,24 +182,22 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
           </div>
 
           <div className="space-y-6">
-            <div className={`p-6 rounded-3xl border min-h-[140px] flex flex-col transition-all duration-500 ${theme === 'dark' ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
-              <div className="flex items-center gap-2 mb-4 text-indigo-500">
+            <div className={`p-6 rounded-3xl border min-h-[140px] flex flex-col transition-all duration-500 ${theme === 'dark' ? 'bg-[#1918f0]/10 border-[#1918f0]/20' : 'bg-indigo-50 border-indigo-100'}`}>
+              <div className="flex items-center gap-2 mb-4 text-[#1918f0]">
                 <Lightbulb size={18} />
                 <h4 className="text-[10px] font-bold uppercase tracking-widest">Growth Tip</h4>
               </div>
-              <p className={`text-sm leading-relaxed ${textPrimary} font-medium`}>
-                "{PRO_TIPS[tipIndex]}"
-              </p>
+              <p className={`text-sm leading-relaxed ${textPrimary} font-medium`}>"{PRO_TIPS[tipIndex]}"</p>
             </div>
 
             <div className="space-y-3">
               <h2 className="text-[10px] font-bold uppercase tracking-widest opacity-40 px-2">Quick Actions</h2>
               {[
                 { label: 'Resume Builder', view: AppView.RESUME_BUILDER, icon: <FileText size={18} />, color: 'bg-emerald-500' },
-                { label: 'Find a Job', view: AppView.FIND_JOB, icon: <Search size={18} />, color: 'bg-indigo-500' },
+                { label: 'Find a Job', view: AppView.FIND_JOB, icon: <Search size={18} />, color: 'bg-[#1918f0]' },
                 { label: 'Skill Lab', view: AppView.KNOWLEDGE_HUB, icon: <Zap size={18} />, color: 'bg-orange-500' },
               ].map((action, i) => (
-                <button key={i} onClick={() => setView(action.view)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all group ${cardBg} hover:border-indigo-500`}>
+                <button key={i} onClick={() => setView(action.view)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all group ${cardBg} hover:border-[#1918f0]`}>
                   <div className={`p-2.5 rounded-xl text-white ${action.color}`}>{action.icon}</div>
                   <span className={`font-bold text-sm ${textPrimary}`}>{action.label}</span>
                   <ArrowUpRight size={16} className={`ml-auto opacity-30 group-hover:translate-x-0.5 transition-transform`} />

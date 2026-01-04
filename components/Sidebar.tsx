@@ -22,7 +22,8 @@ import {
   Edit2,
   X,
   AlertCircle,
-  Menu
+  Menu,
+  Languages
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
@@ -75,29 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     copilot: false
   });
   
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  
   const menuRef = useRef<HTMLDivElement>(null);
-  const renameInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setActiveMenuId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (renamingId && renameInputRef.current) {
-      renameInputRef.current.focus();
-      renameInputRef.current.select();
-    }
-  }, [renamingId]);
 
   const toggleSubmenu = (key: string) => {
     if (isCollapsed && !isMobileOpen) {
@@ -156,12 +135,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {hasSubmenu && isOpen && (!isCollapsed || isMobileOpen) && (
-          <div className="ml-9 mt-1 space-y-1 border-l border-slate-200 dark:border-white/10 pl-3">
+          <div className={`ml-9 mt-1 space-y-1 border-l pl-3 ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
             {filteredSessions.map(s => (
               <div key={s.id} className="group/item flex items-center relative pr-2">
                 <button 
                   onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
-                  className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${activeSessionId === s.id && currentView === id ? 'text-white bg-white/5 font-semibold' : 'text-[#a0a0a0] hover:text-white'}`}
+                  className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${activeSessionId === s.id && currentView === id ? 'text-white bg-[#1918f0]/10 font-semibold' : 'text-[#a0a0a0] hover:text-white'}`}
                 >
                   {s.title}
                 </button>
@@ -174,35 +153,56 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'} border-r ${isMobileOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
+    <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white' : 'bg-white border-[#e2e8f0] text-slate-900'} border-r ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl shadow-black/50' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
+      
+      {/* Sidebar Header */}
       <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
           <ZysculptLogo theme={theme} size={32} />
           {(!isCollapsed || isMobileOpen) && <span className="text-2xl font-black tracking-tighter" style={{ fontFamily: "'DM Sans', sans-serif" }}>zysculpt</span>}
         </div>
+        {isMobileOpen && (
+          <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
+            <X size={20} />
+          </button>
+        )}
       </div>
       
+      {/* Navigation */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2">
         {renderNavButton(AppView.OVERVIEW, 'Overview', <LayoutDashboard size={20} />)}
         {renderNavButton(AppView.CAREER_COPILOT, 'Roadmap', <Compass size={20} />, 'copilot', () => onNewSession('career-copilot'))}
         {renderNavButton(AppView.RESUME_BUILDER, 'Resume Builder', <FileText size={20} />, 'resume', () => onNewSession('resume'))}
         {renderNavButton(AppView.COVER_LETTER, 'Cover Letter', <Mail size={20} />, 'letter', () => onNewSession('cover-letter'))}
         {renderNavButton(AppView.RESIGNATION_LETTER, 'Resignation', <DoorOpen size={20} />, 'resignation', () => onNewSession('resignation-letter'))}
-        <div className="h-px my-3 mx-2 bg-slate-100 dark:bg-[#2a2a2a]" />
+        <div className={`h-px my-3 mx-2 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`} />
         {renderNavButton(AppView.KNOWLEDGE_HUB, 'Skill Lab', <Zap size={20} />)}
         {renderNavButton(AppView.DOCUMENTS, 'My Documents', <FolderOpen size={20} />)}
         {renderNavButton(AppView.FIND_JOB, 'Job Search', <Search size={20} />)}
         {renderNavButton(AppView.SETTINGS, 'Settings', <SettingsIcon size={20} />)}
       </nav>
 
-      <div className="p-4 space-y-2 border-t border-slate-100 dark:border-white/5">
-        <button onClick={() => setIsCollapsed(!isCollapsed)} className={`hidden md:flex w-full items-center gap-4 p-3 rounded-xl transition-all text-[#a0a0a0] hover:bg-[#1f1f1f] hover:text-white ${isCollapsed ? 'justify-center' : ''}`}>
+      {/* Sidebar Footer */}
+      <div className={`p-4 space-y-2 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
+        {/* Translation Widget Container */}
+        <div className={`flex items-center gap-4 px-3 py-2 rounded-xl mb-2 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}`}>
+          <Languages size={18} className="text-[#1918f0] flex-shrink-0" />
+          <div id="google_translate_element" className="flex-1 overflow-hidden"></div>
+        </div>
+
+        <button onClick={toggleTheme} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
+          {theme === 'dark' ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-[#1918f0]" />}
+          {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
+        </button>
+
+        <button onClick={() => setIsCollapsed(!isCollapsed)} className={`hidden md:flex w-full items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-[#a0a0a0] hover:bg-white/5 hover:text-white' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'} ${isCollapsed ? 'justify-center' : ''}`}>
           {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
           {!isCollapsed && <span className="font-medium text-sm">Minimize</span>}
         </button>
-        <button onClick={onLogout} className={`w-full flex items-center gap-4 p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
+
+        <button onClick={onLogout} className={`w-full flex items-center gap-4 p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all active:scale-95 ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
           <LogOut size={20} />
-          {(!isCollapsed || isMobileOpen) && <span className="font-medium text-sm">Logout</span>}
+          {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">Logout</span>}
         </button>
       </div>
     </aside>
