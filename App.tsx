@@ -125,6 +125,13 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Sync profile to database when userProfile changes
+  useEffect(() => {
+    if (session?.user?.id) {
+      syncProfile(userProfile, session.user.id);
+    }
+  }, [userProfile, session, syncProfile]);
+
   const handleLogout = async () => {
     await (supabase.auth as any).signOut();
     setSession(null);
@@ -158,9 +165,12 @@ const App: React.FC = () => {
     else setCurrentView(AppView.CAREER_COPILOT);
   };
 
-  const handleDeleteSession = (id: string) => {
+  const handleDeleteSession = async (id: string) => {
     setSessions(prev => prev.filter(s => s.id !== id));
     if (activeSessionId === id) setActiveSessionId('');
+    if (isSupabaseConfigured) {
+      await supabase.from('sessions').delete().eq('id', id);
+    }
   };
 
   const handleRenameSession = (id: string, title: string) => {

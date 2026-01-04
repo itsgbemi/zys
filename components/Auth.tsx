@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   Moon,
   Sun,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 
 type AuthView = 'signin' | 'signup' | 'forgot-password';
@@ -52,10 +53,11 @@ export const Auth: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [view, setView] = useState<AuthView>('signin');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [theme, setTheme] = useState(() => (localStorage.getItem('zysculpt-theme') as 'light' | 'dark') || 'light');
+  
+  // Toast notifications
+  const [toast, setToast] = useState<{ m: string, type: 'error' | 'success' } | null>(null);
 
   useEffect(() => {
     document.body.className = `theme-${theme}`;
@@ -69,14 +71,17 @@ export const Auth: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const showToast = (m: string, type: 'error' | 'success') => {
+    setToast({ m, type });
+    setTimeout(() => setToast(null), 5000);
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(null);
 
     if (!isSupabaseConfigured) {
-      setError("Configuration Error: Credentials missing.");
+      showToast("Configuration Error: Credentials missing.", "error");
       setLoading(false);
       return;
     }
@@ -92,40 +97,55 @@ export const Auth: React.FC = () => {
           }
         });
         if (signupError) throw signupError;
-        if (data?.user && !data?.session) setSuccess("Success! Check your inbox.");
+        if (data?.user && !data?.session) showToast("Success! Check your inbox to verify.", "success");
       } else if (view === 'signin') {
         const { error: signinError } = await (supabase.auth as any).signInWithPassword({ email, password });
         if (signinError) throw signinError;
       } else if (view === 'forgot-password') {
         const { error: resetError } = await (supabase.auth as any).resetPasswordForEmail(email, {
-          redirectTo: window.location.origin,
+           redirectTo: window.location.origin,
         });
         if (resetError) throw resetError;
-        setSuccess("Password reset link sent! Please check your email.");
+        showToast("Reset link sent! Please check your email inbox.", "success");
       }
     } catch (err: any) {
-      setError(err.message || "An authentication error occurred.");
+      showToast(err.message || "An authentication error occurred.", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
-    setError(null);
     if (!isSupabaseConfigured) {
-      setError("Social login is unavailable.");
+      showToast("Social login is unavailable.", "error");
       return;
     }
     try {
       const { error: oauthError } = await (supabase.auth as any).signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
       if (oauthError) throw oauthError;
     } catch (err: any) {
-      setError(err.message || `Failed to sign in with ${provider}`);
+      showToast(err.message || `Failed to sign in with ${provider}`, "error");
     }
   };
 
   return (
     <div className={`min-h-screen transition-colors duration-300 flex items-center justify-center p-0 md:p-6 font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] min-w-[300px] animate-in slide-in-from-top-4 fade-in duration-300`}>
+          <div className={`flex items-center gap-3 p-4 rounded-2xl shadow-2xl border ${
+            toast.type === 'success' 
+              ? 'bg-emerald-500 border-emerald-400 text-white' 
+              : 'bg-red-500 border-red-400 text-white'
+          }`}>
+             {toast.type === 'success' ? <CheckCircle2 size={20}/> : <AlertCircle size={20}/>}
+             <p className="flex-1 text-sm font-bold leading-tight">{toast.m}</p>
+             <button onClick={() => setToast(null)}><X size={16}/></button>
+          </div>
+        </div>
+      )}
+
       <div className={`w-full max-w-6xl min-h-[700px] flex flex-col md:flex-row md:rounded-[48px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.12)] md:border transition-all ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200'}`}>
         
         {/* Intro Card - Hidden on Mobile */}
@@ -250,14 +270,11 @@ export const Auth: React.FC = () => {
                 </div>
               )}
 
-              {error && <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] leading-relaxed font-bold flex items-start gap-2 animate-in fade-in slide-in-from-top-2"><AlertCircle size={14} className="mt-0.5 flex-shrink-0" /><span>{error}</span></div>}
-              {success && <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] leading-relaxed font-bold flex items-start gap-2 animate-in fade-in slide-in-from-top-2"><CheckCircle2 size={14} className="mt-0.5 flex-shrink-0" /><span>{success}</span></div>}
-
               <button
                 type="submit" disabled={loading}
                 className="w-full bg-[#1918f0] hover:bg-[#1413c7] text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-[#1918f0]/20 flex items-center justify-center gap-2 mt-4 active:scale-95 disabled:opacity-50"
               >
-                {loading ? <Loader2 size={20} className="animate-spin" /> : (view === 'signup' ? 'Create Account' : view === 'forgot-password' ? 'Send Reset Link' : 'Sign In')}
+                {loading ? <Loader2 size={20} className="animate-spin" /> : (view === 'signup' ? 'Sign up' : view === 'forgot-password' ? 'Send Reset Link' : 'Sign In')}
                 <ChevronRight size={18} />
               </button>
             </form>
@@ -304,7 +321,7 @@ export const Auth: React.FC = () => {
 
             <div className="mt-10 text-center">
               <button
-                onClick={() => { setError(null); setSuccess(null); setView(view === 'signin' ? 'signup' : 'signin'); }}
+                onClick={() => { setView(view === 'signin' ? 'signup' : 'signin'); }}
                 className="text-sm font-bold text-slate-500 hover:text-[#1918f0] transition-colors"
               >
                 {view === 'signup' ? 'Already have an account? Sign in' : view === 'forgot-password' ? '' : "Don't have an account? Join Zysculpt"}

@@ -13,10 +13,12 @@ import {
   Paperclip,
   Cpu,
   Zap,
-  Check
+  Check,
+  // Added missing Info import to resolve compilation error
+  Info
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
-import { aiService, AIModel } from '../services/ai';
+import { geminiService } from '../services/gemini';
 import { Document, Packer } from 'docx';
 import { parseMarkdownToDocx } from '../utils/docx-export';
 
@@ -89,10 +91,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const [isSculpting, setIsSculpting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<AIModel>('gemini-3-flash');
-  const [showModelSelector, setShowModelSelector] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -100,12 +99,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const stylePrefs: StylePrefs = activeSession.stylePrefs || {
-    font: 'font-sans',
-    headingColor: 'text-black',
-    listStyle: 'disc'
-  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -161,26 +154,26 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     setIsTyping(true);
 
     try {
-      const type = activeSession.type;
-      let roleDescription = 'professional career assistant';
-      if (type === 'resume') roleDescription = 'ATS resume architect';
-      if (type === 'cover-letter') roleDescription = 'persuasive cover letter writer';
-      if (type === 'career-copilot') roleDescription = 'strategic career coach';
-      
-      const systemInstruction = `You are Zysculpt AI, a world-class ${roleDescription}.
-      Profile: ${userProfile?.fullName}, Background: ${activeSession.resumeText || userProfile?.baseResumeText || 'Not provided'}.
-      Context - Target: ${activeSession.jobDescription || 'Not provided'}.
-      Help the user build a professional ${type.replace('-', ' ')}.`;
+      const context: any = { 
+        jobDescription: activeSession.jobDescription, 
+        resumeText: activeSession.resumeText || userProfile?.baseResumeText, 
+        type: activeSession.type,
+        userProfile
+      };
+      if (audioData) context.audioPart = { inlineData: { data: audioData, mimeType: 'audio/webm' } };
 
-      const audioPart = audioData ? { inlineData: { data: audioData, mimeType: 'audio/webm' } } : undefined;
-      const responseStream = aiService.generateStream(selectedModel, newMessages.slice(0, -1), inputValue, systemInstruction, audioPart);
+      const responseStream = await geminiService.generateChatResponse(
+        newMessages.slice(0, -1), 
+        inputValue, 
+        context
+      );
       
       let assistantResponse = '';
       const assistantId = (Date.now() + 1).toString();
       updateSession(activeSessionId, { messages: [...newMessages, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }] });
 
       for await (const chunk of responseStream) {
-        assistantResponse += chunk;
+        assistantResponse += chunk.text;
         setSessions(prev => prev.map(s => s.id === activeSessionId ? { 
           ...s, 
           messages: s.messages.map(m => m.id === assistantId ? { ...m, content: assistantResponse } : m) 
@@ -197,17 +190,21 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     setIsSculpting(true);
     try {
       const combinedData = `Job: ${activeSession.jobDescription}\nBackground: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
-      const prompt = `As an expert ATS Resume/Letter Writer, generate a high-impact document in Markdown based on:\n${combinedData}`;
-      const result = await aiService.sculpt(selectedModel, prompt);
+      let result = "";
+      
+      if (activeSession.type === 'resume') {
+        result = await geminiService.sculptResume(activeSession.jobDescription || '', combinedData, userProfile);
+      } else if (activeSession.type === 'cover-letter') {
+        result = await geminiService.sculptCoverLetter(activeSession.jobDescription || '', combinedData, userProfile);
+      } else {
+        result = await geminiService.sculptResignationLetter(activeSession.jobDescription || '', combinedData, userProfile);
+      }
+
       updateSession(activeSessionId, { finalResume: result });
       setShowPreview(true);
     } catch (err: any) { 
       setErrorMessage("Failed to sculpt document.");
     } finally { setIsSculpting(false); }
-  };
-
-  const updatePrefs = (newPrefs: Partial<StylePrefs>) => {
-    updateSession(activeSessionId, { stylePrefs: { ...stylePrefs, ...newPrefs } as any });
   };
 
   return (
@@ -232,6 +229,17 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+        {activeSession.messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full opacity-40 text-center px-8">
+             <div className="w-16 h-16 rounded-3xl bg-[#1918f0]/10 flex items-center justify-center text-[#1918f0] mb-4">
+                <Info size={32}/>
+             </div>
+             <p className="font-bold text-sm leading-relaxed max-w-xs">
+               Welcome to your {activeSession.type.replace('-', ' ')} sculpting workspace. 
+               Tell Zysculpt about your goals or upload a target job to begin.
+             </p>
+          </div>
+        )}
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] md:max-w-[75%] rounded-3xl p-5 shadow-sm border relative group ${
@@ -256,29 +264,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
       <div className={`p-4 md:p-6 border-t transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="max-w-4xl mx-auto space-y-4">
-           <div className="flex items-center gap-2">
-              <div className="relative">
-                <button onClick={() => setShowModelSelector(!showModelSelector)} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-[#1918f0]'}`}>
-                   <Cpu size={14}/>
-                   {selectedModel.replace('-', ' ').toUpperCase()}
-                </button>
-                {showModelSelector && (
-                  <div className={`absolute bottom-full mb-2 left-0 w-48 border rounded-2xl shadow-2xl p-2 z-50 animate-in slide-in-from-bottom-2 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                     {[
-                       { id: 'gemini-3-flash', l: 'Gemini 3 Flash' },
-                       { id: 'gemini-3-pro', l: 'Gemini 3 Pro' },
-                       { id: 'deepseek-v3', l: 'DeepSeek V3' },
-                       { id: 'deepseek-r1', l: 'DeepSeek R1' }
-                     ].map(m => (
-                       <button key={m.id} onClick={() => { setSelectedModel(m.id as any); setShowModelSelector(false); }} className={`w-full flex items-center justify-between p-3 rounded-xl text-[11px] font-bold text-left transition-colors ${selectedModel === m.id ? 'bg-[#1918f0]/10 text-[#1918f0]' : 'hover:bg-white/5'}`}>
-                          {m.l} {selectedModel === m.id && <Check size={12}/>}
-                       </button>
-                     ))}
-                  </div>
-                )}
-              </div>
-           </div>
-
            <div className="relative flex items-center gap-3">
             <div className="flex-1 relative">
               <textarea
