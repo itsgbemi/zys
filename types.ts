@@ -22,7 +22,7 @@ export interface UserProfile {
   github?: string;
   portfolio?: string;
   baseResumeText: string;
-  dailyAvailability: number; // Hours per day
+  dailyAvailability: number;
   voiceId: string;
   avatarUrl?: string;
 }
@@ -36,13 +36,13 @@ export interface Message {
 
 export interface ScheduledTask {
   id: string;
-  dayNumber: number; // Day 1, Day 2, etc.
+  dayNumber: number;
   task: string;
   completed: boolean;
 }
 
 export interface DailyLog {
-  date: string; // YYYY-MM-DD
+  date: string;
   win: string;
   completed: boolean;
 }
@@ -55,9 +55,10 @@ export interface CareerGoal {
 }
 
 export interface StylePrefs {
-  font: 'font-sans' | 'font-serif' | 'font-mono' | 'font-arial' | 'font-times';
+  font: 'font-inter' | 'font-roboto' | 'font-eb-garamond' | 'font-arial' | 'font-times';
   headingColor: string;
   listStyle: 'disc' | 'circle' | 'square' | 'star';
+  template?: 'modern' | 'classic' | 'minimal';
 }
 
 export interface ChatSession {

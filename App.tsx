@@ -50,19 +50,18 @@ const App: React.FC = () => {
         email: profile.email,
         phone: profile.phone,
         location: profile.location,
-        linkedin: profile.linkedIn, // Ensure mapping matches SQL
+        linkedin: profile.linkedIn,
         github: profile.github || null,
         portfolio: profile.portfolio || null,
         base_resume_text: profile.baseResumeText,
         daily_availability: profile.dailyAvailability,
         updated_at: new Date().toISOString()
       });
-      if (error) console.error("Supabase Sync Error:", error);
+      if (error) console.error("Cloud Sync Error:", error);
     } catch (e) {
       console.error("Profile sync exception:", e);
     } finally {
-      // Small delay for UI feedback
-      setTimeout(() => setIsSavingProfile(false), 1000);
+      setTimeout(() => setIsSavingProfile(false), 1200);
     }
   }, []);
 
@@ -123,14 +122,13 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Autosave Logic with Debounce
   const autosaveTimerRef = useRef<number | null>(null);
   useEffect(() => {
     if (session?.user?.id) {
       if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = window.setTimeout(() => {
         syncProfile(userProfile, session.user.id);
-      }, 2000);
+      }, 2500);
     }
     return () => {
       if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
@@ -185,11 +183,11 @@ const App: React.FC = () => {
     
     const viewMap: any = { 
       'resume': AppView.RESUME_BUILDER, 
-      'cover-letter': AppView.COVER_LETTER, 
-      'resignation-letter': AppView.RESIGNATION_LETTER, 
+      'cover-letter': AppView.RESUME_BUILDER, // Unified builder
+      'resignation-letter': AppView.RESUME_BUILDER, // Unified builder
       'career-copilot': AppView.CAREER_COPILOT 
     };
-    setCurrentView(viewMap[type]);
+    setCurrentView(viewMap[type] || AppView.RESUME_BUILDER);
   };
 
   const handleDeleteSession = async (id: string) => {
@@ -210,7 +208,7 @@ const App: React.FC = () => {
   const activeSess = sessions.find(s => s.id === activeSessionId);
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden transition-colors font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
+    <div className={`flex h-screen w-full overflow-hidden transition-colors font-['Inter',_sans-serif] ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
       <Sidebar 
         currentView={currentView} setView={setCurrentView} 
         isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed}
@@ -247,7 +245,7 @@ const App: React.FC = () => {
                    <Plus className="mx-auto mb-4 text-[#1918f0] opacity-20" size={48}/>
                    <h2 className="text-xl font-black mb-2">No Active Session</h2>
                    <p className="text-sm text-slate-500 mb-6">Select a workspace from the sidebar or start fresh with a click.</p>
-                   <button onClick={() => handleNewSession('resume')} className="px-6 py-3 bg-[#1918f0] text-white rounded-2xl font-black shadow-xl shadow-[#1918f0]/20">New Resume Builder</button>
+                   <button onClick={() => handleNewSession('resume')} className="px-8 py-3 bg-[#1918f0] text-white rounded-2xl font-black shadow-xl shadow-[#1918f0]/20">New Workspace</button>
                 </div>
              </div>
            )
