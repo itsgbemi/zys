@@ -14,8 +14,8 @@ import {
   Cpu,
   Zap,
   Check,
-  // Added missing Info import to resolve compilation error
-  Info
+  Info,
+  CircleDashed
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { geminiService } from '../services/gemini';
@@ -89,7 +89,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSculpting, setIsSculpting] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -162,11 +161,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       };
       if (audioData) context.audioPart = { inlineData: { data: audioData, mimeType: 'audio/webm' } };
 
-      const responseStream = await geminiService.generateChatResponse(
-        newMessages.slice(0, -1), 
-        inputValue, 
-        context
-      );
+      const responseStream = await geminiService.generateChatResponse(newMessages, "", context);
       
       let assistantResponse = '';
       const assistantId = (Date.now() + 1).toString();
@@ -180,7 +175,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         } : s));
       }
     } catch (e: any) {
-      setErrorMessage("AI is currently unavailable.");
+      setErrorMessage("AI service unavailable.");
       setIsTyping(false);
     } finally { setIsTyping(false); }
   };
@@ -189,62 +184,60 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     setErrorMessage(null);
     setIsSculpting(true);
     try {
-      const combinedData = `Job: ${activeSession.jobDescription}\nBackground: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
+      const combinedData = `Job: ${activeSession.jobDescription}\nExperience: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat Context: ${activeSession.messages.map(m => m.content).join('\n')}`;
       let result = "";
-      
-      if (activeSession.type === 'resume') {
-        result = await geminiService.sculptResume(activeSession.jobDescription || '', combinedData, userProfile);
-      } else if (activeSession.type === 'cover-letter') {
-        result = await geminiService.sculptCoverLetter(activeSession.jobDescription || '', combinedData, userProfile);
-      } else {
-        result = await geminiService.sculptResignationLetter(activeSession.jobDescription || '', combinedData, userProfile);
-      }
-
+      if (activeSession.type === 'resume') result = await geminiService.sculptResume(activeSession.jobDescription || '', combinedData, userProfile);
+      else if (activeSession.type === 'cover-letter') result = await geminiService.sculptCoverLetter(activeSession.jobDescription || '', combinedData, userProfile);
+      else result = await geminiService.sculptResignationLetter(activeSession.jobDescription || '', combinedData, userProfile);
       updateSession(activeSessionId, { finalResume: result });
       setShowPreview(true);
-    } catch (err: any) { 
-      setErrorMessage("Failed to sculpt document.");
-    } finally { setIsSculpting(false); }
+    } catch (err: any) { setErrorMessage("Sculpting failed."); } finally { setIsSculpting(false); }
   };
+
+  const displayType = activeSession.type.replace('-', ' ');
+  const subtitle = activeSession.type === 'resume' ? 'Architecting your ATS-proof professional profile' : 
+                   activeSession.type === 'cover-letter' ? 'Drafting a persuasive narrative for recruiters' :
+                   activeSession.type === 'career-copilot' ? 'Strategic roadmap for your next big move' :
+                   'Managing your career transition gracefully';
 
   return (
     <div className="flex flex-col h-full relative font-['Roboto',_sans-serif]">
-      <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+      <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
           <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <div className="flex flex-col">
-            <h2 className={`text-lg md:text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>
-              {activeSession.type.replace('-', ' ').toUpperCase()}
+            <h2 className={`text-lg md:text-xl font-bold capitalize ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>
+              {displayType}
             </h2>
+            <p className="text-[10px] md:text-xs opacity-50">{subtitle}</p>
           </div>
         </div>
         {(activeSession.jobDescription || userProfile?.baseResumeText) && activeSession.type !== 'career-copilot' && (
-          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#1918f0] text-white rounded-full font-black hover:bg-[#0e0da8] transition-all shadow-lg shadow-[#1918f0]/20 text-xs md:text-sm disabled:opacity-50">
+          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#1918f0] text-white rounded-full font-black hover:bg-[#0e0da8] transition-all shadow-lg shadow-[#1918f0]/20 text-xs md:text-sm">
             {isSculpting || isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
-            <span className="hidden sm:inline">Sculpt Document</span><span className="sm:hidden">Sculpt</span>
+            <span className="hidden sm:inline">Sculpt</span>
           </button>
         )}
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         {activeSession.messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full opacity-40 text-center px-8">
-             <div className="w-16 h-16 rounded-3xl bg-[#1918f0]/10 flex items-center justify-center text-[#1918f0] mb-4">
-                <Info size={32}/>
+          <div className="flex justify-start">
+             <div className={`max-w-[85%] md:max-w-[75%] rounded-3xl p-5 shadow-sm border ${theme === 'dark' ? 'bg-[#1a1a1a] text-white border-white/5' : 'bg-white text-slate-900 border-slate-200'}`}>
+                <div className="text-sm leading-relaxed">
+                   Hello! I'm your Zysculpt AI assistant. I'm ready to help you create a world-class <strong>{displayType}</strong>. 
+                   {activeSession.jobDescription ? " I've imported the job details. Let's start by looking at your current experience—what part of your background do you want to highlight most for this role?" : " How would you like to begin?"}
+                </div>
              </div>
-             <p className="font-bold text-sm leading-relaxed max-w-xs">
-               Welcome to your {activeSession.type.replace('-', ' ')} sculpting workspace. 
-               Tell Zysculpt about your goals or upload a target job to begin.
-             </p>
           </div>
         )}
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] md:max-w-[75%] rounded-3xl p-5 shadow-sm border relative group ${
+            <div className={`max-w-[85%] md:max-w-[75%] rounded-3xl p-5 shadow-sm border ${
               m.role === 'user' 
-                ? theme === 'dark' ? 'bg-[#1918f0] text-white border-[#1918f0]' : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
+                ? theme === 'dark' ? 'bg-[#2a2a2a] text-white border-white/10' : 'bg-slate-100 text-slate-900 border-slate-200' 
                 : theme === 'dark' ? 'bg-[#1a1a1a] text-white border-white/5' : 'bg-white text-slate-900 border-slate-200'
             }`}>
               <div className="text-sm leading-relaxed"><MarkdownLite text={m.content} theme={theme} /></div>
@@ -254,40 +247,35 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         {(isTyping || isSculpting) && (
           <div className="flex justify-start">
             <div className={`rounded-3xl p-5 border flex items-center gap-3 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5' : 'bg-white border-slate-200'}`}>
-              <Loader2 className="animate-spin text-[#1918f0]" size={18} />
-              {isSculpting && <span className="text-xs font-black opacity-70">Sculpting...</span>}
+              <CircleDashed className="animate-spin text-[#1918f0]" size={18} />
+              <span className="text-xs font-black opacity-40">{isSculpting ? 'Sculpting...' : 'Thinking...'}</span>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className={`p-4 md:p-6 border-t transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
-        <div className="max-w-4xl mx-auto space-y-4">
-           <div className="relative flex items-center gap-3">
-            <div className="flex-1 relative">
-              <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={isRecording ? "Listening..." : "Message Zysculpt..."}
-                disabled={isRecording || isSculpting}
-                className={`w-full border rounded-[32px] p-5 pr-14 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none shadow-sm ${
-                  theme === 'dark' ? 'bg-[#121212] border-white/5 text-white focus:border-[#1918f0]' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-[#1918f0]'
-                } ${isRecording ? 'opacity-50 animate-pulse' : ''}`}
-                rows={1}
-              />
-              <button 
-                onMouseDown={startRecording} onMouseUp={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
-                className={`absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-2xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-[#1918f0] hover:bg-white/5'}`}
-              >
-                {isRecording ? <Square size={20} /> : <Mic size={20} />}
-              </button>
-            </div>
-            <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording || isSculpting} className="p-5 bg-[#1918f0] text-white rounded-[32px] hover:bg-[#0e0da8] transition-all shadow-xl shadow-[#1918f0]/20 flex-shrink-0 active:scale-95 disabled:opacity-50">
-              <Send size={24} />
+      <div className={`p-4 md:p-6 border-t transition-colors ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+        <div className="max-w-4xl mx-auto flex items-center gap-3">
+          <div className="flex-1 relative">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder={isRecording ? "Listening..." : "Message Zysculpt..."}
+              disabled={isRecording || isSculpting}
+              className={`w-full border rounded-[32px] p-5 pr-14 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
+                theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white focus:border-[#1918f0]' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-[#1918f0]'
+              }`}
+              rows={1}
+            />
+            <button onMouseDown={startRecording} onMouseUp={stopRecording} className={`absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-2xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-[#1918f0]'}`}>
+              {isRecording ? <Square size={20} /> : <Mic size={20} />}
             </button>
           </div>
+          <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isSculpting} className="p-5 bg-[#1918f0] text-white rounded-[32px] hover:bg-[#0e0da8] transition-all flex-shrink-0 active:scale-95 disabled:opacity-50">
+            <Send size={24} />
+          </button>
         </div>
       </div>
     </div>

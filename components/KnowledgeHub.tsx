@@ -30,7 +30,7 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
       setUserAnswer(null);
     } catch (e) {
       console.error(e);
-      alert("Failed to generate learning content. Please check your topic or API key.");
+      alert("Failed to generate content.");
     } finally {
       setLoading(false);
     }
@@ -53,6 +53,7 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
   };
 
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
+  const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
   const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-slate-200 shadow-sm';
 
   return (
@@ -62,10 +63,10 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
           <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
-          <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Knowledge Hub</h2>
-        </div>
-        <div className="flex gap-2">
-           <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-[10px] font-bold">PRO FEATURE</span>
+          <div className="flex flex-col">
+            <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Knowledge Hub</h2>
+            <p className="text-[10px] md:text-xs opacity-50">Master new industry concepts with interactive AI</p>
+          </div>
         </div>
       </header>
 
@@ -76,19 +77,19 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
               <div className="w-16 h-16 rounded-3xl bg-orange-500 text-white flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/20">
                 <BrainCircuit size={32} />
               </div>
-              <h1 className={`text-2xl font-extrabold mb-2 ${textPrimary}`}>Refresh your Memory</h1>
-              <p className="text-slate-500 mb-8 text-sm">Pick a topic and let AI quiz you or provide flashcards for active recall.</p>
+              <h1 className={`text-2xl font-extrabold mb-2 ${textPrimary}`}>Knowledge Lab</h1>
+              <p className="text-slate-500 mb-8 text-sm">Enter a topic to generate a custom quiz or flashcards.</p>
               
               <div className="space-y-4">
                 <input 
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  placeholder="e.g. React Native, SEO Strategy, AWS..."
+                  placeholder="e.g. System Design, Product Management..."
                   className={`w-full p-4 rounded-2xl border outline-none transition-all focus:border-[#1918f0] ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-slate-50 border-slate-200'}`}
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <button onClick={() => startLearning('quiz')} disabled={loading} className="p-4 bg-[#1918f0] text-white rounded-2xl font-bold text-sm hover:bg-[#1413c7] transition-all flex items-center justify-center gap-2">
-                    {loading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />} AI Quiz
+                    {loading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />} Quiz
                   </button>
                   <button onClick={() => startLearning('flashcards')} disabled={loading} className="p-4 bg-emerald-600 text-white rounded-2xl font-bold text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
                     {loading ? <Loader2 className="animate-spin" size={16} /> : <BookOpen size={16} />} Flashcards
@@ -123,15 +124,15 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
                </div>
                {userAnswer !== null && (
                  <button onClick={nextQuestion} className="w-full mt-8 py-4 bg-[#1918f0] text-white rounded-2xl font-bold transition-all hover:bg-[#1413c7]">
-                    {currentIndex === content.length - 1 ? 'Finish Hub Session' : 'Next Question'}
+                    {currentIndex === content.length - 1 ? 'Finish' : 'Next'}
                  </button>
                )}
             </div>
           ) : (
             <div className={`p-8 rounded-[40px] border ${cardBg} text-center cursor-pointer min-h-[300px] flex flex-col items-center justify-center animate-in flip-in-y`} onClick={() => setShowAnswer(!showAnswer)}>
-               <div className="mb-8"><RefreshCw size={24} className="text-emerald-500 animate-spin-slow" /></div>
-               <h3 className={`text-2xl font-bold mb-4 ${textPrimary}`}>{showAnswer ? content[currentIndex].options[content[currentIndex].correctIndex] : content[currentIndex].question}</h3>
-               <p className="text-xs font-bold uppercase tracking-widest opacity-30 mt-8">{showAnswer ? 'Click to flip back' : 'Click to reveal answer'}</p>
+               <RefreshCw size={24} className="text-emerald-500 mb-6" />
+               <h3 className={`text-xl font-bold mb-4 ${textPrimary}`}>{showAnswer ? content[currentIndex].options[content[currentIndex].correctIndex] : content[currentIndex].question}</h3>
+               <p className="text-[10px] font-bold uppercase tracking-widest opacity-30 mt-8">{showAnswer ? 'Click to flip' : 'Reveal answer'}</p>
                {showAnswer && (
                  <button onClick={(e) => { e.stopPropagation(); nextQuestion(); }} className="mt-12 px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs">Next Card</button>
                )}

@@ -40,7 +40,7 @@ export const ZysculptLogo = ({ theme, size = 24 }: { theme: Theme, size?: number
       className="w-full h-full"
       style={{ 
         transform: 'matrix(-1, 0, 0, 1, 0, 0)',
-        fill: '#1918f0'
+        fill: 'currentColor'
       }}
     >
       <path d="M15.258 23.994C28.83 47.05 58.626 88.46 89.648 116.95l92.844 62.818-119.47-50.465-1.92-.315c24.343 38.854 55.535 70.026 92.005 93.282l127.3 60.376L155.9 253.238c40.5 39.53 100.607 75.72 151.4 98.698l63.925 24.37-82.89-11.066-.208.016c52.34 51.69 149.044 110.424 207.45 130.998-1.585-13.49-4.593-28.014-8.82-42.758-16.24-34.366-48.9-49.708-83.413-61.435 2.364-.095 4.702-.14 7.017-.126 22.757.123 43.142 5.6 60.71 18.603-13.84-30.897-32.514-59.165-54.246-76.754l.39.037c-26.092-21.573-56.34-40.94-89.81-58.67 46.746 9.337 102.14 38.655 136.29 63.16l.122.01c-34.19-46.3-90.762-97.425-140.103-130.974L208.53 148.023l136.18 37.754c-41.767-26.197-80.66-45.64-123.83-61.582L108.19 87.82l122.273 13.176C176.465 68.613 75.36 38.786 15.26 23.994h-.002z" />
@@ -143,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`flex items-center group rounded-xl transition-all ${
             isActive && !hasSubmenu
               ? 'bg-[#1918f0] text-white shadow-lg shadow-[#1918f0]/20' 
-              : theme === 'dark' ? 'text-[#a0a0a0] hover:bg-white/5 hover:text-white' : 'text-[#64748b] hover:bg-slate-50 hover:text-[#0F172A]'
+              : theme === 'dark' ? 'text-slate-400 hover:bg-white/5 hover:text-white' : 'text-[#64748b] hover:bg-slate-100 hover:text-[#0F172A]'
           } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
         >
           <button
@@ -176,7 +176,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {filteredSessions.length === 0 ? (
               <div className="py-2 px-1 pr-4">
                  <p className="text-[10px] leading-relaxed opacity-40 font-medium italic">
-                   No {label.toLowerCase()}s yet. Click the <span className="text-[#1918f0] font-black">+</span> icon to start.
+                   No {label.toLowerCase()}s. Click <span className="text-[#1918f0] font-black">+</span> to start.
                  </p>
               </div>
             ) : (
@@ -198,23 +198,27 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <>
                       <button 
                         onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
-                        className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${activeSessionId === s.id && currentView === id ? 'text-white bg-[#1918f0]/10 font-bold' : 'text-[#a0a0a0] hover:text-white'}`}
+                        className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${
+                          activeSessionId === s.id && currentView === id 
+                            ? 'text-white bg-[#1918f0] font-bold' 
+                            : theme === 'dark' ? 'text-slate-400 hover:bg-white/10 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
                       >
                         {s.title}
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === s.id ? null : s.id); }}
-                        className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-white/5 rounded-lg transition-all text-[#a0a0a0] hover:text-white"
+                        className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-[#1918f0]/10 rounded-lg transition-all text-slate-400 hover:text-[#1918f0]"
                       >
                         <MoreHorizontal size={14} />
                       </button>
                       
                       {activeMenuId === s.id && (
-                        <div ref={menuRef} className={`absolute right-[-10px] top-8 z-50 min-w-[120px] rounded-xl border shadow-2xl p-1 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                          <button onClick={() => handleStartRename(s.id, s.title)} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-[#1918f0]/10 transition-colors text-left">
+                        <div ref={menuRef} className={`absolute right-[-10px] top-8 z-[60] min-w-[120px] rounded-xl border shadow-2xl p-1 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                          <button onClick={() => handleStartRename(s.id, s.title)} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-[#1918f0] hover:text-white transition-colors text-left">
                              <Edit2 size={12}/> Rename
                           </button>
-                          <button onClick={() => { onDeleteSession(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500/10 text-red-500 transition-colors text-left">
+                          <button onClick={() => { onDeleteSession(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500 hover:text-white transition-colors text-left">
                              <Trash2 size={12}/> Delete
                           </button>
                         </div>
@@ -242,9 +246,8 @@ const Sidebar: React.FC<SidebarProps> = ({
            <button 
             onClick={() => setIsCollapsed(!isCollapsed)} 
             className={`hidden md:flex p-2 hover:bg-white/5 rounded-xl transition-all ${isCollapsed ? 'rotate-180' : ''}`}
-            title={isCollapsed ? "Expand sidebar" : "Minimize sidebar"}
            >
-              {isCollapsed ? <PanelLeftOpen size={20} className={theme === 'dark' ? 'text-white/40' : 'text-slate-400'} /> : <PanelLeftClose size={20} className={theme === 'dark' ? 'text-white/40' : 'text-slate-400'} />}
+              {isCollapsed ? <PanelLeftOpen size={20} className="opacity-40" /> : <PanelLeftClose size={20} className="opacity-40" />}
            </button>
            {isMobileOpen && (
               <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
@@ -269,7 +272,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <div className={`p-4 space-y-2 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
         <button onClick={toggleTheme} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
-          {theme === 'dark' ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-[#1918f0]" />}
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
 

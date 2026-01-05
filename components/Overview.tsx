@@ -25,7 +25,7 @@ interface OverviewProps {
   sessions: ChatSession[];
   setView: (view: AppView) => void;
   updateSession?: (id: string, updates: Partial<ChatSession>) => void;
-  onNewSession: (type?: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot', initialPrompt?: string) => void;
+  onNewSession: (type?: 'resume' | 'cover-letter' | 'resignation-letter' | 'career-copilot', initialPrompt?: string, context?: any) => void;
   userProfile: UserProfile;
 }
 
@@ -108,31 +108,32 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
-        {/* Welcome Hero Section - Redesigned as requested */}
-        <div className={`p-8 md:p-12 rounded-[40px] border mb-12 animate-in fade-in zoom-in-95 duration-700 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5' : 'bg-white border-slate-200 shadow-xl shadow-indigo-500/5'}`}>
+        <div className={`p-8 md:p-12 rounded-[40px] border mb-12 animate-in fade-in zoom-in-95 duration-700 ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200 shadow-xl shadow-indigo-500/5'}`}>
           <div className="flex flex-col md:flex-row items-center gap-8 mb-10">
             <div className="w-20 h-20 rounded-[32px] bg-[#1918f0] flex items-center justify-center text-white shadow-2xl shadow-[#1918f0]/40 flex-shrink-0">
-               <Sparkles size={40}/>
+               <ZysculptLogo theme="dark" size={40}/>
             </div>
             <div className="text-center md:text-left">
-              <h1 className={`text-4xl font-black mb-2 tracking-tight ${textPrimary}`}>Welcome to Zysculpt AI</h1>
-              <p className="text-slate-500 text-xl font-medium">I'm your dedicated career architect. How can I help you today?</p>
+              <h1 className={`text-3xl md:text-4xl font-black mb-2 tracking-tight ${textPrimary}`}>Welcome to Zysculpt</h1>
+              <p className="text-slate-500 text-lg md:text-xl font-medium">Empowering your career with precise AI sculpting.</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { l: 'Tailor a Resume', d: 'Match your profile to a job description', t: 'resume', i: <FileText size={24}/>, color: 'bg-indigo-500' },
-              { l: 'Draft a Cover Letter', d: 'Persuasive writing for specific roles', t: 'cover-letter', i: <Mail size={24}/>, color: 'bg-emerald-500' },
-              { l: 'Interview Prep', d: 'Simulate high-stakes interviews', t: 'career-copilot', p: 'I want to practice for an upcoming interview.', i: <UserCheck size={24}/>, color: 'bg-amber-500' },
-              { l: 'Career Advice', d: 'Navigate complex workplace transitions', t: 'career-copilot', p: 'I need career advice regarding...', i: <Compass size={24}/>, color: 'bg-sky-500' }
+              { l: 'Tailor a Resume', d: 'Architect an ATS-proof profile based on a target role.', t: 'resume', i: <FileText size={24}/>, color: 'bg-indigo-500' },
+              { l: 'Draft a Cover Letter', d: 'Build a persuasive narrative for human recruiters.', t: 'cover-letter', i: <Mail size={24}/>, color: 'bg-emerald-500' },
+              { l: 'Career Prep & Strategy', d: 'Prepare for interviews or map long-term growth.', t: 'career-copilot', i: <UserCheck size={24}/>, color: 'bg-amber-500' },
+              { l: 'Skill Lab & Quizzes', d: 'Refresh your industry knowledge with interactive AI.', v: AppView.KNOWLEDGE_HUB, i: <Zap size={24}/>, color: 'bg-sky-500' }
             ].map((action, i) => (
-              <button key={i} onClick={() => handleAction(action.t as any, action.p)} className={`p-6 rounded-[32px] border transition-all text-left hover:border-[#1918f0] hover:bg-[#1918f0]/5 group ${theme === 'dark' ? 'border-white/5 bg-[#121212]' : 'border-slate-100 bg-slate-50 shadow-sm'}`}>
-                 <div className={`p-3 rounded-2xl ${action.color} text-white w-fit mb-5 group-hover:scale-110 transition-transform shadow-lg shadow-${action.color.split('-')[1]}-500/20`}>
+              <button key={i} onClick={() => action.v ? setView(action.v) : handleAction(action.t as any)} className={`p-8 rounded-[32px] border transition-all text-left hover:border-[#1918f0] hover:bg-[#1918f0]/5 group flex items-start gap-6 ${theme === 'dark' ? 'border-white/5 bg-[#1a1a1a]' : 'border-slate-100 bg-slate-50 shadow-sm'}`}>
+                 <div className={`p-4 rounded-3xl ${action.color} text-white flex-shrink-0 shadow-lg shadow-${action.color.split('-')[1]}-500/20`}>
                    {action.i}
                  </div>
-                 <span className={`text-base font-black block mb-1 group-hover:text-[#1918f0] transition-colors ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>{action.l}</span>
-                 <span className="text-xs text-slate-500 font-medium leading-relaxed">{action.d}</span>
+                 <div>
+                    <span className={`text-xl font-black block mb-2 transition-colors ${theme === 'dark' ? 'text-white group-hover:text-[#1918f0]' : 'text-[#0F172A] group-hover:text-[#1918f0]'}`}>{action.l}</span>
+                    <span className="text-sm text-slate-500 font-medium leading-relaxed">{action.d}</span>
+                 </div>
               </button>
             ))}
           </div>

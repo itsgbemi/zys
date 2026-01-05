@@ -42,9 +42,9 @@ const App: React.FC = () => {
   const [activeSessionId, setActiveSessionId] = useState('');
 
   const syncProfile = useCallback(async (profile: UserProfile, userId: string) => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || !userId) return;
     try {
-      await supabase.from('profiles').upsert({
+      const { error } = await supabase.from('profiles').upsert({
         id: userId,
         full_name: profile.fullName,
         title: profile.title,
@@ -60,8 +60,9 @@ const App: React.FC = () => {
         avatar_url: profile.avatarUrl,
         updated_at: new Date().toISOString()
       });
+      if (error) console.error("Sync Error:", error);
     } catch (e) {
-      console.error("Profile sync error:", e);
+      console.error("Profile sync exception:", e);
     }
   }, []);
 
@@ -91,8 +92,6 @@ const App: React.FC = () => {
 
       setUserProfile(seededProfile);
       setDatadogUser({ id: userId, email: seededProfile.email, name: seededProfile.fullName });
-
-      if (!profileRes.data) syncProfile(seededProfile, userId);
 
       if (sessionsRes.data && sessionsRes.data.length > 0) {
         const mapped: ChatSession[] = sessionsRes.data.map(s => ({
@@ -125,12 +124,15 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Sync profile to database when userProfile changes
+  // Sync profile when user changes data, but throttled by dependency on state update
   useEffect(() => {
-    if (session?.user?.id) {
-      syncProfile(userProfile, session.user.id);
-    }
-  }, [userProfile, session, syncProfile]);
+    const timer = setTimeout(() => {
+      if (session?.user?.id) {
+        syncProfile(userProfile, session.user.id);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [userProfile, session]);
 
   const handleLogout = async () => {
     await (supabase.auth as any).signOut();
@@ -151,18 +153,39 @@ const App: React.FC = () => {
     } catch (e) { console.error(e); }
   };
 
-  const handleNewSession = async (type: any = 'resume', initialPrompt?: string) => {
+  const handleNewSession = async (type: any = 'resume', initialPrompt?: string, context?: any) => {
     const newId = Date.now().toString();
-    const messages = initialPrompt ? [{ id: 'init', role: 'user', content: initialPrompt, timestamp: Date.now() }] : [];
     const newSess: ChatSession = {
-      id: newId, title: `New ${type.replace('-', ' ')}`, type, messages: messages as any, lastUpdated: Date.now()
+      id: newId, 
+      title: context?.jobTitle ? `${context.jobTitle} @ ${context.company}` : `New ${type.replace('-', ' ')}`, 
+      type, 
+      messages: [], 
+      lastUpdated: Date.now(),
+      jobDescription: context?.jobDescription
     };
+
+    if (isSupabaseConfigured && session?.user?.id) {
+      await supabase.from('sessions').insert({
+        id: newId,
+        user_id: session.user.id,
+        title: newSess.title,
+        type: newSess.type,
+        messages: [],
+        job_description: context?.jobDescription || null,
+        last_updated: Date.now()
+      });
+    }
+
     setSessions(prev => [newSess, ...prev]);
     setActiveSessionId(newId);
-    if (type === 'resume') setCurrentView(AppView.RESUME_BUILDER);
-    else if (type === 'cover-letter') setCurrentView(AppView.COVER_LETTER);
-    else if (type === 'resignation-letter') setCurrentView(AppView.RESIGNATION_LETTER);
-    else setCurrentView(AppView.CAREER_COPILOT);
+    
+    const viewMap: any = { 
+      'resume': AppView.RESUME_BUILDER, 
+      'cover-letter': AppView.COVER_LETTER, 
+      'resignation-letter': AppView.RESIGNATION_LETTER, 
+      'career-copilot': AppView.CAREER_COPILOT 
+    };
+    setCurrentView(viewMap[type]);
   };
 
   const handleDeleteSession = async (id: string) => {
@@ -219,13 +242,13 @@ const App: React.FC = () => {
                 <div className="max-w-md">
                    <Plus className="mx-auto mb-4 text-[#1918f0] opacity-20" size={48}/>
                    <h2 className="text-xl font-black mb-2">No Active Session</h2>
-                   <p className="text-sm text-slate-500 mb-6">Select a session from the sidebar or create a new one to start sculpting.</p>
+                   <p className="text-sm text-slate-500 mb-6">Select a workspace from the sidebar or start fresh with a click.</p>
                    <button onClick={() => handleNewSession('resume')} className="px-6 py-3 bg-[#1918f0] text-white rounded-2xl font-black shadow-xl shadow-[#1918f0]/20">New Resume Builder</button>
                 </div>
              </div>
            )
         )}
-        {currentView === AppView.FIND_JOB && <JobSearch onToggleMobile={() => setIsMobileOpen(true)} theme={theme} onSculptResume={(j) => handleNewSession('resume', `I want to tailor my resume for this job: ${j.title} at ${j.company}.\nDescription: ${j.description}`)} onSculptLetter={(j) => handleNewSession('cover-letter', `I want to write a cover letter for this job: ${j.title} at ${j.company}.\nDescription: ${j.description}`)} />}
+        {currentView === AppView.FIND_JOB && <JobSearch onToggleMobile={() => setIsMobileOpen(true)} theme={theme} onSculptResume={(j) => handleNewSession('resume', undefined, { jobTitle: j.title, company: j.company, jobDescription: j.description })} onSculptLetter={(j) => handleNewSession('cover-letter', undefined, { jobTitle: j.title, company: j.company, jobDescription: j.description })} />}
         {currentView === AppView.KNOWLEDGE_HUB && <KnowledgeHub onToggleMobile={() => setIsMobileOpen(true)} theme={theme} />}
         {currentView === AppView.DOCUMENTS && <Documents onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} onSelectSession={id => { setActiveSessionId(id); setCurrentView(AppView.RESUME_BUILDER); }} />}
       </main>
