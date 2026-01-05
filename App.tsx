@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Overview from './components/Overview';
 import AIResumeBuilder from './components/AIResumeBuilder';
@@ -50,28 +50,27 @@ const App: React.FC = () => {
         email: profile.email,
         phone: profile.phone,
         location: profile.location,
-        linkedin: profile.linkedIn,
-        github: profile.github,
-        portfolio: profile.portfolio,
+        linkedin: profile.linkedIn, // Ensure mapping matches SQL
+        github: profile.github || null,
+        portfolio: profile.portfolio || null,
         base_resume_text: profile.baseResumeText,
         daily_availability: profile.dailyAvailability,
-        voice_id: profile.voiceId,
-        avatar_url: profile.avatarUrl,
         updated_at: new Date().toISOString()
       });
-      if (error) console.error("Sync Error:", error);
+      if (error) console.error("Supabase Sync Error:", error);
     } catch (e) {
       console.error("Profile sync exception:", e);
     } finally {
-      setTimeout(() => setIsSavingProfile(false), 800);
+      // Small delay for UI feedback
+      setTimeout(() => setIsSavingProfile(false), 1000);
     }
   }, []);
 
   const fetchData = async (userId: string, authUser: any) => {
     if (!isSupabaseConfigured) return;
     try {
-      const { data: profileRes, error: pErr } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      const { data: sessionsRes, error: sErr } = await supabase.from('sessions').select('*').eq('user_id', userId).order('last_updated', { ascending: false });
+      const { data: profileRes } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      const { data: sessionsRes } = await supabase.from('sessions').select('*').eq('user_id', userId).order('last_updated', { ascending: false });
 
       const metadata = authUser.user_metadata || {};
       
@@ -124,14 +123,19 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Autosave Logic with Debounce
+  const autosaveTimerRef = useRef<number | null>(null);
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (session?.user?.id) {
+    if (session?.user?.id) {
+      if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = window.setTimeout(() => {
         syncProfile(userProfile, session.user.id);
-      }
-    }, 1500); // Throttled autosave
-    return () => clearTimeout(timer);
-  }, [userProfile, session]);
+      }, 2000);
+    }
+    return () => {
+      if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+    };
+  }, [userProfile, session, syncProfile]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -147,6 +151,7 @@ const App: React.FC = () => {
       if (updates.messages) dbUpdates.messages = updates.messages;
       if (updates.finalResume !== undefined) dbUpdates.final_resume = updates.finalResume;
       if (updates.careerGoalData) dbUpdates.career_goal_data = updates.careerGoalData;
+      if (updates.jobDescription) dbUpdates.job_description = updates.jobDescription;
       
       await supabase.from('sessions').update(dbUpdates).eq('id', id);
     } catch (e) { console.error(e); }

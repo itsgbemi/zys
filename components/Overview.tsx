@@ -28,12 +28,8 @@ interface OverviewProps {
 }
 
 const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, setView, updateSession, onNewSession, userProfile }) => {
-  const [selectedDay, setSelectedDay] = useState<number | null>(new Date().getDate());
-  const [tipIndex, setTipIndex] = useState(0);
-
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
-  const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
-  const cardBg = theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200 shadow-sm';
+  const cardBg = theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200 shadow-xl';
 
   const actions = [
     { l: 'Tailor a Resume', d: 'Architect an ATS-proof profile based on a target role.', t: 'resume', i: <FileText size={24}/>, color: 'bg-indigo-500' },
@@ -54,18 +50,18 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
-        <div className={`p-8 md:p-12 rounded-[40px] border mb-12 ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-slate-200 shadow-xl'}`}>
-          <div className="flex flex-col md:flex-row items-center gap-8 mb-10">
+        <div className={`p-8 md:p-12 rounded-[40px] border mb-12 ${cardBg}`}>
+          <div className="flex flex-col md:flex-row items-center gap-8 mb-10 text-center md:text-left">
             <div className="w-20 h-20 rounded-[32px] bg-[#1918f0] flex items-center justify-center text-white shadow-2xl shadow-[#1918f0]/40 flex-shrink-0">
                <ZysculptLogo theme="dark" size={40}/>
             </div>
-            <div className="text-center md:text-left">
-              <h1 className={`text-3xl md:text-4xl font-black mb-2 tracking-tight ${textPrimary}`}>Welcome, {userProfile.fullName.split(' ')[0]}</h1>
-              <p className="text-slate-500 text-lg md:text-xl font-medium">What shall we sculpt today?</p>
+            <div>
+              <h1 className={`text-3xl md:text-4xl font-black mb-2 tracking-tight ${textPrimary}`}>Welcome, {userProfile.fullName.split(' ')[0] || 'Pilot'}</h1>
+              <p className="text-slate-500 text-lg md:text-xl font-medium">Ready to sculpt your next big move?</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {actions.map((action, i) => (
               <button key={i} onClick={() => action.v ? setView(action.v) : onNewSession(action.t as any)} className={`p-8 rounded-[32px] border transition-all text-left hover:border-[#1918f0] hover:bg-[#1918f0]/5 group flex items-start gap-6 ${theme === 'dark' ? 'border-white/5 bg-[#1a1a1a]' : 'border-slate-100 bg-slate-50 shadow-sm'}`}>
                  <div className={`p-4 rounded-3xl ${action.color} text-white flex-shrink-0 shadow-lg`}>
@@ -79,7 +75,6 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
             ))}
           </div>
         </div>
-        {/* Rest of calendar/tips follow same styling */}
       </div>
     </div>
   );

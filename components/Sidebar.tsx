@@ -143,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`flex items-center group rounded-xl transition-all ${
             isActive && !hasSubmenu
               ? 'bg-[#1918f0] text-white shadow-lg shadow-[#1918f0]/20' 
-              : theme === 'dark' ? 'text-slate-400 hover:bg-white/5 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+              : theme === 'dark' ? 'text-slate-400 hover:bg-white/10 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
           } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
         >
           <button
@@ -154,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             }}
             className="flex-1 flex items-center gap-4 p-3 overflow-hidden"
           >
-            <span className="flex-shrink-0">{icon}</span>
+            <span className="flex-shrink-0 opacity-80">{icon}</span>
             {(!isCollapsed || isMobileOpen) && <span className="font-semibold text-sm truncate">{label}</span>}
             {hasSubmenu && (!isCollapsed || isMobileOpen) && (
               <ChevronDown size={14} className={`ml-auto transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
@@ -164,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {hasSubmenu && onPlusClick && (!isCollapsed || isMobileOpen) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onPlusClick(); }}
-              className="p-3 hover:text-[#1918f0] transition-colors"
+              className={`p-3 transition-colors ${theme === 'dark' ? 'hover:text-white' : 'hover:text-[#1918f0]'}`}
             >
               <Plus size={16} />
             </button>
@@ -175,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={`ml-9 mt-1 space-y-1 border-l pl-3 ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
             {filteredSessions.length === 0 ? (
               <div className="py-2 px-1 pr-4">
-                 <p className="text-[10px] leading-relaxed opacity-30 font-medium italic">
+                 <p className="text-[10px] leading-relaxed opacity-40 font-medium italic">
                    No {label.toLowerCase()}s. Click <span className="text-[#1918f0] font-black">+</span> to start.
                  </p>
               </div>
@@ -201,14 +201,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                         className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${
                           activeSessionId === s.id && currentView === id 
                             ? 'text-white bg-[#1918f0] font-bold' 
-                            : theme === 'dark' ? 'text-slate-400 hover:bg-white/10 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                            : theme === 'dark' ? 'text-slate-400 hover:bg-white/20 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                         }`}
                       >
                         {s.title}
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === s.id ? null : s.id); }}
-                        className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-[#1918f0]/10 rounded-lg transition-all text-slate-400 hover:text-[#1918f0]"
+                        className={`opacity-0 group-hover/item:opacity-100 p-1.5 rounded-lg transition-all ${theme === 'dark' ? 'text-slate-500 hover:bg-white/10 hover:text-white' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-700'}`}
                       >
                         <MoreHorizontal size={14} />
                       </button>
@@ -247,7 +247,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setIsCollapsed(!isCollapsed)} 
             className={`hidden md:flex p-2 hover:bg-white/5 rounded-xl transition-all ${isCollapsed ? 'rotate-180' : ''}`}
            >
-              {isCollapsed ? <PanelLeftOpen size={20} className="opacity-20" /> : <PanelLeftClose size={20} className="opacity-20" />}
+              {isCollapsed ? <PanelLeftOpen size={20} className="opacity-40" /> : <PanelLeftClose size={20} className="opacity-40" />}
            </button>
            {isMobileOpen && (
               <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">

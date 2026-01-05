@@ -36,7 +36,6 @@ export class GeminiService {
       audioPart?: { inlineData: { data: string, mimeType: string } }
     }
   ) {
-    const startTime = performance.now();
     try {
       const ai = this.getClient();
       const type = context?.type || 'resume';

@@ -23,7 +23,8 @@ import {
   Phone,
   Mail,
   MapPin,
-  Check
+  Check,
+  CloudCheck
 } from 'lucide-react';
 import { Theme, UserProfile } from '../types';
 import { simulateError, simulateHighLatency } from '../services/datadog';
@@ -33,7 +34,7 @@ interface SettingsProps {
   theme: Theme;
   userProfile: UserProfile;
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
-  isSaving?: boolean;
+  isSaving: boolean;
 }
 
 type SettingsTab = 'profile' | 'master-resume' | 'goals' | 'billing' | 'security' | 'observability';
@@ -71,11 +72,11 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
 
   const navItems = [
     { id: 'profile', label: 'Personal Information', icon: <User size={18} />, desc: 'Name, contact details, and social links' },
-    { id: 'master-resume', label: 'Master Resume', icon: <FileText size={18} />, desc: 'Source document for AI sculpting' },
+    { id: 'master-resume', label: 'Master Resume', icon: <FileText size={18} />, desc: 'The source document for all tailored AI documents' },
     { id: 'goals', label: 'Daily Goals', icon: <Clock size={18} />, desc: 'Set your target availability for roadmaps' },
     { id: 'billing', label: 'Billing & Usage', icon: <CreditCard size={18} />, desc: 'Track your credits and subscription status' },
-    { id: 'security', label: 'Privacy & Data', icon: <Shield size={18} />, desc: 'Manage session security' },
-    { id: 'observability', label: 'App Health', icon: <Activity size={18} />, desc: 'Observability monitoring' },
+    { id: 'security', label: 'Privacy & Data', icon: <Shield size={18} />, desc: 'Manage session security and account erasure' },
+    { id: 'observability', label: 'App Health & Monitoring', icon: <Activity size={18} />, desc: 'Test Datadog signals and detection rules' },
   ];
 
   const renderBackHeader = (title: string) => (
@@ -89,16 +90,19 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
         </button>
         <h3 className={`text-xl font-bold ${textPrimary}`}>{title}</h3>
       </div>
-      <div className="flex items-center gap-2">
-        {isSaving ? (
-          <div className="flex items-center gap-2 text-[10px] font-bold text-[#1918f0] uppercase tracking-widest">
-            <Loader2 size={12} className="animate-spin" /> Autosaving...
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
-            <Check size={12} /> Saved to Cloud
-          </div>
-        )}
+      
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1918f0]/5 border border-[#1918f0]/10">
+         {isSaving ? (
+           <>
+             <Loader2 size={12} className="animate-spin text-[#1918f0]" />
+             <span className="text-[10px] font-bold text-[#1918f0] uppercase tracking-widest">Autosaving...</span>
+           </>
+         ) : (
+           <>
+             <Check size={12} className="text-emerald-500" />
+             <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Saved to Cloud</span>
+           </>
+         )}
       </div>
     </div>
   );
@@ -112,6 +116,12 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
           </button>
           <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Settings</h2>
         </div>
+        {isSaving && (
+          <div className="flex items-center gap-2 opacity-50">
+             <Loader2 size={16} className="animate-spin text-[#1918f0]" />
+             <span className="text-xs font-bold text-[#1918f0]">Syncing...</span>
+          </div>
+        )}
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
@@ -129,10 +139,10 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                   </div>
                   <div>
                     <h3 className={`text-xl md:text-2xl font-black ${textPrimary}`}>{userProfile.fullName || 'Zysculpt Pilot'}</h3>
-                    <p className={`text-sm ${textSecondary}`}>{userProfile.email}</p>
+                    <p className={`text-sm ${textSecondary}`}>{userProfile.email || 'Sign in to sync your data'}</p>
                     <div className="mt-2 flex gap-2">
                        <span className="px-3 py-1 bg-[#1918f0]/10 text-[#1918f0] rounded-full text-[10px] font-bold uppercase border border-[#1918f0]/20">Member</span>
-                       {isSaving && <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[10px] font-bold uppercase border border-white/10 flex items-center gap-1.5 animate-pulse"><Loader2 size={10}/> Syncing</span>}
+                       {isSaving && <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[10px] font-bold uppercase border border-white/10 flex items-center gap-1.5 animate-pulse"><Loader2 size={10}/> Cloud Sync</span>}
                     </div>
                   </div>
                 </div>
@@ -169,15 +179,15 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Full Name</label>
-                          <input value={userProfile.fullName} onChange={e => handleUpdate('fullName', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} />
+                          <input value={userProfile.fullName} onChange={e => handleUpdate('fullName', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="Jane Doe" />
                         </div>
                         <div className="space-y-2">
                           <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Current Title</label>
                           <input value={userProfile.title} onChange={e => handleUpdate('title', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="Software Engineer" />
                         </div>
                         <div className="space-y-2">
-                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Phone</label>
-                          <input value={userProfile.phone} onChange={e => handleUpdate('phone', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} />
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Phone Number</label>
+                          <input value={userProfile.phone} onChange={e => handleUpdate('phone', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="+1 (555) 000-0000" />
                         </div>
                         <div className="space-y-2">
                           <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Location</label>
@@ -191,22 +201,59 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>LinkedIn URL</label>
-                          <input value={userProfile.linkedIn} onChange={e => handleUpdate('linkedIn', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://linkedin.com/..." />
+                          <input value={userProfile.linkedIn} onChange={e => handleUpdate('linkedIn', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://linkedin.com/in/username" />
                         </div>
                         <div className="space-y-2">
                           <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>GitHub URL</label>
-                          <input value={userProfile.github} onChange={e => handleUpdate('github', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://github.com/..." />
+                          <input value={userProfile.github} onChange={e => handleUpdate('github', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://github.com/username" />
                         </div>
                         <div className="space-y-2">
-                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Portfolio URL</label>
-                          <input value={userProfile.portfolio} onChange={e => handleUpdate('portfolio', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://..." />
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Portfolio Website</label>
+                          <input value={userProfile.portfolio} onChange={e => handleUpdate('portfolio', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://yourportfolio.com" />
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
-              {/* Rest of tabs follow same rendering logic with renderBackHeader */}
+
+              {activeTab === 'master-resume' && (
+                <div className="space-y-8">
+                  {renderBackHeader('Master Resume')}
+                  <p className={`text-sm ${textSecondary}`}>This is your source material. We use it to ensure every tailored document is accurate.</p>
+                  <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg}`}>
+                    <textarea 
+                      value={userProfile.baseResumeText} 
+                      onChange={e => handleUpdate('baseResumeText', e.target.value)}
+                      className={`w-full h-96 p-6 rounded-2xl border outline-none transition-all focus:border-[#1918f0] resize-none text-sm leading-relaxed ${inputBg} ${textPrimary}`}
+                      placeholder="Paste your master resume here..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'goals' && (
+                <div className="space-y-8">
+                  {renderBackHeader('Daily Goals')}
+                  <div className={`p-8 rounded-[32px] border ${cardBg}`}>
+                     <div className="flex items-center justify-between mb-8">
+                        <h4 className={`font-bold ${textPrimary}`}>Learning Intensity</h4>
+                        <span className="text-2xl font-black text-[#1918f0]">{userProfile.dailyAvailability}h / Day</span>
+                     </div>
+                     <input 
+                       type="range" min="1" max="12" step="1"
+                       value={userProfile.dailyAvailability}
+                       onChange={e => handleUpdate('dailyAvailability', parseInt(e.target.value))}
+                       className="w-full accent-[#1918f0]"
+                     />
+                     <div className="flex justify-between mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span>Casual</span>
+                        <span>Dedicated</span>
+                        <span>Expert</span>
+                     </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
