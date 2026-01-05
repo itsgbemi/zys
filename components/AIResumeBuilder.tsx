@@ -4,19 +4,17 @@ import {
   Loader2, 
   Undo,
   Sparkles,
-  FileText,
-  Palette,
-  Mic,
-  Square,
-  Menu,
-  AlertCircle,
   Download,
   ChevronDown,
   Layout,
-  Type as TypeIcon,
   Check,
   Zap,
-  Cpu
+  Cpu,
+  Menu,
+  AlertCircle,
+  Mic,
+  Square,
+  Type as TypeIcon
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { aiService, AIModel } from '../services/ai';
@@ -36,7 +34,6 @@ interface AIResumeBuilderProps {
 export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; prefs?: StylePrefs }> = ({ text, dark = false, theme = 'dark', prefs }) => {
   const lines = text.split('\n');
   const fontClass = prefs?.font || 'font-inter';
-  const listStyle = prefs?.listStyle || 'disc';
   const template = prefs?.template || 'modern';
   
   const formatText = (content: string) => {
@@ -45,28 +42,24 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
       if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
       }
-      const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
-      if (linkMatch) {
-        return <a key={i} href={linkMatch[2]} className="text-[#1918f0] hover:underline" target="_blank" rel="noopener noreferrer">{linkMatch[1]}</a>;
-      }
       return part;
     });
   };
 
+  const containerClasses = `space-y-1 ${fontClass} ${dark ? 'text-black' : theme === 'dark' ? 'text-slate-200' : 'text-slate-900'} ${
+    template === 'classic' ? 'leading-relaxed' : template === 'minimal' ? 'leading-tight' : 'leading-normal'
+  }`;
+
   return (
-    <div className={`space-y-1 ${fontClass} ${dark ? 'text-black' : theme === 'dark' ? 'text-slate-200' : 'text-slate-900'} ${template === 'classic' ? 'leading-relaxed' : ''}`}>
+    <div className={containerClasses}>
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (trimmed === '') return <div key={i} className="h-2" />;
         
-        if (trimmed.startsWith('### ')) return <h3 key={i} className={`text-base font-bold mt-4 mb-2 ${template === 'minimal' ? 'text-[#1918f0]' : ''}`}>{formatText(trimmed.slice(4))}</h3>;
-        if (trimmed.startsWith('## ')) return <h2 key={i} className={`text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20 ${template === 'classic' ? 'uppercase tracking-wide' : ''}`}>{formatText(trimmed.slice(3))}</h2>;
+        if (trimmed.startsWith('### ')) return <h3 key={i} className={`text-base font-bold mt-4 mb-2 ${template === 'classic' ? 'uppercase border-b border-slate-200 pb-1' : ''}`}>{formatText(trimmed.slice(4))}</h3>;
+        if (trimmed.startsWith('## ')) return <h2 key={i} className={`text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20`}>{formatText(trimmed.slice(3))}</h2>;
         if (trimmed.startsWith('# ')) return <h1 key={i} className={`text-xl font-bold mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center ${template === 'modern' ? 'text-[#1918f0]' : ''}`}>{formatText(trimmed.slice(2))}</h1>;
         
-        if (trimmed.startsWith('#### ')) {
-           return <h4 key={i} className="text-sm font-bold mt-3 mb-1">{formatText(trimmed.slice(5))}</h4>;
-        }
-
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 ml-4">
@@ -170,8 +163,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       const assistantId = (Date.now() + 1).toString();
       updateSession(activeSessionId, { messages: [...newMessages, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }] });
 
-      const audioPart = audioData ? { inlineData: { data: audioData, mimeType: 'audio/webm' } } : undefined;
-      const stream = aiService.generateStream(selectedModel, newMessages, inputValue, context, audioPart);
+      const stream = aiService.generateStream(selectedModel, newMessages, inputValue, context);
 
       for await (const chunk of stream) {
         assistantResponse += chunk;
@@ -181,7 +173,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         } : s));
       }
     } catch (e: any) {
-      setErrorMessage("AI is currently unavailable. Ensure your API keys are correct.");
+      setErrorMessage("AI is currently unavailable. Check your internet or API key.");
       setIsTyping(false);
     } finally { setIsTyping(false); }
   };
@@ -190,12 +182,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     setErrorMessage(null);
     setIsSculpting(true);
     try {
-      const combinedData = `User Profile: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat History: ${activeSession.messages.map(m => m.content).join('\n')}`;
+      const combinedData = `User Profile: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat context: ${activeSession.messages.map(m => m.content).join('\n')}`;
       const typeLabel = activeSession.type.replace('-', ' ').toUpperCase();
-      const prompt = `Act as a world-class senior recruiter. Based on this profile and chat context, sculpt a final, professionally formatted ${typeLabel} in Markdown. 
-      Target Job: ${activeSession.jobDescription || 'Professional Role'}
-      Context: ${combinedData}
-      Return ONLY the document content in markdown. No conversational preamble.`;
+      const prompt = `Act as a senior Recruiter. Sculpt a final, world-class ${typeLabel} in Markdown format based on this data: ${combinedData}. Target role: ${activeSession.jobDescription || 'Professional Application'}. Return ONLY markdown.`;
       
       const result = await aiService.sculpt(selectedModel, prompt);
       updateSession(activeSessionId, { finalResume: result });
@@ -241,9 +230,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
   const getWelcomeMessage = () => {
     switch(activeSession.type) {
-      case 'resume': return "Welcome! I'm your Zysculpt Resume Architect. I'll help you craft an ATS-proof resume that highlights your highest impact. Tell me about your current role or paste a job link you're targeting.";
-      case 'cover-letter': return "Hello! I'm your Cover Letter Storyteller. A great letter proves you're a fit for the company's culture. What's the one thing you want the hiring manager to know about you?";
-      case 'resignation-letter': return "Hi there. I'll help you transition professionally. When is your last day, and what's the reason for your departure? We'll make it graceful.";
+      case 'resume': return "Welcome! I'm your Zysculpt Resume Architect. I'll help you craft an ATS-proof resume. Tell me about your most recent role or paste a job link you're targeting.";
+      case 'cover-letter': return "Hello! I'm your Cover Letter Specialist. A great cover letter tells a story. What's the one thing you want the hiring manager to know about your passion for this role?";
+      case 'resignation-letter': return "Hi there. I'll help you write a professional and graceful resignation. When is your intended last day and who are we addressing?";
       default: return "How can I help you today?";
     }
   };
@@ -325,7 +314,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
-        {/* Persistent Welcome Message */}
         <div className="flex justify-start">
            <div className={`max-w-[85%] md:max-w-[70%] rounded-3xl p-6 border shadow-sm ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-slate-200' : 'bg-white border-slate-100 text-slate-800'}`}>
               <div className="flex items-center gap-2 mb-3 text-[10px] font-black uppercase tracking-widest text-[#1918f0]">

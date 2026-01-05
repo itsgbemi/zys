@@ -6,6 +6,7 @@ import JobSearch from './components/JobSearch';
 import Settings from './components/Settings';
 import Documents from './components/Documents';
 import KnowledgeHub from './components/KnowledgeHub';
+import CareerCopilot from './components/CareerCopilot';
 import { Auth } from './components/Auth';
 import { AppView, ChatSession, Theme, UserProfile } from './types';
 import { supabase, isSupabaseConfigured } from './services/supabase';
@@ -183,8 +184,8 @@ const App: React.FC = () => {
     
     const viewMap: any = { 
       'resume': AppView.RESUME_BUILDER, 
-      'cover-letter': AppView.RESUME_BUILDER, // Unified builder
-      'resignation-letter': AppView.RESUME_BUILDER, // Unified builder
+      'cover-letter': AppView.COVER_LETTER, 
+      'resignation-letter': AppView.RESIGNATION_LETTER, 
       'career-copilot': AppView.CAREER_COPILOT 
     };
     setCurrentView(viewMap[type] || AppView.RESUME_BUILDER);
@@ -228,7 +229,9 @@ const App: React.FC = () => {
       <main className="flex-1 overflow-hidden relative">
         {currentView === AppView.OVERVIEW && <Overview onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} setView={setCurrentView} updateSession={updateSession} onNewSession={handleNewSession} userProfile={userProfile} />}
         {currentView === AppView.SETTINGS && <Settings onToggleMobile={() => setIsMobileOpen(true)} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} isSaving={isSavingProfile} />}
-        {(currentView === AppView.RESUME_BUILDER || currentView === AppView.COVER_LETTER || currentView === AppView.RESIGNATION_LETTER || currentView === AppView.CAREER_COPILOT) && (
+        
+        {/* All Builder Views use the Unified AIResumeBuilder Component */}
+        {(currentView === AppView.RESUME_BUILDER || currentView === AppView.COVER_LETTER || currentView === AppView.RESIGNATION_LETTER) && (
            activeSess ? (
               <AIResumeBuilder 
                 onToggleMobile={() => setIsMobileOpen(true)} 
@@ -250,6 +253,29 @@ const App: React.FC = () => {
              </div>
            )
         )}
+        
+        {currentView === AppView.CAREER_COPILOT && (
+           activeSess ? (
+              <CareerCopilot 
+                onToggleMobile={() => setIsMobileOpen(true)} 
+                theme={theme} 
+                sessions={sessions} 
+                activeSessionId={activeSessionId} 
+                updateSession={updateSession} 
+                setSessions={setSessions}
+                userProfile={userProfile}
+              />
+           ) : (
+             <div className="h-full flex items-center justify-center p-8 text-center">
+                <div className="max-w-md">
+                   <Plus className="mx-auto mb-4 text-[#1918f0] opacity-20" size={48}/>
+                   <h2 className="text-xl font-black mb-2">No Active Goal</h2>
+                   <button onClick={() => handleNewSession('career-copilot')} className="px-8 py-3 bg-[#1918f0] text-white rounded-2xl font-black shadow-xl shadow-[#1918f0]/20">Start Copilot</button>
+                </div>
+             </div>
+           )
+        )}
+
         {currentView === AppView.FIND_JOB && <JobSearch onToggleMobile={() => setIsMobileOpen(true)} theme={theme} onSculptResume={(j) => handleNewSession('resume', undefined, { jobTitle: j.title, company: j.company, jobDescription: j.description })} onSculptLetter={(j) => handleNewSession('cover-letter', undefined, { jobTitle: j.title, company: j.company, jobDescription: j.description })} />}
         {currentView === AppView.KNOWLEDGE_HUB && <KnowledgeHub onToggleMobile={() => setIsMobileOpen(true)} theme={theme} />}
         {currentView === AppView.DOCUMENTS && <Documents onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} onSelectSession={id => { setActiveSessionId(id); setCurrentView(AppView.RESUME_BUILDER); }} />}
