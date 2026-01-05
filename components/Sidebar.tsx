@@ -143,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`flex items-center group rounded-xl transition-all ${
             isActive && !hasSubmenu
               ? 'bg-[#1918f0] text-white shadow-lg shadow-[#1918f0]/20' 
-              : theme === 'dark' ? 'text-slate-400 hover:bg-white/5 hover:text-white' : 'text-[#64748b] hover:bg-slate-100 hover:text-[#0F172A]'
+              : theme === 'dark' ? 'text-slate-400 hover:bg-white/5 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
           } ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}
         >
           <button
@@ -175,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={`ml-9 mt-1 space-y-1 border-l pl-3 ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
             {filteredSessions.length === 0 ? (
               <div className="py-2 px-1 pr-4">
-                 <p className="text-[10px] leading-relaxed opacity-40 font-medium italic">
+                 <p className="text-[10px] leading-relaxed opacity-30 font-medium italic">
                    No {label.toLowerCase()}s. Click <span className="text-[#1918f0] font-black">+</span> to start.
                  </p>
               </div>
@@ -235,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white' : 'bg-white border-[#e2e8f0] text-slate-900'} border-r ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl shadow-black/50' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
+    <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#121212] border-white/5 text-white' : 'bg-white border-slate-200 text-slate-900'} border-r ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl shadow-black/50' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
       
       <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
@@ -247,7 +247,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setIsCollapsed(!isCollapsed)} 
             className={`hidden md:flex p-2 hover:bg-white/5 rounded-xl transition-all ${isCollapsed ? 'rotate-180' : ''}`}
            >
-              {isCollapsed ? <PanelLeftOpen size={20} className="opacity-40" /> : <PanelLeftClose size={20} className="opacity-40" />}
+              {isCollapsed ? <PanelLeftOpen size={20} className="opacity-20" /> : <PanelLeftClose size={20} className="opacity-20" />}
            </button>
            {isMobileOpen && (
               <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">

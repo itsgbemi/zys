@@ -2,9 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Overview from './components/Overview';
 import AIResumeBuilder from './components/AIResumeBuilder';
-import CoverLetterBuilder from './components/CoverLetterBuilder';
-import ResignationLetterBuilder from './components/ResignationLetterBuilder';
-import CareerCopilot from './components/CareerCopilot';
 import JobSearch from './components/JobSearch';
 import Settings from './components/Settings';
 import Documents from './components/Documents';
@@ -22,6 +19,7 @@ const App: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('zysculpt-theme') as Theme) || 'light');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile>({
     fullName: '',
@@ -43,6 +41,7 @@ const App: React.FC = () => {
 
   const syncProfile = useCallback(async (profile: UserProfile, userId: string) => {
     if (!isSupabaseConfigured || !userId) return;
+    setIsSavingProfile(true);
     try {
       const { error } = await supabase.from('profiles').upsert({
         id: userId,
@@ -63,38 +62,39 @@ const App: React.FC = () => {
       if (error) console.error("Sync Error:", error);
     } catch (e) {
       console.error("Profile sync exception:", e);
+    } finally {
+      setTimeout(() => setIsSavingProfile(false), 800);
     }
   }, []);
 
   const fetchData = async (userId: string, authUser: any) => {
     if (!isSupabaseConfigured) return;
     try {
-      const profilePromise = supabase.from('profiles').select('*').eq('id', userId).single();
-      const sessionsPromise = supabase.from('sessions').select('*').eq('user_id', userId).order('last_updated', { ascending: false });
+      const { data: profileRes, error: pErr } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      const { data: sessionsRes, error: sErr } = await supabase.from('sessions').select('*').eq('user_id', userId).order('last_updated', { ascending: false });
 
-      const [profileRes, sessionsRes] = await Promise.all([profilePromise, sessionsPromise]);
       const metadata = authUser.user_metadata || {};
       
       const seededProfile: UserProfile = {
-        fullName: profileRes.data?.full_name || metadata.full_name || metadata.name || '',
-        title: profileRes.data?.title || '',
-        email: profileRes.data?.email || authUser.email || '',
-        phone: profileRes.data?.phone || '',
-        location: profileRes.data?.location || '',
-        linkedIn: profileRes.data?.linkedin || '',
-        github: profileRes.data?.github || '',
-        portfolio: profileRes.data?.portfolio || '',
-        baseResumeText: profileRes.data?.base_resume_text || '',
-        dailyAvailability: profileRes.data?.daily_availability || 2,
-        voiceId: profileRes.data?.voice_id || 'IKne3meq5aSn9XLyUdCD',
-        avatarUrl: profileRes.data?.avatar_url || metadata.avatar_url || metadata.picture || ''
+        fullName: profileRes?.full_name || metadata.full_name || metadata.name || '',
+        title: profileRes?.title || '',
+        email: profileRes?.email || authUser.email || '',
+        phone: profileRes?.phone || '',
+        location: profileRes?.location || '',
+        linkedIn: profileRes?.linkedin || '',
+        github: profileRes?.github || '',
+        portfolio: profileRes?.portfolio || '',
+        baseResumeText: profileRes?.base_resume_text || '',
+        dailyAvailability: profileRes?.daily_availability || 2,
+        voiceId: profileRes?.voice_id || 'IKne3meq5aSn9XLyUdCD',
+        avatarUrl: profileRes?.avatar_url || metadata.avatar_url || metadata.picture || ''
       };
 
       setUserProfile(seededProfile);
       setDatadogUser({ id: userId, email: seededProfile.email, name: seededProfile.fullName });
 
-      if (sessionsRes.data && sessionsRes.data.length > 0) {
-        const mapped: ChatSession[] = sessionsRes.data.map(s => ({
+      if (sessionsRes && sessionsRes.length > 0) {
+        const mapped: ChatSession[] = sessionsRes.map(s => ({
           id: s.id, title: s.title, type: s.type, messages: s.messages, jobDescription: s.job_description,
           resumeText: s.resume_text, finalResume: s.final_resume, careerGoalData: s.career_goal_data,
           stylePrefs: s.style_prefs, lastUpdated: s.last_updated
@@ -111,12 +111,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!isSupabaseConfigured) { setAuthLoading(false); return; }
-    (supabase.auth as any).getSession().then(({ data: { session } }: any) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setSession(session);
       if (session) fetchData(session.user.id, session.user);
       else setAuthLoading(false);
     });
-    const { data: { subscription } } = (supabase.auth as any).onAuthStateChange((_event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
       if (session) fetchData(session.user.id, session.user);
       else { clearDatadogUser(); setAuthLoading(false); }
@@ -124,18 +124,17 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Sync profile when user changes data, but throttled by dependency on state update
   useEffect(() => {
     const timer = setTimeout(() => {
       if (session?.user?.id) {
         syncProfile(userProfile, session.user.id);
       }
-    }, 1000);
+    }, 1500); // Throttled autosave
     return () => clearTimeout(timer);
   }, [userProfile, session]);
 
   const handleLogout = async () => {
-    await (supabase.auth as any).signOut();
+    await supabase.auth.signOut();
     setSession(null);
   };
 
@@ -225,7 +224,7 @@ const App: React.FC = () => {
       />
       <main className="flex-1 overflow-hidden relative">
         {currentView === AppView.OVERVIEW && <Overview onToggleMobile={() => setIsMobileOpen(true)} theme={theme} sessions={sessions} setView={setCurrentView} updateSession={updateSession} onNewSession={handleNewSession} userProfile={userProfile} />}
-        {currentView === AppView.SETTINGS && <Settings onToggleMobile={() => setIsMobileOpen(true)} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} />}
+        {currentView === AppView.SETTINGS && <Settings onToggleMobile={() => setIsMobileOpen(true)} theme={theme} userProfile={userProfile} setUserProfile={setUserProfile} isSaving={isSavingProfile} />}
         {(currentView === AppView.RESUME_BUILDER || currentView === AppView.COVER_LETTER || currentView === AppView.RESIGNATION_LETTER || currentView === AppView.CAREER_COPILOT) && (
            activeSess ? (
               <AIResumeBuilder 

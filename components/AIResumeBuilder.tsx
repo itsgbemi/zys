@@ -35,7 +35,6 @@ interface AIResumeBuilderProps {
 export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Theme; prefs?: StylePrefs }> = ({ text, dark = false, theme = 'dark', prefs }) => {
   const lines = text.split('\n');
   const fontClass = "font-['Roboto',_sans-serif]";
-  const listStyle = prefs?.listStyle || 'disc';
   
   const formatText = (content: string) => {
     const parts = content.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
@@ -43,19 +42,8 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
       if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={i} className="font-black">{part.slice(2, -2)}</strong>;
       }
-      const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
-      if (linkMatch) {
-        return <a key={i} href={linkMatch[2]} className="text-[#1918f0] hover:underline" target="_blank" rel="noopener noreferrer">{linkMatch[1]}</a>;
-      }
       return part;
     });
-  };
-
-  const getListBullet = () => {
-    if (listStyle === 'circle') return '○';
-    if (listStyle === 'square') return '■';
-    if (listStyle === 'star') return '★';
-    return '•';
   };
 
   return (
@@ -63,16 +51,11 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (trimmed === '') return <div key={i} className="h-2" />;
-        
         if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-black mt-4 mb-2">{formatText(trimmed.slice(4))}</h3>;
-        if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-black mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
-        if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-black mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center">{formatText(trimmed.slice(2))}</h1>;
-        if (trimmed.startsWith('#### ')) return <h4 key={i} className="text-sm font-bold mt-3 mb-1">{formatText(trimmed.slice(5))}</h4>;
-
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 ml-4">
-              <span className="opacity-50 flex-shrink-0">{getListBullet()}</span>
+              <span className="opacity-50 flex-shrink-0">•</span>
               <span className="flex-1">{formatText(trimmed.slice(2))}</span>
             </div>
           );
@@ -130,7 +113,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      alert("Please allow microphone access to record voice messages.");
+      alert("Microphone access is required.");
     }
   };
 
@@ -143,7 +126,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
   const handleSend = async (audioData?: string) => {
     if (!inputValue.trim() && !audioData && !isTyping) return;
-    
     setErrorMessage(null);
     const contentText = audioData ? (inputValue.trim() ? `${inputValue} [Voice Message]` : "[Voice Message]") : inputValue;
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: contentText, timestamp: Date.now() };
@@ -162,7 +144,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       if (audioData) context.audioPart = { inlineData: { data: audioData, mimeType: 'audio/webm' } };
 
       const responseStream = await geminiService.generateChatResponse(newMessages, "", context);
-      
       let assistantResponse = '';
       const assistantId = (Date.now() + 1).toString();
       updateSession(activeSessionId, { messages: [...newMessages, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }] });
@@ -175,7 +156,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         } : s));
       }
     } catch (e: any) {
-      setErrorMessage("AI service unavailable.");
+      setErrorMessage("AI is currently unavailable.");
       setIsTyping(false);
     } finally { setIsTyping(false); }
   };
@@ -202,16 +183,16 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
   return (
     <div className="flex flex-col h-full relative font-['Roboto',_sans-serif]">
-      <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+      <header className={`p-4 md:p-6 border-b flex items-center justify-between transition-colors sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
           <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
             <Menu size={24} />
           </button>
           <div className="flex flex-col">
             <h2 className={`text-lg md:text-xl font-bold capitalize ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>
-              {displayType}
+              {displayType} Builder
             </h2>
-            <p className="text-[10px] md:text-xs opacity-50">{subtitle}</p>
+            <p className="text-[10px] md:text-xs opacity-40">{subtitle}</p>
           </div>
         </div>
         {(activeSession.jobDescription || userProfile?.baseResumeText) && activeSession.type !== 'career-copilot' && (
@@ -228,7 +209,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
              <div className={`max-w-[85%] md:max-w-[75%] rounded-3xl p-5 shadow-sm border ${theme === 'dark' ? 'bg-[#1a1a1a] text-white border-white/5' : 'bg-white text-slate-900 border-slate-200'}`}>
                 <div className="text-sm leading-relaxed">
                    Hello! I'm your Zysculpt AI assistant. I'm ready to help you create a world-class <strong>{displayType}</strong>. 
-                   {activeSession.jobDescription ? " I've imported the job details. Let's start by looking at your current experience—what part of your background do you want to highlight most for this role?" : " How would you like to begin?"}
+                   {activeSession.jobDescription ? " I've imported the job details. To make this stand out, tell me: what is a specific achievement from your past that proves you can excel in this exact role?" : " How would you like to begin?"}
                 </div>
              </div>
           </div>
@@ -255,7 +236,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className={`p-4 md:p-6 border-t transition-colors ${theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+      <div className={`p-4 md:p-6 border-t transition-colors ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="max-w-4xl mx-auto flex items-center gap-3">
           <div className="flex-1 relative">
             <textarea
@@ -265,7 +246,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               placeholder={isRecording ? "Listening..." : "Message Zysculpt..."}
               disabled={isRecording || isSculpting}
               className={`w-full border rounded-[32px] p-5 pr-14 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
-                theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white focus:border-[#1918f0]' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-[#1918f0]'
+                theme === 'dark' ? 'bg-[#1a1a1a] border-white/5 text-white focus:border-[#1918f0]' : 'bg-slate-50 border-slate-200 text-[#0F172A] focus:border-[#1918f0]'
               }`}
               rows={1}
             />
