@@ -8,23 +8,101 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=EB+Garamond:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; }
-        .theme-dark { background-color: #121212; color: white; }
-        .theme-light { background-color: #F8FAFC; color: #0F172A; }
+        :root {
+            --bg-dark: #09090b;
+            --card-dark: #121214;
+            --border-dark: #27272a;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .theme-dark { background-color: var(--bg-dark); color: #f4f4f5; }
+        .theme-light { background-color: #f8fafc; color: #0f172a; }
         
-        .font-eb-garamond { font-family: 'EB Garamond', serif; }
-        .font-inter { font-family: 'Inter', sans-serif; }
-        .font-roboto { font-family: 'Roboto', sans-serif; }
-        .font-arial { font-family: Arial, sans-serif; }
-        .font-times { font-family: 'Times New Roman', serif; }
+        .font-outfit { font-family: 'Outfit', sans-serif; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        .theme-light::-webkit-scrollbar-thumb { background: #cbd5e1; }
 
-        /* Document Styles */
-        .template-classic { line-height: 1.6; }
-        .template-modern { line-height: 1.5; color: #1e293b; }
-        .template-minimal { line-height: 1.4; color: #334155; }
+        .glass-card {
+            background: rgba(18, 18, 20, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* GSI Material Button Base Styling */
+        .gsi-material-button {
+          -moz-user-select: none;
+          -webkit-user-select: none;
+          -ms-user-select: none;
+          -webkit-appearance: none;
+          background-image: none;
+          -webkit-border-radius: 12px;
+          border-radius: 12px;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          cursor: pointer;
+          font-family: 'Inter', arial, sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          height: 48px;
+          letter-spacing: 0.25px;
+          outline: none;
+          overflow: hidden;
+          padding: 0 16px;
+          position: relative;
+          text-align: center;
+          -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
+          transition: background-color .218s, border-color .218s, box-shadow .218s;
+          vertical-align: middle;
+          white-space: nowrap;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .gsi-material-button .gsi-material-button-icon {
+          height: 20px;
+          margin-right: 12px;
+          min-width: 20px;
+          width: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .gsi-material-button .gsi-material-button-content-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+        }
+
+        .gsi-material-button-contents {
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .theme-light .gsi-material-button {
+          background-color: WHITE;
+          border: 1px solid #e2e8f0;
+          color: #1f1f1f;
+        }
+        .theme-dark .gsi-material-button {
+          background-color: #18181b;
+          border: 1px solid #27272a;
+          color: #f4f4f5;
+        }
     </style>
 <script type="importmap">
 {
@@ -42,7 +120,7 @@
 }
 </script>
 </head>
-<body class="theme-light">
+<body class="theme-dark">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
 </body>
