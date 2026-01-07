@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Zap, BrainCircuit, RefreshCw, CheckCircle2, XCircle, Loader2, Menu } from 'lucide-react';
 import { Theme } from '../types';
-import { geminiService } from '../services/gemini';
+import { aiService } from '../services/ai';
 
 interface KnowledgeHubProps {
   onToggleMobile?: () => void;
@@ -22,7 +22,7 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
     if (!topic.trim()) return;
     setLoading(true);
     try {
-      const data = await geminiService.generateQuiz(topic);
+      const data = await aiService.generateQuiz(topic);
       setContent(data);
       setMode(m);
       setCurrentIndex(0);
@@ -53,7 +53,6 @@ const KnowledgeHub: React.FC<KnowledgeHubProps> = ({ onToggleMobile, theme }) =>
   };
 
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-[#0F172A]';
-  const textSecondary = theme === 'dark' ? 'text-slate-400' : 'text-slate-500';
   const cardBg = theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a]' : 'bg-white border-slate-200 shadow-sm';
 
   return (

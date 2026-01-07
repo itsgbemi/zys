@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { Message, UserProfile } from "../types";
 
 export class AIService {
@@ -17,7 +17,7 @@ export class AIService {
   ) {
     const systemInstruction = this.getSystemInstruction(context);
     const ai = this.getGeminiClient();
-    const geminiModel = 'gemini-3-flash-preview'; // Efficient for interactive chat
+    const geminiModel = 'gemini-3-flash-preview';
     
     const contents = history.map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
@@ -71,12 +71,42 @@ export class AIService {
 
   async sculpt(prompt: string): Promise<string> {
     const ai = this.getGeminiClient();
-    const geminiModel = 'gemini-3-pro-preview'; // Higher quality for final output
+    const geminiModel = 'gemini-3-pro-preview';
     const result = await ai.models.generateContent({
       model: geminiModel,
       contents: prompt
     });
     return result.text || "";
+  }
+
+  async generateQuiz(topic: string): Promise<any[]> {
+    const ai = this.getGeminiClient();
+    const prompt = `Generate 5 challenging interview/knowledge questions about "${topic}". 
+    Return as JSON array: [{"question": "...", "options": ["A","B","C","D"], "correctIndex": 0}]`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: { 
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              question: { type: Type.STRING },
+              options: { 
+                type: Type.ARRAY, 
+                items: { type: Type.STRING } 
+              },
+              correctIndex: { type: Type.INTEGER }
+            },
+            required: ['question', 'options', 'correctIndex']
+          }
+        }
+      }
+    });
+    return JSON.parse(response.text || '[]');
   }
 }
 

@@ -7,7 +7,6 @@ import {
   Download,
   Menu,
   Paperclip,
-  Trash2,
   FileText
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
@@ -49,9 +48,11 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (trimmed === '') return <div key={i} className="h-2" />;
+        
         if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-bold mt-4 mb-2">{formatText(trimmed.slice(4))}</h3>;
         if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
         if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center">{formatText(trimmed.slice(2))}</h1>;
+        
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 ml-4">

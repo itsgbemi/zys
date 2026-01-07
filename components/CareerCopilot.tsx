@@ -4,8 +4,7 @@ import {
   Loader2, 
   Sparkles,
   Menu,
-  Paperclip,
-  ChevronDown
+  Paperclip
 } from 'lucide-react';
 import { Message, ChatSession, Theme, ScheduledTask, UserProfile } from '../types';
 import { aiService } from '../services/ai';

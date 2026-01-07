@@ -106,7 +106,7 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
       <div className={`p-4 md:p-6 border-t ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="max-w-4xl mx-auto">
           <div className={`relative flex items-end gap-2 border rounded-[28px] p-2 pr-3 transition-all ${theme === 'dark' ? 'bg-[#121212] border-white/10' : 'bg-slate-50 border-slate-200'}`}>
-            <button onClick={() => fileInputRef.current?.click()} className="p-3 text-zinc-400 hover:text-zinc-200 transition-colors"><Paperclip size={20} /></button>
+            <button onClick={() => fileInputRef.current?.click()} className="p-3 text-zinc-400 hover:text-zinc-200"><Paperclip size={20} /></button>
             <input type="file" ref={fileInputRef} className="hidden" />
             <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Message Zysculpt..." className={`flex-1 bg-transparent border-none py-3 px-1 min-h-[48px] max-h-[200px] resize-none text-sm md:text-base outline-none ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`} rows={1} />
             <button onClick={() => handleSend()} className="p-3 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 shadow-md"><Send size={20} /></button>
