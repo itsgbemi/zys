@@ -5,8 +5,8 @@ import { Theme, AppView } from '../types';
 interface JobSearchProps {
   onToggleMobile?: () => void;
   theme: Theme;
-  onSculptResume: (job: { title: string, company: string, description: string }) => void;
-  onSculptLetter: (job: { title: string, company: string, description: string }) => void;
+  onSculptResume: (job: { title: string, company: string, jobDescription: string }) => void;
+  onSculptLetter: (job: { title: string, company: string, jobDescription: string }) => void;
 }
 
 interface Job {
@@ -106,13 +106,13 @@ const JobSearch: React.FC<JobSearchProps> = ({ onToggleMobile, theme, onSculptRe
           </div>
           <div className="flex gap-2">
             <button 
-              onClick={() => onSculptLetter({ title: selectedJob.title, company: selectedJob.company, description: selectedJob.description })}
+              onClick={() => onSculptLetter({ title: selectedJob.title, company: selectedJob.company, jobDescription: selectedJob.description })}
               className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
             >
               <Mail size={16} /> <span className="hidden sm:inline">Cover Letter</span>
             </button>
             <button 
-              onClick={() => onSculptResume({ title: selectedJob.title, company: selectedJob.company, description: selectedJob.description })}
+              onClick={() => onSculptResume({ title: selectedJob.title, company: selectedJob.company, jobDescription: selectedJob.description })}
               className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#1918f0] text-white rounded-xl text-xs font-bold hover:bg-[#1413c7] shadow-lg shadow-indigo-500/20"
             >
               <Sparkles size={16} /> <span className="hidden sm:inline">Sculpt Resume</span>

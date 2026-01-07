@@ -7,7 +7,9 @@ import {
   Download,
   Menu,
   Paperclip,
-  FileText
+  FileText,
+  Palette,
+  Layout
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { aiService } from '../services/ai';
@@ -75,11 +77,20 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const [isSculpting, setIsSculpting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const stylePrefs: StylePrefs = activeSession.stylePrefs || {
+    font: 'font-inter',
+    headingColor: 'text-black',
+    listStyle: 'disc',
+    template: 'modern'
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -134,7 +145,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       }
     } catch (e: any) {
       setErrorMessage("AI is currently unavailable.");
-      setIsTyping(false);
     } finally { setIsTyping(false); }
   };
 
@@ -154,6 +164,44 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     } finally { setIsSculpting(false); }
   };
 
+  const updatePrefs = (newPrefs: Partial<StylePrefs>) => {
+    updateSession(activeSessionId, { stylePrefs: { ...stylePrefs, ...newPrefs } as any });
+  };
+
+  const exportPDF = () => {
+    setIsExporting(true);
+    const element = document.querySelector('.printable-area');
+    const opt = { 
+      margin: 10, 
+      filename: `${activeSession.title.replace(/\s+/g, '_')}.pdf`, 
+      html2canvas: { scale: 2 }, 
+      jsPDF: { unit: 'mm', format: 'a4' } 
+    };
+    // @ts-ignore
+    html2pdf().set(opt).from(element).save().then(() => setIsExporting(false));
+  };
+
+  const exportDOCX = async () => {
+    if (!activeSession.finalResume) return;
+    setIsExporting(true);
+    try {
+      const children = parseMarkdownToDocx(activeSession.finalResume);
+      const doc = new Document({
+        sections: [{ properties: {}, children: children }],
+      });
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${activeSession.title.replace(/\s+/g, '_')}.docx`;
+      link.click();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const getWelcomeMessage = () => {
     switch(activeSession.type) {
       case 'resume': return "Welcome! I'm your Zysculpt Resume Architect. I'll help you craft an ATS-proof resume. Tell me about your most recent role or target job.";
@@ -171,11 +219,64 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             <button onClick={() => setShowPreview(false)} className={`p-2 rounded-xl transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-[#0F172A]'}`}><Undo size={20} /></button>
             <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Preview</h2>
           </div>
-          <button onClick={handleSculpt} className="px-6 py-2 bg-[#1918f0] text-white rounded-xl font-bold text-xs shadow-lg shadow-[#1918f0]/20">Export PDF</button>
+          <div className="flex gap-2">
+            <div className="relative">
+              <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+                <Palette size={14} /> Style
+              </button>
+              {showStyleMenu && (
+                <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+                  {[
+                    { id: 'font-inter', label: 'Inter (Modern)' },
+                    { id: 'font-eb-garamond', label: 'Garamond (Serif)' },
+                    { id: 'font-roboto', label: 'Roboto (Clean)' },
+                    { id: 'font-arial', label: 'Arial (Standard)' },
+                    { id: 'font-times', label: 'Tinos (Academic)' }
+                  ].map(font => (
+                    <button 
+                      key={font.id}
+                      onClick={() => { updatePrefs({ font: font.id as any }); setShowStyleMenu(false); }}
+                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-[#1918f0] text-white' : 'hover:bg-slate-500/10'}`}
+                    >
+                      {font.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <button onClick={() => setShowTemplateMenu(!showTemplateMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+                <Layout size={14} /> Template
+              </button>
+              {showTemplateMenu && (
+                <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+                  {[
+                    { id: 'modern', label: 'Modern' },
+                    { id: 'classic', label: 'Classic' },
+                    { id: 'minimal', label: 'Minimal' }
+                  ].map(tmpl => (
+                    <button 
+                      key={tmpl.id}
+                      onClick={() => { updatePrefs({ template: tmpl.id as any }); setShowTemplateMenu(false); }}
+                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.template === tmpl.id ? 'bg-[#1918f0] text-white' : 'hover:bg-slate-500/10'}`}
+                    >
+                      {tmpl.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+              {isExporting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} Word
+            </button>
+            <button onClick={exportPDF} disabled={isExporting} className="px-6 py-2 bg-[#1918f0] text-white rounded-xl font-bold text-xs shadow-lg shadow-[#1918f0]/20">
+              {isExporting ? <Loader2 size={14} className="animate-spin" /> : 'Export PDF'}
+            </button>
+          </div>
         </header>
         <div className={`flex-1 overflow-y-auto p-4 md:p-12 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
           <div className="printable-area max-w-4xl mx-auto bg-white text-black p-12 md:p-20 shadow-2xl rounded-sm border border-slate-200">
-            <MarkdownLite text={activeSession.finalResume} dark={true} />
+            <MarkdownLite text={activeSession.finalResume} dark={true} prefs={stylePrefs} />
           </div>
         </div>
       </div>
@@ -197,7 +298,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         <div className="flex justify-start">
            <div className="max-w-full text-sm leading-relaxed bg-transparent border-0 shadow-none">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
               <MarkdownLite text={getWelcomeMessage()} theme={theme} />
            </div>
         </div>
@@ -212,7 +312,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               </div>
             ) : (
               <div className="max-w-full text-sm leading-relaxed bg-transparent border-0 shadow-none">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
                 <MarkdownLite text={m.content} theme={theme} />
               </div>
             )}
@@ -244,7 +343,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               rows={1}
             />
 
-            <button onClick={handleSend} disabled={!inputValue.trim() || isTyping} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30"><Send size={20} /></button>
+            <button onClick={handleSend} disabled={!inputValue.trim() || isTyping} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30">
+              {isTyping ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+            </button>
           </div>
         </div>
       </div>

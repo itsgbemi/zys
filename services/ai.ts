@@ -2,8 +2,17 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Message, UserProfile } from "../types";
 
 export class AIService {
+  private getApiKey(): string {
+    // Priority: process.env.API_KEY (shimmed), then VITE_API_KEY (Vite direct)
+    const key = (process.env as any).API_KEY || (import.meta as any).env?.VITE_API_KEY;
+    if (!key) {
+      console.error("Zysculpt: Gemini API Key is missing. Please set VITE_API_KEY.");
+    }
+    return key || '';
+  }
+
   private getGeminiClient() {
-    return new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    return new GoogleGenAI({ apiKey: this.getApiKey() });
   }
 
   async *generateStream(
@@ -48,7 +57,7 @@ export class AIService {
       Background Snapshot: ${profile.baseResumeText.slice(0, 1500)}
     ` : '';
 
-    const jobInfo = context.jobDescription ? `TARGET GOAL/JOB: ${context.jobDescription}` : '';
+    const jobInfo = context.jobDescription ? `TARGET GOAL/JOB DESCRIPTION: ${context.jobDescription}` : '';
 
     let persona = '';
     switch (context.type) {
@@ -66,7 +75,7 @@ export class AIService {
         break;
     }
 
-    return `${persona}\n\n${profileSummary}\n\n${jobInfo}\n\nINSTRUCTIONS: Always use Markdown. Be concise. Ask high-value questions if you need more details to "Sculpt" the final document.`;
+    return `${persona}\n\n${profileSummary}\n\n${jobInfo}\n\nINSTRUCTIONS: Always use Markdown. Be concise. Ask high-value questions if you need more details to "Sculpt" the final document. If a job description is provided, ensure you tailor all advice to that specific role.`;
   }
 
   async sculpt(prompt: string): Promise<string> {
