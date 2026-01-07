@@ -5,14 +5,13 @@ import {
   Undo,
   Sparkles,
   Download,
-  ChevronDown,
   Menu,
   Paperclip,
-  Zap,
-  Cpu
+  Trash2,
+  FileText
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
-import { aiService, AIModel } from '../services/ai';
+import { aiService } from '../services/ai';
 import { Document, Packer } from 'docx';
 import { parseMarkdownToDocx } from '../utils/docx-export';
 
@@ -41,7 +40,7 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
     });
   };
 
-  const containerClasses = `space-y-1 ${fontClass} ${dark ? 'text-black' : theme === 'dark' ? 'text-slate-200' : 'text-slate-900'} ${
+  const containerClasses = `space-y-1 ${fontClass} ${dark ? 'text-black' : theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'} ${
     template === 'classic' ? 'leading-relaxed' : template === 'minimal' ? 'leading-tight' : 'leading-normal'
   }`;
 
@@ -50,11 +49,9 @@ export const MarkdownLite: React.FC<{ text: string; dark?: boolean; theme?: Them
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (trimmed === '') return <div key={i} className="h-2" />;
-        
-        if (trimmed.startsWith('### ')) return <h3 key={i} className={`text-base font-bold mt-4 mb-2 ${template === 'classic' ? 'uppercase border-b border-slate-200 pb-1' : ''}`}>{formatText(trimmed.slice(4))}</h3>;
-        if (trimmed.startsWith('## ')) return <h2 key={i} className={`text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20`}>{formatText(trimmed.slice(3))}</h2>;
-        if (trimmed.startsWith('# ')) return <h1 key={i} className={`text-xl font-bold mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center ${template === 'modern' ? 'text-[#1918f0]' : ''}`}>{formatText(trimmed.slice(2))}</h1>;
-        
+        if (trimmed.startsWith('### ')) return <h3 key={i} className="text-base font-bold mt-4 mb-2">{formatText(trimmed.slice(4))}</h3>;
+        if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-bold mt-6 mb-3 border-b pb-1 border-current opacity-20">{formatText(trimmed.slice(3))}</h2>;
+        if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-2 mb-4 border-b-2 pb-2 uppercase tracking-tight border-current opacity-80 text-center">{formatText(trimmed.slice(2))}</h1>;
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 ml-4">
@@ -78,8 +75,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<AIModel>('gemini');
-  const [showModelDropdown, setShowModelDropdown] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
@@ -127,7 +122,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       const assistantId = (Date.now() + 1).toString();
       updateSession(activeSessionId, { messages: [...newMessages, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }] });
 
-      const stream = aiService.generateStream(selectedModel, newMessages, "", context);
+      const stream = aiService.generateStream(newMessages, "", context);
 
       for await (const chunk of stream) {
         assistantResponse += chunk;
@@ -150,7 +145,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       const typeLabel = activeSession.type.replace('-', ' ').toUpperCase();
       const prompt = `Act as a senior Recruiter. Sculpt a final, world-class ${typeLabel} in Markdown format based on this data: ${combinedData}. Target role: ${activeSession.jobDescription || 'Professional Application'}. Return ONLY markdown.`;
       
-      const result = await aiService.sculpt(selectedModel, prompt);
+      const result = await aiService.sculpt(prompt);
       updateSession(activeSessionId, { finalResume: result });
       setShowPreview(true);
     } catch (err: any) { 
@@ -200,7 +195,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         <div className="flex justify-start">
-           <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}>
+           <div className="max-w-full text-sm leading-relaxed bg-transparent border-0 shadow-none">
               <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
               <MarkdownLite text={getWelcomeMessage()} theme={theme} />
            </div>
@@ -209,13 +204,13 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'user' ? (
-              <div className={`max-w-[80%] rounded-[20px] px-3 py-1.5 shadow-sm text-sm font-normal leading-normal ${
-                theme === 'dark' ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-100 text-zinc-900'
+              <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-4 py-2 border text-sm font-normal leading-normal ${
+                theme === 'dark' ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-zinc-100 text-zinc-900 border-zinc-200'
               }`}>
                 {m.content}
               </div>
             ) : (
-              <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}>
+              <div className="max-w-full text-sm leading-relaxed bg-transparent border-0 shadow-none">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
                 <MarkdownLite text={m.content} theme={theme} />
               </div>
@@ -247,22 +242,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               className={`flex-1 bg-transparent border-none py-3 px-1 min-h-[48px] max-h-[200px] resize-none text-sm md:text-base outline-none ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}
               rows={1}
             />
-
-            <div className="relative">
-              <button onClick={() => setShowModelDropdown(!showModelDropdown)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${theme === 'dark' ? 'text-zinc-400 hover:text-white bg-zinc-800' : 'text-zinc-500 bg-zinc-100 hover:bg-zinc-200'}`}>
-                {selectedModel}
-                <ChevronDown size={12} className={`transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              {showModelDropdown && (
-                <div className={`absolute bottom-full right-0 mb-3 w-36 border rounded-2xl shadow-2xl p-2 z-50 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                  {['gemini', 'deepseek'].map(m => (
-                    <button key={m} onClick={() => { setSelectedModel(m as any); setShowModelDropdown(false); }} className={`w-full text-left px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedModel === m ? 'bg-[#1918f0] text-white' : 'hover:bg-white/5 text-zinc-500'}`}>
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <button onClick={handleSend} disabled={!inputValue.trim() || isTyping} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30"><Send size={20} /></button>
           </div>

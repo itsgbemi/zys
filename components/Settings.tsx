@@ -9,7 +9,10 @@ import {
   ChevronLeft,
   Shield,
   Menu,
-  Check
+  Check,
+  Globe,
+  Github,
+  Linkedin
 } from 'lucide-react';
 import { Theme, UserProfile } from '../types';
 
@@ -104,14 +107,52 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                 <div className="space-y-8 pb-12">
                   {renderBackHeader('Personal Information')}
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg} space-y-8`}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Full Name</label>
-                        <input value={userProfile.fullName} onChange={e => handleUpdate('fullName', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="Jane Doe" />
+                    <div>
+                      <h4 className={`text-sm font-black mb-6 uppercase tracking-widest ${theme === 'dark' ? 'text-white/20' : 'text-slate-300'}`}>Contact Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Full Name</label>
+                          <input value={userProfile.fullName} onChange={e => handleUpdate('fullName', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="Jane Doe" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Current Title</label>
+                          <input value={userProfile.title} onChange={e => handleUpdate('title', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="Software Engineer" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Phone Number</label>
+                          <input value={userProfile.phone} onChange={e => handleUpdate('phone', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="+1 (555) 000-0000" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Location</label>
+                          <input value={userProfile.location} onChange={e => handleUpdate('location', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="New York, USA" />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Current Title</label>
-                        <input value={userProfile.title} onChange={e => handleUpdate('title', e.target.value)} className={`w-full px-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="Software Engineer" />
+                    </div>
+
+                    <div className="pt-4 border-t border-white/5">
+                      <h4 className={`text-sm font-black mb-6 uppercase tracking-widest ${theme === 'dark' ? 'text-white/20' : 'text-slate-300'}`}>Professional Links</h4>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>LinkedIn URL</label>
+                          <div className="relative">
+                            <Linkedin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input value={userProfile.linkedIn} onChange={e => handleUpdate('linkedIn', e.target.value)} className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://linkedin.com/in/username" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>GitHub URL</label>
+                          <div className="relative">
+                            <Github className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input value={userProfile.github} onChange={e => handleUpdate('github', e.target.value)} className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://github.com/username" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${textSecondary}`}>Portfolio Website</label>
+                          <div className="relative">
+                            <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input value={userProfile.portfolio} onChange={e => handleUpdate('portfolio', e.target.value)} className={`w-full pl-12 pr-4 py-3 rounded-2xl border text-sm outline-none focus:border-[#1918f0] transition-all ${inputBg} ${textPrimary}`} placeholder="https://yourportfolio.com" />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -120,8 +161,31 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
               {activeTab === 'master-resume' && (
                 <div className="space-y-8">
                   {renderBackHeader('Master Resume')}
+                  <p className={`text-sm ${textSecondary}`}>This is your source material. We use it to ensure every tailored document is accurate.</p>
                   <div className={`p-6 md:p-8 rounded-[32px] border ${cardBg}`}>
                     <textarea value={userProfile.baseResumeText} onChange={e => handleUpdate('baseResumeText', e.target.value)} className={`w-full h-96 p-6 rounded-2xl border outline-none transition-all focus:border-[#1918f0] resize-none text-sm leading-relaxed ${inputBg} ${textPrimary}`} placeholder="Paste your master resume here..." />
+                  </div>
+                </div>
+              )}
+              {activeTab === 'goals' && (
+                <div className="space-y-8">
+                  {renderBackHeader('Daily Goals')}
+                  <div className={`p-8 rounded-[32px] border ${cardBg}`}>
+                     <div className="flex items-center justify-between mb-8">
+                        <h4 className={`font-bold ${textPrimary}`}>Learning Intensity</h4>
+                        <span className="text-2xl font-black text-[#1918f0]">{userProfile.dailyAvailability}h / Day</span>
+                     </div>
+                     <input 
+                       type="range" min="1" max="12" step="1"
+                       value={userProfile.dailyAvailability}
+                       onChange={e => handleUpdate('dailyAvailability', parseInt(e.target.value))}
+                       className="w-full accent-[#1918f0]"
+                     />
+                     <div className="flex justify-between mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span>Casual</span>
+                        <span>Dedicated</span>
+                        <span>Expert</span>
+                     </div>
                   </div>
                 </div>
               )}

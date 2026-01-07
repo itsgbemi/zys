@@ -17,9 +17,6 @@ if (typeof window !== 'undefined') {
       browserProcess.env.API_KEY = viteEnv.VITE_API_KEY;
     }
 
-    // Bridge DeepSeek key
-    if (viteEnv.VITE_DEEPSEEK_API_KEY) browserProcess.env.VITE_DEEPSEEK_API_KEY = viteEnv.VITE_DEEPSEEK_API_KEY;
-
     // Bridge Supabase vars specifically
     if (viteEnv.VITE_SUPABASE_URL) browserProcess.env.VITE_SUPABASE_URL = viteEnv.VITE_SUPABASE_URL;
     if (viteEnv.VITE_SUPABASE_ANON_KEY) browserProcess.env.VITE_SUPABASE_ANON_KEY = viteEnv.VITE_SUPABASE_ANON_KEY;
