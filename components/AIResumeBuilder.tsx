@@ -152,9 +152,28 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     setErrorMessage(null);
     setIsSculpting(true);
     try {
-      const combinedData = `User Profile: ${activeSession.resumeText || userProfile?.baseResumeText || ''}\nChat context: ${activeSession.messages.map(m => m.content).join('\n')}`;
+      const combinedData = `User Profile Info:
+Name: ${userProfile?.fullName}
+Title: ${userProfile?.title}
+Email: ${userProfile?.email}
+Phone: ${userProfile?.phone}
+Location: ${userProfile?.location}
+LinkedIn: ${userProfile?.linkedIn}
+GitHub: ${userProfile?.github || 'N/A'}
+Portfolio: ${userProfile?.portfolio || 'N/A'}
+
+Experience/Base Material: ${activeSession.resumeText || userProfile?.baseResumeText || ''}
+
+Chat Context/Instructions: ${activeSession.messages.map(m => m.content).join('\n')}`;
+
       const typeLabel = activeSession.type.replace('-', ' ').toUpperCase();
-      const prompt = `Act as a senior Recruiter. Sculpt a final, world-class ${typeLabel} in Markdown format based on this data: ${combinedData}. Target role: ${activeSession.jobDescription || 'Professional Application'}. Return ONLY markdown.`;
+      const prompt = `Act as a senior Recruiter. Sculpt a final, world-class ${typeLabel} in Markdown format based on this data: ${combinedData}. 
+
+CRITICAL INSTRUCTIONS:
+1. USE the real personal information provided above (Name, Phone, Location, etc.).
+2. DO NOT use generic placeholders like "[Your Name]", "[City, State]", or "[Phone Number]".
+3. Target role: ${activeSession.jobDescription || 'Professional Application'}. 
+4. Return ONLY markdown content.`;
       
       const result = await aiService.sculpt(prompt);
       updateSession(activeSessionId, { finalResume: result });
@@ -214,15 +233,15 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   if (showPreview && activeSession.finalResume) {
     return (
       <div className="flex flex-col h-full animate-in fade-in duration-500 relative">
-        <header className={`flex items-center justify-between p-4 md:p-6 border-b sticky top-0 z-10 no-print transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+        <header className={`flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 border-b sticky top-0 z-10 no-print transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
           <div className="flex items-center gap-4">
             <button onClick={() => setShowPreview(false)} className={`p-2 rounded-xl transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-[#0F172A]'}`}><Undo size={20} /></button>
             <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Preview</h2>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
-                <Palette size={14} /> Style
+                <Palette size={14} /> <span className="hidden sm:inline">Style</span>
               </button>
               {showStyleMenu && (
                 <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
@@ -246,7 +265,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
             </div>
             <div className="relative">
               <button onClick={() => setShowTemplateMenu(!showTemplateMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
-                <Layout size={14} /> Template
+                <Layout size={14} /> <span className="hidden sm:inline">Template</span>
               </button>
               {showTemplateMenu && (
                 <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
@@ -267,9 +286,9 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
               )}
             </div>
             <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
-              {isExporting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} Word
+              {isExporting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} <span className="hidden sm:inline">Word</span>
             </button>
-            <button onClick={exportPDF} disabled={isExporting} className="px-6 py-2 bg-[#1918f0] text-white rounded-xl font-bold text-xs shadow-lg shadow-[#1918f0]/20">
+            <button onClick={exportPDF} disabled={isExporting} className="px-6 py-2 bg-[#1918f0] text-white rounded-xl font-bold text-xs shadow-lg shadow-[#1918f0]/20 whitespace-nowrap">
               {isExporting ? <Loader2 size={14} className="animate-spin" /> : 'Export PDF'}
             </button>
           </div>
@@ -305,8 +324,8 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'user' ? (
-              <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-4 py-2 border text-sm font-normal leading-normal ${
-                theme === 'dark' ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-zinc-100 text-zinc-900 border-zinc-200'
+              <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-4 py-2 border text-sm font-normal leading-normal transition-colors ${
+                theme === 'dark' ? 'bg-[#2c2c2e] text-zinc-100 border-[#64656d]' : 'bg-[#f4f4f4] text-zinc-900 border-[#e0e0e0]'
               }`}>
                 {m.content}
               </div>

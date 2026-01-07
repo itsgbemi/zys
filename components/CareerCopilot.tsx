@@ -88,21 +88,19 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         <div className="flex justify-start">
            <div className="max-w-full text-sm leading-relaxed bg-transparent border-0 shadow-none">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
               <MarkdownLite text="Hello! I'm your Career Copilot. How can I help you today?" theme={theme} />
            </div>
         </div>
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'user' ? (
-              <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-4 py-2 border text-sm font-normal leading-normal ${
-                theme === 'dark' ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-zinc-100 text-zinc-900 border-zinc-200'
+              <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-4 py-2 border text-sm font-normal leading-normal transition-colors ${
+                theme === 'dark' ? 'bg-[#2c2c2e] text-zinc-100 border-[#64656d]' : 'bg-[#f4f4f4] text-zinc-900 border-[#e0e0e0]'
               }`}>
                 {m.content}
               </div>
             ) : (
               <div className="max-w-full text-sm leading-relaxed bg-transparent border-0 shadow-none">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
                 <MarkdownLite text={m.content} theme={theme} />
               </div>
             )}

@@ -15,17 +15,13 @@ import {
   FolderOpen,
   Zap,
   LogOut,
-  ChevronLeft,
   PanelLeftClose,
   PanelLeftOpen,
   Trash2,
   Edit2,
   X,
   AlertCircle,
-  Menu,
-  Check,
-  ChevronRight,
-  Info
+  Check
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
@@ -80,6 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   
   const menuRef = useRef<HTMLDivElement>(null);
@@ -180,53 +177,67 @@ const Sidebar: React.FC<SidebarProps> = ({
                  </p>
               </div>
             ) : (
-              filteredSessions.map(s => (
-                <div key={s.id} className="group/item flex items-center relative pr-2">
-                  {renamingId === s.id ? (
-                     <div className="flex-1 flex items-center gap-1 p-1">
-                        <input 
-                          ref={renameInputRef}
-                          className={`w-full bg-transparent border-b border-[#1918f0] text-[11px] outline-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
-                          value={renameValue}
-                          onChange={e => setRenameValue(e.target.value)}
-                          onBlur={submitRename}
-                          onKeyDown={e => e.key === 'Enter' && submitRename()}
-                        />
-                        <button onClick={submitRename} className="text-[#1918f0]"><Check size={14}/></button>
-                     </div>
-                  ) : (
-                    <>
-                      <button 
-                        onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
-                        className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${
-                          activeSessionId === s.id && currentView === id 
-                            ? 'text-white bg-[#1918f0] font-bold' 
-                            : theme === 'dark' ? 'text-slate-400 hover:bg-white/20 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-                        }`}
-                      >
-                        {s.title}
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === s.id ? null : s.id); }}
-                        className={`opacity-0 group-hover/item:opacity-100 p-1.5 rounded-lg transition-all ${theme === 'dark' ? 'text-slate-500 hover:bg-white/10 hover:text-white' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-700'}`}
-                      >
-                        <MoreHorizontal size={14} />
-                      </button>
-                      
-                      {activeMenuId === s.id && (
-                        <div ref={menuRef} className={`absolute right-[-10px] top-8 z-[60] min-w-[120px] rounded-xl border shadow-2xl p-1 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
-                          <button onClick={() => handleStartRename(s.id, s.title)} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-[#1918f0] hover:text-white transition-colors text-left">
-                             <Edit2 size={12}/> Rename
-                          </button>
-                          <button onClick={() => { onDeleteSession(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500 hover:text-white transition-colors text-left">
-                             <Trash2 size={12}/> Delete
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))
+              filteredSessions.map(s => {
+                const isSessionActive = activeSessionId === s.id && currentView === id;
+                return (
+                  <div 
+                    key={s.id} 
+                    className={`group/item flex items-center relative pr-2 rounded-lg transition-all ${
+                      isSessionActive 
+                        ? theme === 'dark' ? 'bg-[#2c2c2e]' : 'bg-[#e2eefc]'
+                        : theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-100'
+                    }`}
+                  >
+                    {renamingId === s.id ? (
+                      <div className="flex-1 flex items-center gap-1 p-1">
+                          <input 
+                            ref={renameInputRef}
+                            className={`w-full bg-transparent border-b border-[#1918f0] text-[11px] outline-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
+                            value={renameValue}
+                            onChange={e => setRenameValue(e.target.value)}
+                            onBlur={submitRename}
+                            onKeyDown={e => e.key === 'Enter' && submitRename()}
+                          />
+                          <button onClick={submitRename} className="text-[#1918f0]"><Check size={14}/></button>
+                      </div>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => { setActiveSessionId(s.id); setView(id); if(isMobileOpen) setIsMobileOpen(false); }}
+                          className={`flex-1 text-left p-2 rounded-md text-[11px] truncate transition-all ${
+                            isSessionActive 
+                              ? theme === 'dark' ? 'text-white font-bold' : 'text-[#1c1cf9] font-bold'
+                              : theme === 'dark' ? 'text-slate-400 group-hover/item:text-white' : 'text-slate-500 group-hover/item:text-slate-900'
+                          }`}
+                        >
+                          {s.title}
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === s.id ? null : s.id); }}
+                          className={`opacity-0 group-hover/item:opacity-100 p-1.5 rounded-lg transition-all ${
+                            isSessionActive 
+                              ? theme === 'dark' ? 'text-white hover:bg-white/10' : 'text-[#1c1cf9] hover:bg-indigo-200/50'
+                              : theme === 'dark' ? 'text-slate-500 hover:bg-white/10 hover:text-white' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-700'
+                          }`}
+                        >
+                          <MoreHorizontal size={14} />
+                        </button>
+                        
+                        {activeMenuId === s.id && (
+                          <div ref={menuRef} className={`absolute right-[-10px] top-8 z-[60] min-w-[120px] rounded-xl border shadow-2xl p-1 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                            <button onClick={() => handleStartRename(s.id, s.title)} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-[#1918f0] hover:text-white transition-colors text-left">
+                              <Edit2 size={12}/> Rename
+                            </button>
+                            <button onClick={() => { setDeletingId(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500 hover:text-white transition-colors text-left">
+                              <Trash2 size={12}/> Delete
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         )}
@@ -235,53 +246,85 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#121212] border-white/5 text-white' : 'bg-white border-slate-200 text-slate-900'} border-r ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl shadow-black/50' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
-      
-      <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
-          <ZysculptLogo theme={theme} size={32} />
-          {(!isCollapsed || isMobileOpen) && <span className="text-2xl font-black tracking-tighter">zysculpt</span>}
+    <>
+      {deletingId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className={`w-full max-w-sm p-6 rounded-[32px] border shadow-2xl animate-in zoom-in-95 duration-300 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-6">
+                <Trash2 size={32} />
+              </div>
+              <h3 className={`text-xl font-black mb-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Delete session?</h3>
+              <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+                This conversation and all its sculpted data will be permanently removed. Are you ready to let it go?
+              </p>
+              <div className="flex gap-3 w-full">
+                <button 
+                  onClick={() => setDeletingId(null)}
+                  className={`flex-1 py-3.5 rounded-2xl text-sm font-bold transition-all ${theme === 'dark' ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  Keep it
+                </button>
+                <button 
+                  onClick={() => { onDeleteSession(deletingId); setDeletingId(null); }}
+                  className="flex-1 py-3.5 bg-red-500 text-white rounded-2xl text-sm font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 active:scale-95"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-           <button 
-            onClick={() => setIsCollapsed(!isCollapsed)} 
-            className={`hidden md:flex p-2 hover:bg-white/5 rounded-xl transition-all ${isCollapsed ? 'rotate-180' : ''}`}
-           >
-              {isCollapsed ? <PanelLeftOpen size={20} className="opacity-40" /> : <PanelLeftClose size={20} className="opacity-40" />}
-           </button>
-           {isMobileOpen && (
-              <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
-                <X size={20} />
-              </button>
-           )}
+      )}
+
+      <aside className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 md:relative md:translate-x-0 flex flex-col no-print font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#121212] border-white/5 text-white' : 'bg-white border-slate-200 text-slate-900'} border-r ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl shadow-black/50' : '-translate-x-full md:translate-x-0'} ${isCollapsed && !isMobileOpen ? 'md:w-20' : 'md:w-72'}`}>
+        
+        <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
+            <ZysculptLogo theme={theme} size={32} />
+            {(!isCollapsed || isMobileOpen) && <span className="text-2xl font-black tracking-tighter">zysculpt</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)} 
+              className={`hidden md:flex p-2 hover:bg-white/5 rounded-xl transition-all ${isCollapsed ? 'rotate-180' : ''}`}
+            >
+                {isCollapsed ? <PanelLeftOpen size={20} className="opacity-40" /> : <PanelLeftClose size={20} className="opacity-40" />}
+            </button>
+            {isMobileOpen && (
+                <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
+                  <X size={20} />
+                </button>
+            )}
+          </div>
         </div>
-      </div>
-      
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2">
-        {renderNavButton(AppView.OVERVIEW, 'Overview', <LayoutDashboard size={20} />)}
-        {renderNavButton(AppView.CAREER_COPILOT, 'Roadmap', <Compass size={20} />, 'copilot', () => onNewSession('career-copilot'))}
-        {renderNavButton(AppView.RESUME_BUILDER, 'Resume Builder', <FileText size={20} />, 'resume', () => onNewSession('resume'))}
-        {renderNavButton(AppView.COVER_LETTER, 'Cover Letter', <Mail size={20} />, 'letter', () => onNewSession('cover-letter'))}
-        {renderNavButton(AppView.RESIGNATION_LETTER, 'Resignation', <DoorOpen size={20} />, 'resignation', () => onNewSession('resignation-letter'))}
-        <div className={`h-px my-3 mx-2 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`} />
-        {renderNavButton(AppView.KNOWLEDGE_HUB, 'Skill Lab', <Zap size={20} />)}
-        {renderNavButton(AppView.DOCUMENTS, 'My Documents', <FolderOpen size={20} />)}
-        {renderNavButton(AppView.FIND_JOB, 'Job Search', <Search size={20} />)}
-        {renderNavButton(AppView.SETTINGS, 'Settings', <SettingsIcon size={20} />)}
-      </nav>
+        
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-2">
+          {renderNavButton(AppView.OVERVIEW, 'Overview', <LayoutDashboard size={20} />)}
+          {renderNavButton(AppView.CAREER_COPILOT, 'Roadmap', <Compass size={20} />, 'copilot', () => onNewSession('career-copilot'))}
+          {renderNavButton(AppView.RESUME_BUILDER, 'Resume Builder', <FileText size={20} />, 'resume', () => onNewSession('resume'))}
+          {renderNavButton(AppView.COVER_LETTER, 'Cover Letter', <Mail size={20} />, 'letter', () => onNewSession('cover-letter'))}
+          {renderNavButton(AppView.RESIGNATION_LETTER, 'Resignation', <DoorOpen size={20} />, 'resignation', () => onNewSession('resignation-letter'))}
+          <div className={`h-px my-3 mx-2 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`} />
+          {renderNavButton(AppView.KNOWLEDGE_HUB, 'Skill Lab', <Zap size={20} />)}
+          {renderNavButton(AppView.DOCUMENTS, 'My Documents', <FolderOpen size={20} />)}
+          {renderNavButton(AppView.FIND_JOB, 'Job Search', <Search size={20} />)}
+          {renderNavButton(AppView.SETTINGS, 'Settings', <SettingsIcon size={20} />)}
+        </nav>
 
-      <div className={`p-4 space-y-2 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-        <button onClick={toggleTheme} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
-        </button>
+        <div className={`p-4 space-y-2 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
+          <button onClick={toggleTheme} className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${theme === 'dark' ? 'text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
+          </button>
 
-        <button onClick={onLogout} className={`w-full flex items-center gap-4 p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all active:scale-95 ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
-          <LogOut size={20} />
-          {(!isCollapsed || isMobileOpen) && <span className="font-black text-sm">Logout</span>}
-        </button>
-      </div>
-    </aside>
+          <button onClick={onLogout} className={`w-full flex items-center gap-4 p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all active:scale-95 ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
+            <LogOut size={20} />
+            {(!isCollapsed || isMobileOpen) && <span className="font-black text-sm">Logout</span>}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 

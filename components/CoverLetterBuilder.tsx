@@ -66,8 +66,21 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
         <button onClick={async () => {
           setIsTyping(true);
           try {
-            const combinedData = `User Data: ${activeSession.resumeText || ''}\nChat context: ${activeSession.messages.map(m => m.content).join('\n')}`;
-            const result = await aiService.sculpt(`Sculpt a cover letter based on: ${combinedData}`);
+            const combinedData = `User Profile Info:
+Name: ${userProfile?.fullName}
+Title: ${userProfile?.title}
+Email: ${userProfile?.email}
+Phone: ${userProfile?.phone}
+Location: ${userProfile?.location}
+LinkedIn: ${userProfile?.linkedIn}
+GitHub: ${userProfile?.github || 'N/A'}
+Portfolio: ${userProfile?.portfolio || 'N/A'}
+
+Experience/Base Material: ${activeSession.resumeText || userProfile?.baseResumeText || ''}
+
+Chat Context/Instructions: ${activeSession.messages.map(m => m.content).join('\n')}`;
+
+            const result = await aiService.sculpt(`Sculpt a cover letter based on: ${combinedData}. CRITICAL: Use the real personal information provided to fill headers. DO NOT use generic placeholders like [Your Name].`);
             updateSession(activeSessionId, { finalResume: result });
             setShowPreview(true);
           } catch (err) {} finally { setIsTyping(false); }
@@ -85,8 +98,8 @@ const CoverLetterBuilder: React.FC<CoverLetterBuilderProps> = ({
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'user' ? (
-              <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-4 py-2 border text-sm font-normal leading-normal ${
-                theme === 'dark' ? 'bg-zinc-800 text-zinc-100 border-zinc-700' : 'bg-zinc-100 text-zinc-900 border-zinc-200'
+              <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-4 py-2 border text-sm font-normal leading-normal transition-colors ${
+                theme === 'dark' ? 'bg-[#2c2c2e] text-zinc-100 border-[#64656d]' : 'bg-[#f4f4f4] text-zinc-900 border-[#e0e0e0]'
               }`}>
                 {m.content}
               </div>
