@@ -10,7 +10,6 @@ import { Auth } from './components/Auth';
 import { AppView, ChatSession, Theme, UserProfile } from './types';
 import { supabase, isSupabaseConfigured } from './services/supabase';
 import { Sparkles, Plus } from 'lucide-react';
-import { setDatadogUser, clearDatadogUser } from './services/datadog';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -90,7 +89,6 @@ const App: React.FC = () => {
       };
 
       setUserProfile(seededProfile);
-      setDatadogUser({ id: userId, email: seededProfile.email, name: seededProfile.fullName });
 
       if (sessionsRes && sessionsRes.length > 0) {
         const mapped: ChatSession[] = sessionsRes.map(s => ({
@@ -118,7 +116,7 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
       if (session) fetchData(session.user.id, session.user);
-      else { clearDatadogUser(); setAuthLoading(false); }
+      else { setAuthLoading(false); }
     });
     return () => subscription.unsubscribe();
   }, []);

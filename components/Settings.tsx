@@ -27,7 +27,6 @@ import {
   CloudCheck
 } from 'lucide-react';
 import { Theme, UserProfile } from '../types';
-import { simulateError, simulateHighLatency } from '../services/datadog';
 
 interface SettingsProps {
   onToggleMobile?: () => void;
@@ -37,7 +36,7 @@ interface SettingsProps {
   isSaving: boolean;
 }
 
-type SettingsTab = 'profile' | 'master-resume' | 'goals' | 'billing' | 'security' | 'observability';
+type SettingsTab = 'profile' | 'master-resume' | 'goals' | 'billing' | 'security';
 
 const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile, setUserProfile, isSaving }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab | null>(null);
@@ -76,7 +75,6 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
     { id: 'goals', label: 'Daily Goals', icon: <Clock size={18} />, desc: 'Set your target availability for roadmaps' },
     { id: 'billing', label: 'Billing & Usage', icon: <CreditCard size={18} />, desc: 'Track your credits and subscription status' },
     { id: 'security', label: 'Privacy & Data', icon: <Shield size={18} />, desc: 'Manage session security and account erasure' },
-    { id: 'observability', label: 'App Health & Monitoring', icon: <Activity size={18} />, desc: 'Test Datadog signals and detection rules' },
   ];
 
   const renderBackHeader = (title: string) => (
@@ -142,7 +140,6 @@ const Settings: React.FC<SettingsProps> = ({ onToggleMobile, theme, userProfile,
                     <p className={`text-sm ${textSecondary}`}>{userProfile.email || 'Sign in to sync your data'}</p>
                     <div className="mt-2 flex gap-2">
                        <span className="px-3 py-1 bg-[#1918f0]/10 text-[#1918f0] rounded-full text-[10px] font-bold uppercase border border-[#1918f0]/20">Member</span>
-                       {isSaving && <span className="px-3 py-1 bg-white/5 text-slate-400 rounded-full text-[10px] font-bold uppercase border border-white/10 flex items-center gap-1.5 animate-pulse"><Loader2 size={10}/> Cloud Sync</span>}
                     </div>
                   </div>
                 </div>

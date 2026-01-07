@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, 
@@ -14,10 +13,13 @@ import {
   Palette,
   Mic,
   Square,
-  Menu
+  Menu,
+  ChevronDown,
+  Zap,
+  Cpu
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
-import { geminiService } from '../services/gemini';
+import { aiService, AIModel } from '../services/ai';
 import { Document, Packer } from 'docx';
 import { parseMarkdownToDocx } from '../utils/docx-export';
 import { MarkdownLite } from './AIResumeBuilder';
@@ -39,15 +41,12 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [showStyleMenu, setShowStyleMenu] = useState(false);
-
-  // Voice recording states
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const [selectedModel, setSelectedModel] = useState<AIModel>('gemini-3-pro');
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
 
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stylePrefs: StylePrefs = activeSession.stylePrefs || {
     font: 'font-sans',
@@ -64,82 +63,31 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
     else setShowPreview(false);
   }, [activeSessionId]);
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          const base64Audio = (reader.result as string).split(',')[1];
-          handleSend(base64Audio);
-        };
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      alert("Please allow microphone access to record voice messages.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const handleSend = async (audioData?: string) => {
-    if (!inputValue.trim() && !audioData && !isTyping) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() || isTyping) return;
     
-    const contentText = audioData ? (inputValue.trim() ? `${inputValue} [Voice Message]` : "[Voice Message]") : inputValue;
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: contentText, timestamp: Date.now() };
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: inputValue, timestamp: Date.now() };
     const newMessages = [...activeSession.messages, userMessage];
     updateSession(activeSessionId, { messages: newMessages });
     setInputValue('');
     setIsTyping(true);
 
     try {
-      const context: any = { jobDescription: activeSession.jobDescription, resumeText: activeSession.resumeText, type: 'resignation-letter', userProfile };
-      if (audioData) {
-        context.audioPart = { inlineData: { data: audioData, mimeType: 'audio/webm' } };
-      }
-
-      const responseStream = await geminiService.generateChatResponse(
-        newMessages.slice(0, -1), 
-        inputValue, 
-        context
-      );
-      
-      let assistantResponse = '';
       const assistantId = (Date.now() + 1).toString();
       updateSession(activeSessionId, { messages: [...newMessages, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }] });
 
-      for await (const chunk of responseStream) {
-        assistantResponse += chunk.text;
+      const stream = aiService.generateStream(selectedModel, newMessages, "", { type: 'resignation-letter', userProfile });
+      let fullText = "";
+      for await (const chunk of stream) {
+        fullText += chunk;
         setSessions(prev => prev.map(s => s.id === activeSessionId ? { 
           ...s, 
-          messages: s.messages.map(m => m.id === assistantId ? { ...m, content: assistantResponse } : m) 
+          messages: s.messages.map(m => m.id === assistantId ? { ...m, content: fullText } : m) 
         } : s));
       }
     } catch (e) {
       updateSession(activeSessionId, { messages: [...newMessages, { id: 'error', role: 'assistant', content: "Error occurred.", timestamp: Date.now() }] });
     } finally { setIsTyping(false); }
-  };
-
-  const updatePrefs = (newPrefs: Partial<StylePrefs>) => {
-    updateSession(activeSessionId, { stylePrefs: { ...stylePrefs, ...newPrefs } as any });
   };
 
   const exportPDF = () => {
@@ -161,10 +109,7 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
     try {
       const children = parseMarkdownToDocx(activeSession.finalResume);
       const doc = new Document({
-        sections: [{
-          properties: {},
-          children: children,
-        }],
+        sections: [{ properties: {}, children: children }],
       });
       const blob = await Packer.toBlob(doc);
       const url = URL.createObjectURL(blob);
@@ -172,12 +117,15 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
       link.href = url;
       link.download = `Resignation_Letter_${activeSession.title.replace(/\s+/g, '_')}.docx`;
       link.click();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsExporting(false);
-    }
+    } catch (e) { console.error(e); } finally { setIsExporting(false); }
   };
+
+  const models = [
+    { id: 'gemini-3-pro', label: 'Gemini 3 Pro', icon: <Zap size={14}/> },
+    { id: 'gemini-3-flash', label: 'Gemini 3 Flash', icon: <Zap size={14}/> },
+    { id: 'deepseek-v3', label: 'DeepSeek V3', icon: <Cpu size={14}/> },
+    { id: 'deepseek-r1', label: 'DeepSeek R1', icon: <Cpu size={14}/> }
+  ];
 
   if (showPreview && activeSession.finalResume) {
     return (
@@ -188,28 +136,6 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowPreview(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Undo size={14} /> Back</button>
-            <div className="relative">
-              <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><Palette size={14} /> Style</button>
-              {showStyleMenu && (
-                <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                   {[
-                    { id: 'font-sans', label: 'Inter (Modern)' },
-                    { id: 'font-serif', label: 'Garamond (Serif)' },
-                    { id: 'font-mono', label: 'Roboto (Clean)' },
-                    { id: 'font-arial', label: 'Arial (Standard)' },
-                    { id: 'font-times', label: 'Times (Academic)' }
-                  ].map(font => (
-                    <button 
-                      key={font.id}
-                      onClick={() => { updatePrefs({ font: font.id as any }); setShowStyleMenu(false); }}
-                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-indigo-500 text-white' : 'hover:bg-slate-500/10'}`}
-                    >
-                      {font.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
             <button onClick={exportDOCX} disabled={isExporting} className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}><WordIcon size={14} /> Word</button>
             <button onClick={exportPDF} disabled={isExporting} className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-bold text-xs md:text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">Save PDF</button>
           </div>
@@ -232,15 +158,13 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
           </button>
           <div className="flex flex-col">
             <h2 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Resignation Letter</h2>
-            <p className={`text-[10px] md:text-xs opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>Professional assistance for your career transition.</p>
           </div>
         </div>
-        {activeSession.messages.length > 1 && (
+        {activeSession.messages.length > 0 && (
           <button onClick={async () => {
             setIsTyping(true);
             try {
-              const combinedData = `User Info: ${activeSession.resumeText || ''}\nHistory: ${activeSession.messages.map(m => m.content).join('\n')}`;
-              const result = await geminiService.sculptResignationLetter(activeSession.jobDescription || 'Standard Resignation', combinedData);
+              const result = await aiService.sculpt(selectedModel, `Act as an HR Professional. Draft a firm but gracious exit statement. Data: ${activeSession.messages.map(m => m.content).join('\n')}`);
               updateSession(activeSessionId, { finalResume: result });
               setShowPreview(true);
             } catch (err) { console.error(err); } finally { setIsTyping(false); }
@@ -250,25 +174,34 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
+        <div className="flex justify-start">
+           <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+              <p className="opacity-70 mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
+              <MarkdownLite text="Hi there. I'll help you write a professional and graceful resignation. When is your intended last day and who are we addressing?" theme={theme} />
+           </div>
+        </div>
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm border relative group ${
-              m.role === 'user' 
-                ? theme === 'dark' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-[#E0E7FF] text-slate-900 border-[#C7D2FE]' 
-                : theme === 'dark' ? 'bg-[#2a2a2a] text-white border-[#444]' : 'bg-white text-slate-900 border-slate-200'
-            }`}>
-              <div className="text-sm leading-relaxed"><MarkdownLite text={m.content} theme={theme} /></div>
-              <div className={`text-[9px] mt-2 opacity-30 text-right ${m.role === 'user' && theme === 'dark' ? 'text-white' : 'text-slate-600'}`}>
-                {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {m.role === 'user' ? (
+              <div className={`max-w-[85%] md:max-w-[70%] rounded-[24px] px-5 py-3 shadow-sm ${
+                theme === 'dark' ? 'bg-[#1918f0] text-white' : 'bg-[#E0E7FF] text-slate-900'
+              }`}>
+                <div className="text-sm font-medium leading-relaxed">{m.content}</div>
               </div>
-            </div>
+            ) : (
+              <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+                <p className="opacity-70 mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
+                <MarkdownLite text={m.content} theme={theme} />
+              </div>
+            )}
           </div>
         ))}
         {isTyping && (
-          <div className="flex justify-start">
-            <div className={`rounded-2xl p-4 border ${theme === 'dark' ? 'bg-[#2a2a2a] border-[#333]' : 'bg-white border-[#e2e8f0]'}`}>
-              <Loader2 className="animate-spin text-indigo-500" size={18} />
+           <div className="flex justify-start">
+            <div className="flex items-center gap-3">
+              <Loader2 className="animate-spin text-indigo-500" size={16} />
+              <span className="text-[10px] font-bold opacity-40 tracking-widest uppercase">Thinking...</span>
             </div>
           </div>
         )}
@@ -276,32 +209,63 @@ const ResignationLetterBuilder: React.FC<ResignationLetterBuilderProps> = ({
       </div>
 
       <div className={`p-4 md:p-6 border-t transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="flex-1 relative">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <div className={`relative flex items-center gap-3 border rounded-[32px] p-2 pr-3 transition-all ${
+             theme === 'dark' ? 'bg-[#121212] border-white/10' : 'bg-slate-50 border-slate-200'
+           }`}>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 rounded-full hover:bg-white/5 transition-colors text-slate-400"
+            >
+              <Paperclip size={20} />
+            </button>
+            <input type="file" ref={fileInputRef} className="hidden" />
+
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={isRecording ? "Recording..." : "Discuss details with Zysculpt..."}
-              disabled={isRecording}
-              className={`w-full border rounded-2xl p-4 pr-12 min-h-[60px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
-                theme === 'dark' ? 'bg-[#121212] border-[#2a2a2a] text-white focus:border-white' : 'bg-slate-50 border-[#e2e8f0] text-[#0F172A] focus:border-indigo-400'
-              } ${isRecording ? 'opacity-50 animate-pulse' : ''}`}
+              placeholder="Discuss details with Zysculpt..."
+              className={`flex-1 bg-transparent border-none py-3 px-2 min-h-[48px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
+                theme === 'dark' ? 'text-white' : 'text-[#0F172A]'
+              }`}
               rows={1}
             />
-            <button 
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-indigo-500 hover:bg-white/5'}`}
-            >
-              {isRecording ? <Square size={18} /> : <Mic size={18} />}
+
+            <div className="relative">
+              <button 
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
+                className={`p-3 rounded-xl flex items-center gap-2 text-[11px] font-black uppercase transition-all ${
+                  theme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100'
+                }`}
+              >
+                {models.find(m => m.id === selectedModel)?.label.split(' ')[1]}
+                <ChevronDown size={14} className={showModelDropdown ? 'rotate-180' : ''} />
+              </button>
+
+              {showModelDropdown && (
+                <div className={`absolute bottom-full right-0 mb-4 w-48 border rounded-2xl shadow-2xl p-2 z-50 animate-in slide-in-from-bottom-2 ${
+                  theme === 'dark' ? 'bg-[#1a1a1a] border-white/10 text-white' : 'bg-white border-slate-200'
+                }`}>
+                  {models.map(m => (
+                    <button 
+                      key={m.id}
+                      onClick={() => { setSelectedModel(m.id as any); setShowModelDropdown(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        selectedModel === m.id ? 'bg-[#1918f0] text-white' : 'hover:bg-white/5'
+                      }`}
+                    >
+                      {m.icon} {m.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping} className="p-3 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 shadow-md">
+              <Send size={20} />
             </button>
           </div>
-          <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isRecording} className="p-4 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 transition-colors shadow-md disabled:opacity-30">
-            <Send size={18} />
-          </button>
         </div>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 // 1. SHIM IMMEDIATELY (Safely handle environment variables before any imports)
 if (typeof window !== 'undefined') {
   (window as any).process = (window as any).process || { env: {} };
@@ -33,10 +32,6 @@ if (typeof window !== 'undefined') {
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import { initDatadog } from './services/datadog.ts';
-
-// Initialize Monitoring
-initDatadog();
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
