@@ -5,16 +5,19 @@ import {
   Undo,
   Sparkles,
   Download,
-  Menu,
   Paperclip,
   FileText,
   Palette,
-  Layout
+  Layout,
+  Maximize2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { aiService } from '../services/ai';
 import { Document, Packer } from 'docx';
 import { parseMarkdownToDocx } from '../utils/docx-export';
+import { CustomHamburger } from './Sidebar';
 
 interface AIResumeBuilderProps {
   onToggleMobile?: () => void;
@@ -79,6 +82,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const [showPreview, setShowPreview] = useState(false);
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,10 +117,11 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     }
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim() && !isTyping) return;
+  const handleSend = async (messageText?: string) => {
+    const textToSend = messageText || inputValue;
+    if (!textToSend.trim() && !isTyping) return;
     setErrorMessage(null);
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: inputValue, timestamp: Date.now() };
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: textToSend, timestamp: Date.now() };
     const newMessages = [...activeSession.messages, userMessage];
     updateSession(activeSessionId, { messages: newMessages });
     setInputValue('');
@@ -172,7 +177,7 @@ Chat Context/Instructions: ${activeSession.messages.map(m => m.content).join('\n
 CRITICAL INSTRUCTIONS:
 1. USE the real personal information provided above (Name, Phone, Location, etc.).
 2. DO NOT use generic placeholders like "[Your Name]", "[City, State]", or "[Phone Number]".
-3. Target role: ${activeSession.jobDescription || 'Professional Application'}. 
+3. Ensure absolute ATS compatibility with keywords and quantifiable achievements.
 4. Return ONLY markdown content.`;
       
       const result = await aiService.sculpt(prompt);
@@ -181,6 +186,13 @@ CRITICAL INSTRUCTIONS:
     } catch (err: any) { 
       setErrorMessage("Sculpting failed.");
     } finally { setIsSculpting(false); }
+  };
+
+  const handleCopy = () => {
+    if (!activeSession.finalResume) return;
+    navigator.clipboard.writeText(activeSession.finalResume);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const updatePrefs = (newPrefs: Partial<StylePrefs>) => {
@@ -221,12 +233,20 @@ CRITICAL INSTRUCTIONS:
     }
   };
 
-  const getWelcomeMessage = () => {
+  const getSubTitle = () => {
     switch(activeSession.type) {
-      case 'resume': return "Welcome! I'm your Zysculpt Resume Architect. I'll help you craft an ATS-proof resume. Tell me about your most recent role or target job.";
-      case 'cover-letter': return "Hello! I'm your Cover Letter Specialist. A great cover letter tells a story. What's the one thing you want the hiring manager to know?";
-      case 'resignation-letter': return "Hi there. I'll help you write a professional resignation. When is your last day?";
-      default: return "How can I help you today?";
+      case 'resume': return "Architecting ATS-proof profiles for top-tier roles.";
+      case 'cover-letter': return "Crafting persuasive narratives that catch a human eye.";
+      case 'resignation-letter': return "Graceful exits for professional career transitions.";
+      default: return "Zysculpt AI dedicated mentor.";
+    }
+  };
+
+  const getGuidePrompts = () => {
+    switch(activeSession.type) {
+      case 'resume': return ["Add recent role", "Optimize for ATS", "Include skills list", "Improve phrasing"];
+      case 'cover-letter': return ["Highlight leadership", "Mention values fit", "Focus on results", "Shorten letter"];
+      default: return ["Help me plan", "Draft notice", "Career advice"];
     }
   };
 
@@ -240,61 +260,39 @@ CRITICAL INSTRUCTIONS:
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <button onClick={() => setShowStyleMenu(!showStyleMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
-                <Palette size={14} /> <span className="hidden sm:inline">Style</span>
+              <button onClick={() => setShowStyleMenu(!showStyleMenu)} title="Style" className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+                <Palette size={16} /> <span className="hidden sm:inline">Style</span>
               </button>
               {showStyleMenu && (
                 <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                  {[
-                    { id: 'font-inter', label: 'Inter (Modern)' },
-                    { id: 'font-eb-garamond', label: 'Garamond (Serif)' },
-                    { id: 'font-roboto', label: 'Roboto (Clean)' },
-                    { id: 'font-arial', label: 'Arial (Standard)' },
-                    { id: 'font-times', label: 'Tinos (Academic)' }
-                  ].map(font => (
-                    <button 
-                      key={font.id}
-                      onClick={() => { updatePrefs({ font: font.id as any }); setShowStyleMenu(false); }}
-                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-[#1918f0] text-white' : 'hover:bg-slate-500/10'}`}
-                    >
-                      {font.label}
-                    </button>
+                  {[{ id: 'font-inter', label: 'Inter' }, { id: 'font-eb-garamond', label: 'Garamond' }, { id: 'font-roboto', label: 'Roboto' }, { id: 'font-arial', label: 'Arial' }].map(font => (
+                    <button key={font.id} onClick={() => { updatePrefs({ font: font.id as any }); setShowStyleMenu(false); }} className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.font === font.id ? 'bg-[#1918f0] text-white' : 'hover:bg-slate-500/10'}`}>{font.label}</button>
                   ))}
                 </div>
               )}
             </div>
             <div className="relative">
-              <button onClick={() => setShowTemplateMenu(!showTemplateMenu)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
-                <Layout size={14} /> <span className="hidden sm:inline">Template</span>
+              <button onClick={() => setShowTemplateMenu(!showTemplateMenu)} title="Template" className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+                <Layout size={16} /> <span className="hidden sm:inline">Template</span>
               </button>
               {showTemplateMenu && (
                 <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 animate-in zoom-in-95 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
-                  {[
-                    { id: 'modern', label: 'Modern' },
-                    { id: 'classic', label: 'Classic' },
-                    { id: 'minimal', label: 'Minimal' }
-                  ].map(tmpl => (
-                    <button 
-                      key={tmpl.id}
-                      onClick={() => { updatePrefs({ template: tmpl.id as any }); setShowTemplateMenu(false); }}
-                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.template === tmpl.id ? 'bg-[#1918f0] text-white' : 'hover:bg-slate-500/10'}`}
-                    >
-                      {tmpl.label}
-                    </button>
+                  {[{ id: 'modern', label: 'Modern' }, { id: 'classic', label: 'Classic' }, { id: 'minimal', label: 'Minimal' }].map(tmpl => (
+                    <button key={tmpl.id} onClick={() => { updatePrefs({ template: tmpl.id as any }); setShowTemplateMenu(false); }} className={`w-full text-left p-2 rounded-lg text-xs transition-colors ${stylePrefs.template === tmpl.id ? 'bg-[#1918f0] text-white' : 'hover:bg-slate-500/10'}`}>{tmpl.label}</button>
                   ))}
                 </div>
               )}
             </div>
-            <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
-              {isExporting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} <span className="hidden sm:inline">Word</span>
+            <button onClick={exportDOCX} disabled={isExporting} title="Download DOCX" className={`flex items-center gap-2 p-2.5 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-white/10' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+              {isExporting ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />} <span className="hidden sm:inline">Word</span>
             </button>
-            <button onClick={exportPDF} disabled={isExporting} className="px-6 py-2 bg-[#1918f0] text-white rounded-xl font-bold text-xs shadow-lg shadow-[#1918f0]/20 whitespace-nowrap">
-              {isExporting ? <Loader2 size={14} className="animate-spin" /> : 'Export PDF'}
+            <button onClick={exportPDF} disabled={isExporting} className="px-5 py-2.5 bg-[#1918f0] text-white rounded-xl font-bold text-xs shadow-lg shadow-[#1918f0]/20 whitespace-nowrap">
+              {isExporting ? <Loader2 size={16} className="animate-spin" /> : 'Export PDF'}
             </button>
           </div>
         </header>
         <div className={`flex-1 overflow-y-auto p-4 md:p-12 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
-          <div className="printable-area max-w-4xl mx-auto bg-white text-black p-12 md:p-20 shadow-2xl rounded-sm border border-slate-200">
+          <div className="printable-area max-w-4xl mx-auto bg-white text-black p-12 md:p-20 shadow-2xl rounded-sm border border-slate-200 overflow-x-auto">
             <MarkdownLite text={activeSession.finalResume} dark={true} prefs={stylePrefs} />
           </div>
         </div>
@@ -306,8 +304,13 @@ CRITICAL INSTRUCTIONS:
     <div className="flex flex-col h-full relative font-['Inter',_sans-serif]">
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-20 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors"><Menu size={24} /></button>
-          <h2 className={`text-lg md:text-xl font-bold capitalize ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>{activeSession.type.replace('-', ' ')} Builder</h2>
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
+            <CustomHamburger theme={theme} />
+          </button>
+          <div className="flex flex-col">
+            <h2 className={`text-lg md:text-xl font-extrabold capitalize leading-tight ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>{activeSession.type.replace('-', ' ')} Builder</h2>
+            <p className={`text-[10px] md:text-xs font-medium opacity-50 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-500'}`}>{getSubTitle()}</p>
+          </div>
         </div>
         <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-5 py-2.5 bg-[#1918f0] text-white rounded-2xl font-black hover:bg-[#0a09d0] transition-all shadow-xl text-xs md:text-sm">
           {isSculpting || isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} Sculpt
@@ -315,11 +318,20 @@ CRITICAL INSTRUCTIONS:
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-        <div className="flex justify-start">
-           <div className="max-w-full text-sm leading-relaxed bg-transparent border-0 shadow-none">
-              <MarkdownLite text={getWelcomeMessage()} theme={theme} />
-           </div>
-        </div>
+        {activeSession.messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto pb-12 animate-in fade-in zoom-in-95 duration-500">
+            <div className="w-16 h-16 bg-[#1918f0]/10 text-[#1918f0] rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-[#1918f0]/10">
+              <Sparkles size={32} />
+            </div>
+            <h3 className={`text-2xl font-black mb-3 ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Let's Architect Your Future</h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-8">Tell me about the role you're targeting or upload your current background to get started with ATS-optimized sculpting.</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {getGuidePrompts().map(prompt => (
+                <button key={prompt} onClick={() => handleSend(prompt)} className={`px-4 py-2 rounded-full border text-xs font-bold transition-all ${theme === 'dark' ? 'border-white/5 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-[#1918f0]'}`}>{prompt}</button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {activeSession.messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -336,6 +348,38 @@ CRITICAL INSTRUCTIONS:
             )}
           </div>
         ))}
+        
+        {activeSession.finalResume && (
+          <div className="flex justify-start animate-in slide-in-from-left-4 duration-500">
+            <div className={`w-full max-w-sm rounded-[32px] border overflow-hidden shadow-2xl group transition-all ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+              <div className={`p-5 flex items-center justify-between border-b ${theme === 'dark' ? 'border-white/5 bg-white/5' : 'border-slate-100 bg-slate-50'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-[#1918f0] text-white rounded-xl"><FileText size={20}/></div>
+                  <div>
+                    <h4 className={`text-sm font-black ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Sculpted {activeSession.type.replace('-', ' ')}</h4>
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Ready for export</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowPreview(true)} className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-200 text-[#0F172A]'}`}><Maximize2 size={18}/></button>
+              </div>
+              <div className="p-4 grid grid-cols-3 gap-2">
+                <button onClick={handleCopy} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${theme === 'dark' ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
+                   {copied ? <Check size={16} className="text-emerald-500"/> : <Copy size={16} className="text-slate-400"/>}
+                   <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">{copied ? 'Copied' : 'Copy'}</span>
+                </button>
+                <button onClick={exportDOCX} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${theme === 'dark' ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
+                   <FileText size={16} className="text-[#1918f0]"/>
+                   <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">DOCX</span>
+                </button>
+                <button onClick={exportPDF} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${theme === 'dark' ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
+                   <Download size={16} className="text-emerald-500"/>
+                   <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">PDF</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isTyping && (
           <div className="flex justify-start items-center gap-2 opacity-40">
             <Loader2 className="animate-spin text-[#1918f0]" size={14} />
@@ -362,7 +406,7 @@ CRITICAL INSTRUCTIONS:
               rows={1}
             />
 
-            <button onClick={handleSend} disabled={!inputValue.trim() || isTyping} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30">
+            <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30">
               {isTyping ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
             </button>
           </div>

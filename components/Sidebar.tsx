@@ -25,6 +25,13 @@ import {
 } from 'lucide-react';
 import { AppView, ChatSession, Theme } from '../types';
 
+export const CustomHamburger = ({ theme }: { theme: Theme }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={theme === 'dark' ? 'text-white' : 'text-black'}>
+    <path d="M17.2027 4.90036V6.43657H2.79727V4.90036H17.2027Z" fill="currentColor"></path>
+    <path d="M10.9604 13.0635V14.5997H2.79727V13.0635H10.9604Z" fill="currentColor"></path>
+  </svg>
+);
+
 export const ZysculptLogo = ({ theme, size = 24 }: { theme: Theme, size?: number }) => (
   <div 
     className="flex-shrink-0 transition-transform duration-500 hover:scale-110"
@@ -228,8 +235,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <button onClick={() => handleStartRename(s.id, s.title)} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-[#1918f0] hover:text-white transition-colors text-left">
                               <Edit2 size={12}/> Rename
                             </button>
-                            <button onClick={() => { setDeletingId(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500 hover:text-white transition-colors text-left">
-                              <Trash2 size={12}/> Delete
+                            <button onClick={() => { setDeletingId(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500 hover:text-white transition-colors text-left text-[#ff2529]">
+                              <Trash2 size={12} className="text-[#ff2529]"/> Delete
                             </button>
                           </div>
                         )}
@@ -251,7 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className={`w-full max-w-sm p-6 rounded-[32px] border shadow-2xl animate-in zoom-in-95 duration-300 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 text-[#ff2529] flex items-center justify-center mb-6">
                 <Trash2 size={32} />
               </div>
               <h3 className={`text-xl font-black mb-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Delete session?</h3>
@@ -267,7 +274,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </button>
                 <button 
                   onClick={() => { onDeleteSession(deletingId); setDeletingId(null); }}
-                  className="flex-1 py-3.5 bg-red-500 text-white rounded-2xl text-sm font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 active:scale-95"
+                  className="flex-1 py-3.5 bg-[#ff2529] text-white rounded-2xl text-sm font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 active:scale-95"
                 >
                   Delete
                 </button>
@@ -293,7 +300,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </button>
             {isMobileOpen && (
                 <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
-                  <X size={20} />
+                  <CustomHamburger theme={theme} />
                 </button>
             )}
           </div>
