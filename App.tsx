@@ -49,7 +49,7 @@ const App: React.FC = () => {
         email: profile.email,
         phone: profile.phone,
         location: profile.location,
-        linkedin: profile.linkedIn, // Ensure mapping matches SQL
+        linkedin: profile.linkedIn,
         github: profile.github || null,
         portfolio: profile.portfolio || null,
         base_resume_text: profile.baseResumeText,
@@ -60,7 +60,6 @@ const App: React.FC = () => {
     } catch (e) {
       console.error("Profile sync exception:", e);
     } finally {
-      // Small delay for UI feedback
       setTimeout(() => setIsSavingProfile(false), 1000);
     }
   }, []);
@@ -121,7 +120,6 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Autosave Logic with Debounce
   const autosaveTimerRef = useRef<number | null>(null);
   useEffect(() => {
     if (session?.user?.id) {

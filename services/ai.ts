@@ -7,7 +7,7 @@ const getDeepSeekKey = () => {
   return import.meta.env?.VITE_DEEPSEEK_API_KEY || (process.env as any).VITE_DEEPSEEK_API_KEY || '';
 };
 
-export type AIModel = 'gemini-3-pro' | 'gemini-3-flash' | 'deepseek-v3' | 'deepseek-r1';
+export type AIModel = 'gemini' | 'deepseek';
 
 export class AIService {
   private getGeminiClient() {
@@ -26,9 +26,9 @@ export class AIService {
   ) {
     const systemInstruction = this.getSystemInstruction(context);
 
-    if (model.startsWith('gemini')) {
+    if (model === 'gemini') {
       const ai = this.getGeminiClient();
-      const geminiModel = model === 'gemini-3-pro' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
+      const geminiModel = 'gemini-3-pro-preview';
       
       const contents = history.map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
@@ -50,7 +50,7 @@ export class AIService {
       }
     } else {
       const deepseekKey = getDeepSeekKey();
-      const deepseekModel = model === 'deepseek-r1' ? 'deepseek-reasoner' : 'deepseek-chat';
+      const deepseekModel = 'deepseek-chat';
       
       const messages = [
         { role: 'system', content: systemInstruction },
@@ -132,9 +132,9 @@ export class AIService {
   }
 
   async sculpt(model: AIModel, prompt: string): Promise<string> {
-    if (model.startsWith('gemini')) {
+    if (model === 'gemini') {
       const ai = this.getGeminiClient();
-      const geminiModel = model === 'gemini-3-pro' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
+      const geminiModel = 'gemini-3-pro-preview';
       const result = await ai.models.generateContent({
         model: geminiModel,
         contents: prompt
@@ -142,7 +142,7 @@ export class AIService {
       return result.text || "";
     } else {
       const deepseekKey = getDeepSeekKey();
-      const deepseekModel = model === 'deepseek-r1' ? 'deepseek-reasoner' : 'deepseek-chat';
+      const deepseekModel = 'deepseek-chat';
       const response = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
         headers: {

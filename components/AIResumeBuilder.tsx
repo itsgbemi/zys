@@ -6,18 +6,10 @@ import {
   Sparkles,
   Download,
   ChevronDown,
-  Layout,
-  Check,
-  Zap,
-  Cpu,
   Menu,
-  AlertCircle,
-  Mic,
-  Square,
-  Type as TypeIcon,
   Paperclip,
-  Trash2,
-  FileText
+  Zap,
+  Cpu
 } from 'lucide-react';
 import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { aiService, AIModel } from '../services/ai';
@@ -86,23 +78,12 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<AIModel>('gemini-3-pro');
+  const [selectedModel, setSelectedModel] = useState<AIModel>('gemini');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const stylePrefs: StylePrefs = activeSession.stylePrefs || {
-    font: 'font-inter',
-    headingColor: 'text-black',
-    listStyle: 'disc',
-    template: 'modern'
-  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -112,39 +93,6 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     if (activeSession.finalResume) setShowPreview(true);
     else setShowPreview(false);
   }, [activeSessionId]);
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
-      };
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          const base64Audio = (reader.result as string).split(',')[1];
-          handleSend(base64Audio);
-        };
-        stream.getTracks().forEach(track => track.stop());
-      };
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      alert("Microphone access is required.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,11 +106,10 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     }
   };
 
-  const handleSend = async (audioData?: string) => {
-    if (!inputValue.trim() && !audioData && !isTyping) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() && !isTyping) return;
     setErrorMessage(null);
-    const contentText = audioData ? (inputValue.trim() ? `${inputValue} [Voice Message]` : "[Voice Message]") : inputValue;
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: contentText, timestamp: Date.now() };
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: inputValue, timestamp: Date.now() };
     const newMessages = [...activeSession.messages, userMessage];
     updateSession(activeSessionId, { messages: newMessages });
     setInputValue('');
@@ -190,7 +137,7 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
         } : s));
       }
     } catch (e: any) {
-      setErrorMessage("AI is currently unavailable. Check your internet or API key.");
+      setErrorMessage("AI is currently unavailable.");
       setIsTyping(false);
     } finally { setIsTyping(false); }
   };
@@ -207,106 +154,32 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
       updateSession(activeSessionId, { finalResume: result });
       setShowPreview(true);
     } catch (err: any) { 
-      setErrorMessage("Sculpting failed. Please try again.");
+      setErrorMessage("Sculpting failed.");
     } finally { setIsSculpting(false); }
-  };
-
-  const updatePrefs = (newPrefs: Partial<StylePrefs>) => {
-    updateSession(activeSessionId, { stylePrefs: { ...stylePrefs, ...newPrefs } as any });
-  };
-
-  const exportPDF = () => {
-    setIsExporting(true);
-    const element = document.querySelector('.printable-area');
-    const opt = { 
-      margin: 10, 
-      filename: `Zysculpt_${activeSession.type}_${activeSession.title.replace(/\s+/g, '_')}.pdf`, 
-      html2canvas: { scale: 2 }, 
-      jsPDF: { unit: 'mm', format: 'a4' } 
-    };
-    // @ts-ignore
-    html2pdf().set(opt).from(element).save().then(() => setIsExporting(false));
-  };
-
-  const exportDOCX = async () => {
-    if (!activeSession.finalResume) return;
-    setIsExporting(true);
-    try {
-      const children = parseMarkdownToDocx(activeSession.finalResume);
-      const doc = new Document({
-        sections: [{ properties: {}, children: children }],
-      });
-      const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Zysculpt_${activeSession.title.replace(/\s+/g, '_')}.docx`;
-      link.click();
-    } catch (e) { console.error(e); } finally { setIsExporting(false); }
   };
 
   const getWelcomeMessage = () => {
     switch(activeSession.type) {
-      case 'resume': return "Welcome! I'm your Zysculpt Resume Architect. I'll help you craft an ATS-proof resume. Tell me about your most recent role or paste a job link you're targeting.";
-      case 'cover-letter': return "Hello! I'm your Cover Letter Specialist. A great cover letter tells a story. What's the one thing you want the hiring manager to know about your passion for this role?";
-      case 'resignation-letter': return "Hi there. I'll help you write a professional and graceful resignation. When is your intended last day and who are we addressing?";
+      case 'resume': return "Welcome! I'm your Zysculpt Resume Architect. I'll help you craft an ATS-proof resume. Tell me about your most recent role or target job.";
+      case 'cover-letter': return "Hello! I'm your Cover Letter Specialist. A great cover letter tells a story. What's the one thing you want the hiring manager to know?";
+      case 'resignation-letter': return "Hi there. I'll help you write a professional resignation. When is your last day?";
       default: return "How can I help you today?";
     }
   };
 
-  const models = [
-    { id: 'gemini-3-pro', label: 'Gemini 3 Pro', icon: <Zap size={14}/> },
-    { id: 'gemini-3-flash', label: 'Gemini 3 Flash', icon: <Zap size={14}/> },
-    { id: 'deepseek-v3', label: 'DeepSeek V3', icon: <Cpu size={14}/> },
-    { id: 'deepseek-r1', label: 'DeepSeek R1', icon: <Cpu size={14}/> }
-  ];
-
   if (showPreview && activeSession.finalResume) {
     return (
       <div className="flex flex-col h-full animate-in fade-in duration-500 relative">
-        <header className={`flex flex-col md:flex-row md:items-center justify-between p-4 md:p-6 border-b sticky top-0 z-10 no-print gap-4 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
+        <header className={`flex items-center justify-between p-4 md:p-6 border-b sticky top-0 z-10 no-print transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
           <div className="flex items-center gap-4">
             <button onClick={() => setShowPreview(false)} className={`p-2 rounded-xl transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-[#0F172A]'}`}><Undo size={20} /></button>
-            <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Document Preview</h2>
+            <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>Preview</h2>
           </div>
-          
-          <div className="flex flex-wrap items-center gap-2">
-            <select 
-              value={stylePrefs.template}
-              onChange={(e) => updatePrefs({ template: e.target.value as any })}
-              className={`px-3 py-2 rounded-lg text-xs font-bold border outline-none transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white border-white/10' : 'bg-slate-50 text-slate-800 border-slate-200'}`}
-            >
-              <option value="modern">Modern Template</option>
-              <option value="classic">Classic Template</option>
-              <option value="minimal">Minimal Template</option>
-            </select>
-            
-            <select 
-              value={stylePrefs.font}
-              onChange={(e) => updatePrefs({ font: e.target.value as any })}
-              className={`px-3 py-2 rounded-lg text-xs font-bold border outline-none transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white border-white/10' : 'bg-slate-50 text-slate-800 border-slate-200'}`}
-            >
-              <option value="font-inter">Inter</option>
-              <option value="font-roboto">Roboto</option>
-              <option value="font-eb-garamond">EB Garamond</option>
-              <option value="font-arial">Arial</option>
-              <option value="font-times">Times New Roman</option>
-            </select>
-
-            <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
-
-            <button onClick={exportDOCX} disabled={isExporting} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' : 'bg-slate-100 text-[#0F172A] hover:bg-slate-200'}`}>
-              <Download size={14} /> DOCX
-            </button>
-            <button onClick={exportPDF} disabled={isExporting} className="px-6 py-2 bg-[#1918f0] text-white rounded-xl font-bold text-xs hover:bg-[#0a09d0] transition-all shadow-lg shadow-[#1918f0]/20">
-              Export PDF
-            </button>
-          </div>
+          <button onClick={handleSculpt} className="px-6 py-2 bg-[#1918f0] text-white rounded-xl font-bold text-xs shadow-lg shadow-[#1918f0]/20">Export PDF</button>
         </header>
-
         <div className={`flex-1 overflow-y-auto p-4 md:p-12 transition-colors ${theme === 'dark' ? 'bg-[#121212]' : 'bg-slate-50'}`}>
-          <div className="printable-area max-w-4xl mx-auto bg-white text-black p-12 md:p-20 shadow-2xl rounded-sm min-h-[1050px] border border-slate-200">
-            <MarkdownLite text={activeSession.finalResume} dark={true} prefs={stylePrefs} />
+          <div className="printable-area max-w-4xl mx-auto bg-white text-black p-12 md:p-20 shadow-2xl rounded-sm border border-slate-200">
+            <MarkdownLite text={activeSession.finalResume} dark={true} />
           </div>
         </div>
       </div>
@@ -317,118 +190,81 @@ const AIResumeBuilder: React.FC<AIResumeBuilderProps> = ({
     <div className="flex flex-col h-full relative font-['Inter',_sans-serif]">
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-20 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
-            <Menu size={24} />
-          </button>
-          <div className="flex flex-col">
-            <h2 className={`text-lg md:text-xl font-bold capitalize ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>
-              {activeSession.type.replace('-', ' ')} Builder
-            </h2>
-          </div>
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors"><Menu size={24} /></button>
+          <h2 className={`text-lg md:text-xl font-bold capitalize ${theme === 'dark' ? 'text-white' : 'text-[#0F172A]'}`}>{activeSession.type.replace('-', ' ')} Builder</h2>
         </div>
-        {(activeSession.jobDescription || userProfile?.baseResumeText) && (
-          <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-5 py-2.5 bg-[#1918f0] text-white rounded-2xl font-black hover:bg-[#0a09d0] transition-all shadow-xl shadow-[#1918f0]/20 text-xs md:text-sm disabled:opacity-50">
-            {isSculpting || isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
-            <span className="hidden sm:inline">Sculpt Document</span><span className="sm:hidden">Sculpt</span>
-          </button>
-        )}
+        <button onClick={handleSculpt} disabled={isSculpting || isTyping} className="flex items-center gap-2 px-5 py-2.5 bg-[#1918f0] text-white rounded-2xl font-black hover:bg-[#0a09d0] transition-all shadow-xl text-xs md:text-sm">
+          {isSculpting || isTyping ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} Sculpt
+        </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         <div className="flex justify-start">
-           <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
-              <p className="opacity-70 mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
+           <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
               <MarkdownLite text={getWelcomeMessage()} theme={theme} />
            </div>
         </div>
 
         {activeSession.messages.map((m) => (
-          <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}>
+          <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'user' ? (
-              <div className={`max-w-[85%] md:max-w-[70%] rounded-[24px] px-5 py-3 shadow-sm ${
-                theme === 'dark' ? 'bg-[#1918f0] text-white' : 'bg-[#E0E7FF] text-slate-900'
+              <div className={`max-w-[80%] rounded-[20px] px-3 py-1.5 shadow-sm text-sm font-normal leading-normal ${
+                theme === 'dark' ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-100 text-zinc-900'
               }`}>
-                <div className="text-sm font-medium leading-relaxed">{m.content}</div>
+                {m.content}
               </div>
             ) : (
-              <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
-                <p className="opacity-70 mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
+              <div className={`max-w-full text-sm leading-relaxed ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#1918f0]">Zysculpt AI</p>
                 <MarkdownLite text={m.content} theme={theme} />
               </div>
             )}
           </div>
         ))}
-
-        {(isTyping || isSculpting) && (
-          <div className="flex justify-start">
-            <div className="flex items-center gap-3">
-              <Loader2 className="animate-spin text-[#1918f0]" size={16} />
-              <span className="text-[10px] font-bold opacity-40 tracking-widest uppercase">{isSculpting ? 'Sculpting...' : 'Typing...'}</span>
-            </div>
+        {isTyping && (
+          <div className="flex justify-start items-center gap-2 opacity-40">
+            <Loader2 className="animate-spin text-[#1918f0]" size={14} />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Processing</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       <div className={`p-4 md:p-8 border-t transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
-        <div className="max-w-4xl mx-auto space-y-4">
-           
-           <div className={`relative flex items-center gap-3 border rounded-[32px] p-2 pr-3 transition-all ${
+        <div className="max-w-4xl mx-auto">
+          <div className={`relative flex items-end gap-2 border rounded-[28px] p-2 pr-3 transition-all ${
              theme === 'dark' ? 'bg-[#121212] border-white/10' : 'bg-slate-50 border-slate-200'
            }`}>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className={`p-3 rounded-full hover:bg-white/5 transition-colors ${theme === 'dark' ? 'text-slate-400' : 'text-slate-400'}`}
-            >
-              <Paperclip size={20} />
-            </button>
+            <button onClick={() => fileInputRef.current?.click()} className="p-3 text-zinc-400 hover:text-zinc-200 transition-colors"><Paperclip size={20} /></button>
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
 
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={isRecording ? "Listening..." : "Message Zysculpt..."}
-              disabled={isRecording || isSculpting}
-              className={`flex-1 bg-transparent border-none py-3 px-2 min-h-[48px] max-h-[200px] transition-all resize-none text-sm md:text-base outline-none ${
-                theme === 'dark' ? 'text-white' : 'text-[#0F172A]'
-              }`}
+              placeholder="Message Zysculpt..."
+              className={`flex-1 bg-transparent border-none py-3 px-1 min-h-[48px] max-h-[200px] resize-none text-sm md:text-base outline-none ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}
               rows={1}
             />
 
             <div className="relative">
-              <button 
-                onClick={() => setShowModelDropdown(!showModelDropdown)}
-                className={`p-3 rounded-xl flex items-center gap-2 text-[11px] font-black uppercase transition-all ${
-                  theme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100'
-                }`}
-              >
-                {models.find(m => m.id === selectedModel)?.label.split(' ')[1]}
-                <ChevronDown size={14} className={showModelDropdown ? 'rotate-180' : ''} />
+              <button onClick={() => setShowModelDropdown(!showModelDropdown)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${theme === 'dark' ? 'text-zinc-400 hover:text-white bg-zinc-800' : 'text-zinc-500 bg-zinc-100 hover:bg-zinc-200'}`}>
+                {selectedModel}
+                <ChevronDown size={12} className={`transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
               </button>
-
               {showModelDropdown && (
-                <div className={`absolute bottom-full right-0 mb-4 w-48 border rounded-2xl shadow-2xl p-2 z-50 animate-in slide-in-from-bottom-2 ${
-                  theme === 'dark' ? 'bg-[#1a1a1a] border-white/10 text-white' : 'bg-white border-slate-200'
-                }`}>
-                  {models.map(m => (
-                    <button 
-                      key={m.id}
-                      onClick={() => { setSelectedModel(m.id as any); setShowModelDropdown(false); }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                        selectedModel === m.id ? 'bg-[#1918f0] text-white' : 'hover:bg-white/5'
-                      }`}
-                    >
-                      {m.icon} {m.label}
+                <div className={`absolute bottom-full right-0 mb-3 w-36 border rounded-2xl shadow-2xl p-2 z-50 ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-slate-200'}`}>
+                  {['gemini', 'deepseek'].map(m => (
+                    <button key={m} onClick={() => { setSelectedModel(m as any); setShowModelDropdown(false); }} className={`w-full text-left px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedModel === m ? 'bg-[#1918f0] text-white' : 'hover:bg-white/5 text-zinc-500'}`}>
+                      {m}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping || isSculpting} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 active:scale-95 disabled:opacity-50">
-              <Send size={20} />
-            </button>
+            <button onClick={handleSend} disabled={!inputValue.trim() || isTyping} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30"><Send size={20} /></button>
           </div>
         </div>
       </div>
