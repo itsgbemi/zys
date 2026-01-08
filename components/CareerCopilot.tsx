@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Send, 
   Loader2, 
   Sparkles,
   Paperclip,
@@ -9,7 +8,7 @@ import {
 import { Message, ChatSession, Theme, ScheduledTask, UserProfile } from '../types';
 import { aiService } from '../services/ai';
 import { MarkdownLite } from './AIResumeBuilder';
-import { CustomHamburger } from './Sidebar';
+import { CustomHamburger, CustomArrowUp } from './Sidebar';
 
 interface CareerCopilotProps {
   onToggleMobile?: () => void;
@@ -35,6 +34,18 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeSession.messages, isTyping]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        setInputValue(prev => prev + `\n[Attached File: ${file.name}]\n${content.slice(0, 5000)}`);
+      };
+      reader.readAsText(file);
+    }
+  };
 
   const handleSend = async (msg?: string) => {
     const textToSend = msg || inputValue;
@@ -79,7 +90,7 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
     <div className={`flex flex-col h-full transition-colors font-['Inter',_sans-serif] ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 transition-colors">
             <CustomHamburger theme={theme} />
           </button>
           <div className="flex flex-col">
@@ -94,7 +105,7 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
         {activeSession.messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto pb-12 animate-in fade-in duration-500">
+          <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto pb-12 animate-in fade-in zoom-in-95 duration-500">
             <div className="w-16 h-16 bg-[#1918f0]/10 text-[#1918f0] rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-[#1918f0]/10">
               <Compass size={32} />
             </div>
@@ -129,11 +140,28 @@ const CareerCopilot: React.FC<CareerCopilotProps> = ({
 
       <div className={`p-4 md:p-8 border-t ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white'}`}>
         <div className="max-w-4xl mx-auto">
-          <div className={`relative flex items-end gap-2 border rounded-[28px] p-2 pr-3 transition-all ${theme === 'dark' ? 'bg-[#121212] border-white/10' : 'bg-slate-50 border-slate-200'}`}>
-            <button onClick={() => fileInputRef.current?.click()} className="p-3 text-zinc-400 hover:text-zinc-200 transition-colors"><Paperclip size={20} /></button>
-            <input type="file" ref={fileInputRef} className="hidden" />
-            <textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()} placeholder="Ask Zysculpt..." className={`flex-1 bg-transparent border-none py-3 px-1 min-h-[48px] max-h-[200px] resize-none text-sm md:text-base outline-none ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`} rows={1} />
-            <button onClick={() => handleSend()} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#1413c7]"><Send size={20}/></button>
+          <div className={`flex flex-col border rounded-[32px] p-4 transition-all ${theme === 'dark' ? 'bg-[#121212] border-white/10' : 'bg-slate-50 border-slate-200 shadow-sm'}`}>
+            <textarea 
+              value={inputValue} 
+              onChange={e => setInputValue(e.target.value)} 
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()} 
+              placeholder="Message Zysculpt..." 
+              className={`flex-1 bg-transparent border-none p-0 min-h-[48px] max-h-[200px] resize-none text-sm md:text-base outline-none ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`} 
+              rows={1} 
+            />
+            <div className="flex items-center justify-end gap-2 mt-2">
+              <button onClick={() => fileInputRef.current?.click()} className="p-2.5 text-zinc-400 hover:text-zinc-200 transition-colors">
+                <Paperclip size={20} />
+              </button>
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+              <button 
+                onClick={() => handleSend()} 
+                disabled={!inputValue.trim() || isTyping} 
+                className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#1413c7] shadow-md transition-all active:scale-90"
+              >
+                {isTyping ? <Loader2 size={20} className="animate-spin" /> : <CustomArrowUp />}
+              </button>
+            </div>
           </div>
         </div>
       </div>

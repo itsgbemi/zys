@@ -19,7 +19,6 @@ import {
   PanelLeftOpen,
   Trash2,
   Edit2,
-  X,
   AlertCircle,
   Check
 } from 'lucide-react';
@@ -29,6 +28,21 @@ export const CustomHamburger = ({ theme }: { theme: Theme }) => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={theme === 'dark' ? 'text-white' : 'text-black'}>
     <path d="M17.2027 4.90036V6.43657H2.79727V4.90036H17.2027Z" fill="currentColor"></path>
     <path d="M10.9604 13.0635V14.5997H2.79727V13.0635H10.9604Z" fill="currentColor"></path>
+  </svg>
+);
+
+export const CustomArrowUp = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8.3125 0.981587C8.66767 1.0545 8.97902 1.20558 9.2627 1.43374C9.48724 1.61438 9.73029 1.85933 9.97949 2.10854L14.707 6.83608L13.293 8.25014L9 3.95717V15.0431H7V3.95717L2.70703 8.25014L1.29297 6.83608L6.02051 2.10854C6.26971 1.85933 6.51277 1.61438 6.7373 1.43374C6.97662 1.24126 7.28445 1.04542 7.6875 0.981587C7.8973 0.94841 8.1031 0.956564 8.3125 0.981587Z" fill="currentColor"></path>
+  </svg>
+);
+
+export const CustomClose = ({ theme }: { theme: Theme }) => (
+  <svg width="20" height="20" viewBox="240 240 20 20" aria-hidden="true" className={theme === 'dark' ? 'text-white' : 'text-black'}>
+    <g stroke="currentColor" strokeWidth="2">
+      <path d="M255.6 255.6l-11.2-11.2" vectorEffect="non-scaling-stroke"></path>
+      <path d="M255.6 244.4l-11.2 11.2" vectorEffect="non-scaling-stroke"></path>
+    </g>
   </svg>
 );
 
@@ -235,8 +249,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <button onClick={() => handleStartRename(s.id, s.title)} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-[#1918f0] hover:text-white transition-colors text-left">
                               <Edit2 size={12}/> Rename
                             </button>
-                            <button onClick={() => { setDeletingId(s.id); setActiveMenuId(null); }} className="w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500 hover:text-white transition-colors text-left text-[#ff2529]">
-                              <Trash2 size={12} className="text-[#ff2529]"/> Delete
+                            <button onClick={() => { setDeletingId(s.id); setActiveMenuId(null); }} className="group/delete w-full flex items-center gap-2 p-2 rounded-lg text-[11px] font-bold hover:bg-red-500 hover:text-white transition-colors text-left text-[#ff2529]">
+                              <Trash2 size={12} className="text-[#ff2529] group-hover/delete:text-white transition-colors"/> Delete
                             </button>
                           </div>
                         )}
@@ -299,8 +313,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {isCollapsed ? <PanelLeftOpen size={20} className="opacity-40" /> : <PanelLeftClose size={20} className="opacity-40" />}
             </button>
             {isMobileOpen && (
-                <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl">
-                  <CustomHamburger theme={theme} />
+                <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 hover:bg-white/5 rounded-xl transition-all active:scale-90">
+                  <CustomClose theme={theme} />
                 </button>
             )}
           </div>

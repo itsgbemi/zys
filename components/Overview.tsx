@@ -8,14 +8,13 @@ import {
   Lightbulb,
   Calendar as CalendarIcon,
   Search,
-  Menu,
   Sparkles,
   Mail,
   UserCheck,
   Compass
 } from 'lucide-react';
 import { AppView, ChatSession, Theme, DailyLog, UserProfile, ScheduledTask } from '../types';
-import { ZysculptLogo } from './Sidebar';
+import { ZysculptLogo, CustomHamburger } from './Sidebar';
 
 interface OverviewProps {
   onToggleMobile?: () => void;
@@ -42,8 +41,8 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
     <div className={`flex flex-col h-full transition-colors duration-300 font-['Roboto',_sans-serif] ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${theme === 'dark' ? 'bg-[#121212] border-white/5' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
-            <Menu size={24} />
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 transition-colors">
+            <CustomHamburger theme={theme} />
           </button>
           <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>Overview</h2>
         </div>

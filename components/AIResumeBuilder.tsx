@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Send, 
   Loader2, 
   Undo,
   Sparkles,
@@ -17,7 +16,7 @@ import { Message, ChatSession, Theme, StylePrefs, UserProfile } from '../types';
 import { aiService } from '../services/ai';
 import { Document, Packer } from 'docx';
 import { parseMarkdownToDocx } from '../utils/docx-export';
-import { CustomHamburger } from './Sidebar';
+import { CustomHamburger, CustomArrowUp } from './Sidebar';
 
 interface AIResumeBuilderProps {
   onToggleMobile?: () => void;
@@ -304,7 +303,7 @@ CRITICAL INSTRUCTIONS:
     <div className="flex flex-col h-full relative font-['Inter',_sans-serif]">
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-20 transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 transition-colors">
             <CustomHamburger theme={theme} />
           </button>
           <div className="flex flex-col">
@@ -391,24 +390,30 @@ CRITICAL INSTRUCTIONS:
 
       <div className={`p-4 md:p-8 border-t transition-colors ${theme === 'dark' ? 'bg-[#191919] border-[#2a2a2a]' : 'bg-white border-[#e2e8f0]'}`}>
         <div className="max-w-4xl mx-auto">
-          <div className={`relative flex items-end gap-2 border rounded-[28px] p-2 pr-3 transition-all ${
-             theme === 'dark' ? 'bg-[#121212] border-white/10' : 'bg-slate-50 border-slate-200'
+          <div className={`flex flex-col border rounded-[32px] p-4 transition-all ${
+             theme === 'dark' ? 'bg-[#121212] border-white/10' : 'bg-slate-50 border-slate-200 shadow-sm'
            }`}>
-            <button onClick={() => fileInputRef.current?.click()} className="p-3 text-zinc-400 hover:text-zinc-200 transition-colors"><Paperclip size={20} /></button>
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Message Zysculpt..."
-              className={`flex-1 bg-transparent border-none py-3 px-1 min-h-[48px] max-h-[200px] resize-none text-sm md:text-base outline-none ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}
+              className={`w-full bg-transparent border-none p-0 min-h-[48px] max-h-[200px] resize-none text-sm md:text-base outline-none ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}
               rows={1}
             />
-
-            <button onClick={() => handleSend()} disabled={!inputValue.trim() || isTyping} className="p-3 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30">
-              {isTyping ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
-            </button>
+            <div className="flex items-center justify-end gap-2 mt-2">
+              <button onClick={() => fileInputRef.current?.click()} className="p-2.5 text-zinc-400 hover:text-zinc-200 transition-colors">
+                <Paperclip size={20} />
+              </button>
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+              <button 
+                onClick={() => handleSend()} 
+                disabled={!inputValue.trim() || isTyping} 
+                className="p-2.5 bg-[#1918f0] text-white rounded-full hover:bg-[#0e0da8] transition-all flex-shrink-0 disabled:opacity-30 active:scale-90"
+              >
+                {isTyping ? <Loader2 size={16} className="animate-spin" /> : <CustomArrowUp />}
+              </button>
+            </div>
           </div>
         </div>
       </div>

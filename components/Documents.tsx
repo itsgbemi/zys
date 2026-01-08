@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, FileText, Grid, List as ListIcon, Search, ChevronRight, Mail, DoorOpen, File, Clock, Eye } from 'lucide-react';
+import { FileText, Grid, List as ListIcon, Search, ChevronRight, Mail, DoorOpen, File, Clock, Eye } from 'lucide-react';
 import { ChatSession, Theme } from '../types';
+import { CustomHamburger } from './Sidebar';
 
 interface DocumentsProps {
   onToggleMobile?: () => void;
@@ -37,8 +38,8 @@ const Documents: React.FC<DocumentsProps> = ({ onToggleMobile, theme, sessions, 
     <div className={`flex flex-col h-full transition-colors ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       <header className={`p-4 md:p-6 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${bgClass} ${borderClass}`}>
         <div className="flex items-center gap-3">
-          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 text-[#1918f0] transition-colors">
-            <Menu size={24} />
+          <button onClick={onToggleMobile} className="md:hidden p-2 -ml-2 transition-colors">
+            <CustomHamburger theme={theme} />
           </button>
           <div>
             <h2 className={`text-lg md:text-xl font-bold ${textPrimary}`}>My Documents</h2>
