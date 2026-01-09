@@ -127,7 +127,7 @@ export const Auth: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 flex items-center justify-center p-0 md:p-6 font-['Inter',_sans-serif] ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
+    <div className={`min-h-screen transition-colors duration-300 flex items-center justify-center p-4 md:p-6 font-['Inter',_sans-serif] ${theme === 'dark' ? 'bg-[#0a0a0a]' : 'bg-[#F8FAFC]'}`}>
       
       {toast && (
         <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] min-w-[300px] animate-in slide-in-from-top-4 fade-in duration-300`}>
@@ -143,7 +143,7 @@ export const Auth: React.FC = () => {
         </div>
       )}
 
-      <div className={`w-full max-w-6xl min-h-[700px] flex flex-col md:flex-row md:rounded-[40px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.3)] md:border transition-all ${theme === 'dark' ? 'bg-[#121214] border-white/5' : 'bg-white border-slate-200'}`}>
+      <div className={`w-full max-w-6xl min-h-[600px] md:min-h-[700px] flex flex-col md:flex-row rounded-[32px] md:rounded-[40px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.3)] border transition-all ${theme === 'dark' ? 'bg-[#121214] border-white/5' : 'bg-white border-slate-200'}`}>
         
         <div className="hidden md:flex w-full md:w-1/2 bg-[#1918f0] p-8 md:p-16 flex flex-col relative overflow-hidden">
           <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-white/10 rounded-full opacity-20 blur-[100px]"></div>
@@ -175,7 +175,7 @@ export const Auth: React.FC = () => {
           </div>
         </div>
 
-        <div className={`w-full md:w-1/2 p-8 md:p-16 flex flex-col items-center justify-center relative transition-colors ${theme === 'dark' ? 'bg-[#09090b]' : 'bg-white'}`}>
+        <div className={`flex-1 p-8 md:p-16 flex flex-col items-center justify-center relative transition-colors ${theme === 'dark' ? 'bg-[#09090b]' : 'bg-white'}`}>
           <div className="absolute top-8 right-8 flex items-center gap-4 z-20">
              <button 
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -187,7 +187,7 @@ export const Auth: React.FC = () => {
 
           <div className="w-full max-w-sm">
             <div className="md:hidden flex items-center gap-3 mb-8">
-              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/s1fcii84opcg2v1fdmmk.svg" className="h-8 w-auto" alt="Zysculpt" />
+              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/ntoxmdha6gfchddmr8ye.svg" className="h-8 w-auto" alt="Zysculpt" />
             </div>
 
             {view === 'forgot-password' && (
