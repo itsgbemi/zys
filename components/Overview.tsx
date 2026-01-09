@@ -14,7 +14,7 @@ import {
   Compass
 } from 'lucide-react';
 import { AppView, ChatSession, Theme, DailyLog, UserProfile, ScheduledTask } from '../types';
-import { ZysculptLogo, CustomHamburger } from './Sidebar';
+import { CustomHamburger } from './Sidebar';
 
 interface OverviewProps {
   onToggleMobile?: () => void;
@@ -51,8 +51,8 @@ const Overview: React.FC<OverviewProps> = ({ onToggleMobile, theme, sessions, se
       <div className="flex-1 overflow-y-auto p-4 md:p-8 max-w-6xl mx-auto w-full">
         <div className={`p-8 md:p-12 rounded-[40px] border mb-12 ${cardBg}`}>
           <div className="flex flex-col md:flex-row items-center gap-8 mb-10 text-center md:text-left">
-            <div className="w-20 h-20 rounded-[32px] bg-[#1918f0] flex items-center justify-center text-white shadow-2xl shadow-[#1918f0]/40 flex-shrink-0">
-               <ZysculptLogo theme="dark" size={40}/>
+            <div className="w-20 h-20 rounded-[32px] bg-[#1918f0] flex items-center justify-center text-white shadow-2xl shadow-[#1918f0]/40 flex-shrink-0 p-4">
+               <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767978528/tbkus5ht2z4okdfqwnv1.svg" className="w-full h-auto brightness-0 invert" alt="Zysculpt" />
             </div>
             <div>
               <h1 className={`text-3xl md:text-4xl font-black mb-2 tracking-tight ${textPrimary}`}>Welcome, {userProfile.fullName.split(' ')[0] || 'Pilot'}</h1>

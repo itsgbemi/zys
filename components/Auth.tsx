@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
-import { ZysculptLogo } from './Sidebar';
 import { 
   Loader2, 
   Mail, 
@@ -151,10 +150,7 @@ export const Auth: React.FC = () => {
           
           <div className="relative z-10 flex items-center justify-between mb-16">
             <div className="flex items-center gap-3">
-              <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20">
-                <ZysculptLogo theme="dark" size={32} />
-              </div>
-              <span className="text-2xl font-black text-white tracking-tighter">zysculpt</span>
+              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/s1fcii84opcg2v1fdmmk.svg" className="h-10 w-auto" alt="Zysculpt" />
             </div>
           </div>
 
@@ -191,8 +187,7 @@ export const Auth: React.FC = () => {
 
           <div className="w-full max-w-sm">
             <div className="md:hidden flex items-center gap-3 mb-8">
-              <ZysculptLogo theme={theme} size={32} />
-              <h1 className={`text-2xl font-black tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-[#1918f0]'}`}>zysculpt</h1>
+              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/s1fcii84opcg2v1fdmmk.svg" className="h-8 w-auto" alt="Zysculpt" />
             </div>
 
             {view === 'forgot-password' && (

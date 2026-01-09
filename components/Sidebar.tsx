@@ -46,25 +46,6 @@ export const CustomClose = ({ theme }: { theme: Theme }) => (
   </svg>
 );
 
-export const ZysculptLogo = ({ theme, size = 24 }: { theme: Theme, size?: number }) => (
-  <div 
-    className="flex-shrink-0 transition-transform duration-500 hover:scale-110"
-    style={{ width: size, height: size }}
-  >
-    <svg 
-      viewBox="0 0 512 512" 
-      xmlns="http://www.w3.org/2000/svg" 
-      className="w-full h-full"
-      style={{ 
-        transform: 'matrix(-1, 0, 0, 1, 0, 0)',
-        fill: 'currentColor'
-      }}
-    >
-      <path d="M15.258 23.994C28.83 47.05 58.626 88.46 89.648 116.95l92.844 62.818-119.47-50.465-1.92-.315c24.343 38.854 55.535 70.026 92.005 93.282l127.3 60.376L155.9 253.238c40.5 39.53 100.607 75.72 151.4 98.698l63.925 24.37-82.89-11.066-.208.016c52.34 51.69 149.044 110.424 207.45 130.998-1.585-13.49-4.593-28.014-8.82-42.758-16.24-34.366-48.9-49.708-83.413-61.435 2.364-.095 4.702-.14 7.017-.126 22.757.123 43.142 5.6 60.71 18.603-13.84-30.897-32.514-59.165-54.246-76.754l.39.037c-26.092-21.573-56.34-40.94-89.81-58.67 46.746 9.337 102.14 38.655 136.29 63.16l.122.01c-34.19-46.3-90.762-97.425-140.103-130.974L208.53 148.023l136.18 37.754c-41.767-26.197-80.66-45.64-123.83-61.582L108.19 87.82l122.273 13.176C176.465 68.613 75.36 38.786 15.26 23.994h-.002z" />
-    </svg>
-  </div>
-);
-
 interface SidebarProps {
   currentView: AppView;
   setView: (view: AppView) => void;
@@ -302,8 +283,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         
         <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
-            <ZysculptLogo theme={theme} size={32} />
-            {(!isCollapsed || isMobileOpen) && <span className="text-2xl font-black tracking-tighter">zysculpt</span>}
+            {isCollapsed && !isMobileOpen ? (
+              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767978528/tbkus5ht2z4okdfqwnv1.svg" className="h-8 w-auto transition-transform hover:scale-110" alt="Logo" />
+            ) : (
+              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/ntoxmdha6gfchddmr8ye.svg" className="h-8 w-auto transition-transform hover:scale-110" alt="Zysculpt" />
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button 
