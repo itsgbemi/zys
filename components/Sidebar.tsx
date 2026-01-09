@@ -284,9 +284,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className={`p-6 flex items-center justify-between ${isCollapsed && !isMobileOpen ? 'md:justify-center' : ''}`}>
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView(AppView.OVERVIEW)}>
             {isCollapsed && !isMobileOpen ? (
-              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767978528/tbkus5ht2z4okdfqwnv1.svg" className="h-8 w-auto transition-transform hover:scale-110" alt="Logo" />
+              <img 
+                src={theme === 'dark' 
+                  ? "https://res.cloudinary.com/dqhawdcol/image/upload/v1767992391/ir6ykkdop1tx4ofyv9fp.svg" 
+                  : "https://res.cloudinary.com/dqhawdcol/image/upload/v1767985935/hvtzson3taizrogbomqh.svg"} 
+                className="h-10 w-auto transition-transform hover:scale-110" 
+                alt="Logo" 
+              />
             ) : (
-              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/ntoxmdha6gfchddmr8ye.svg" className="h-8 w-auto transition-transform hover:scale-110" alt="Zysculpt" />
+              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/ntoxmdha6gfchddmr8ye.svg" className="h-12 w-auto transition-transform hover:scale-110" alt="Zysculpt" />
             )}
           </div>
           <div className="flex items-center gap-2">

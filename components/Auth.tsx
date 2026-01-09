@@ -150,7 +150,7 @@ export const Auth: React.FC = () => {
           
           <div className="relative z-10 flex items-center justify-between mb-16">
             <div className="flex items-center gap-3">
-              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/s1fcii84opcg2v1fdmmk.svg" className="h-10 w-auto" alt="Zysculpt" />
+              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/s1fcii84opcg2v1fdmmk.svg" className="h-16 w-auto" alt="Zysculpt" />
             </div>
           </div>
 
@@ -187,7 +187,13 @@ export const Auth: React.FC = () => {
 
           <div className="w-full max-w-sm">
             <div className="md:hidden flex items-center gap-3 mb-8">
-              <img src="https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/ntoxmdha6gfchddmr8ye.svg" className="h-8 w-auto" alt="Zysculpt" />
+              <img 
+                src={theme === 'dark' 
+                  ? "https://res.cloudinary.com/dqhawdcol/image/upload/v1767992391/ir6ykkdop1tx4ofyv9fp.svg" 
+                  : "https://res.cloudinary.com/dqhawdcol/image/upload/v1767973402/ntoxmdha6gfchddmr8ye.svg"} 
+                className="h-12 w-auto" 
+                alt="Zysculpt" 
+              />
             </div>
 
             {view === 'forgot-password' && (
